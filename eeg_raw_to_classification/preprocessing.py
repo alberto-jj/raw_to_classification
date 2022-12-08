@@ -55,9 +55,10 @@ def prepare(filename, line_noise, keep_chans=None, epoch_length = 2,
     # Import EEG raw recording + channel standarization
     raw = mne.io.read_raw(filename,preload=True)
     # Remove channels which are not needed
-    standardize(raw) #standardize ch_names
     if keep_chans is not None:
-        raw.pick_channels(keep_chans)
+        raw.reorder_channels(keep_chans)
+    standardize(raw) #standardize ch_names
+
     eeg_index = mne.pick_types(raw.info, eeg=True, eog=False, meg=False)
     ch_names = raw.info["ch_names"]
     ch_names_eeg = list(np.asarray(ch_names)[eeg_index])
