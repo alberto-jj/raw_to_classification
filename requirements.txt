@@ -3,6 +3,7 @@ numpy
 pybids
 mne
 mne-bids
+pyyaml
 git+https://github.com/yjmantilla/sovabids.git#egg=sovabids
 autoreject
 mne-icalabel
@@ -16,3 +17,4 @@ matplotlib
 plotly
 tqdm
 shap
+psutil
