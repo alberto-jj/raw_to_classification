@@ -1,7 +1,6 @@
 # raw_to_classification
 This repository include all the codes necesary to reproduce the manuscript entitled *"Fully reproducible Python workflow for multi-site resting-state EEG analysis: From raw data to group classification"*
 
-
 The flowchart below describes the workflow
 
 
@@ -16,3 +15,11 @@ Besides, Dataset 2 was collected in 38 subjects (19 Parkinson Disease Patients; 
 https://osf.io/pehj9/
 
 This workflow wraps on multiple tools already available such as [sovaBIDS](https://github.com/yjmantilla/sovabids), [PyPREP](https://github.com/sappelhoff/pyprep), [autoreject](https://github.com/autoreject/autoreject), [mne-icalabel](https://github.com/mne-tools/mne-icalabel), [YASA](https://github.com/raphaelvallat/yasa), [neuroComBat](https://github.com/Jfortin1/ComBatHarmonization), [XGBoost](https://github.com/dmlc/xgboost), and [SHAP](https://github.com/slundberg/shap).
+
+## Installation
+
+```bash
+git clone https://github.com/alberto-jj/raw_to_classification.git
+cd raw_to_classification
+pip install -r requirements.txt
+```
