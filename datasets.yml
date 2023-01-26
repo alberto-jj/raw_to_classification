@@ -28,7 +28,10 @@ FINLAND:
         non-bids:                                       # Additional configuration not belonging specifically to any of the previous objects
           eeg_extension : .set                         # Sets which extension to read as an eeg file
           path_analysis:                                # Some bids properties can be inferred from the path of the source files
-            pattern : data/%entities.subject%_%entities.task%.set
+            pattern : data/%a%_%b%.set
+            operation :
+              entities.subject : "[a]"
+              entities.task : "[b]"
           file_filter:
             - exclude: '_PREP_preprocessed'
 
