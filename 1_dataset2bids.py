@@ -4,13 +4,15 @@ from sovabids.convert import convert_them # Do the conversion
 
 from eeg_raw_to_classification.utils import load_yaml
 datasets = load_yaml('datasets.yml')
-DATASET = datasets['FINLAND']
 
-source_path = DATASET['sovabids']['paths']['source_path']
-bids_path = DATASET['sovabids']['paths']['bids_path']
-rules = DATASET['sovabids']['rules']
-mapping_path = DATASET['sovabids']['paths']['mapping_path']
+for DATASET in datasets.items():
+    DATASET = datasets['FINLAND']
 
-apply_rules(source_path,bids_path,rules,mapping_path)
-convert_them(mapping_path)
-print_dir_tree(bids_path)
+    source_path = DATASET['sovabids']['paths']['source_path']
+    bids_path = DATASET['sovabids']['paths']['bids_path']
+    rules = DATASET['sovabids']['rules']
+    mapping_path = DATASET['sovabids']['paths']['mapping_path']
+
+    apply_rules(source_path,bids_path,rules,mapping_path)
+    convert_them(mapping_path)
+    print_dir_tree(bids_path)
