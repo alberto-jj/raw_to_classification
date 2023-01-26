@@ -10,8 +10,7 @@ for dslabel,DATASET in datasets.items():
     source_path = DATASET['sovabids']['paths']['source_path']
     bids_path = DATASET['sovabids']['paths']['bids_path']
     rules = DATASET['sovabids']['rules']
-    mapping_path = DATASET['sovabids']['paths']['mapping_path']
 
-    apply_rules(source_path,bids_path,rules,mapping_path)
-    convert_them(mapping_path)
+    mappings = apply_rules(source_path,bids_path,rules)
+    convert_them(mappings)
     print_dir_tree(bids_path)

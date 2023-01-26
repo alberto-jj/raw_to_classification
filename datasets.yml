@@ -11,8 +11,7 @@ FINLAND:
     sovabids:
       paths:
         source_path : "Y:/datasets/HenryRailo/data"
-        bids_path : "Y:/datasets/HenryRailo/bids"
-        mapping_path : "Y:/datasets/HenryRailo/mappings.yml"
+        bids_path : "Y:/datasets/HenryRailo/bids3"
       rules:
         dataset_description:                            # Configuring the dataset_description.json file
           Name : "Parkinson-RESEEG" # Name of the dataset, set up as a fixed string
