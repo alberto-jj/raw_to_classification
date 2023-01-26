@@ -21,5 +21,13 @@ This workflow wraps on multiple tools already available such as [sovaBIDS](https
 ```bash
 git clone https://github.com/alberto-jj/raw_to_classification.git
 cd raw_to_classification
-pip install -r requirements.txt
+pip install .
+```
+
+## Developer Install
+
+```bash
+git clone https://github.com/alberto-jj/raw_to_classification.git
+cd raw_to_classification
+pip install -e .
 ```
