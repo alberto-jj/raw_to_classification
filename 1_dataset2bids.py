@@ -6,7 +6,6 @@ from eeg_raw_to_classification.utils import load_yaml
 datasets = load_yaml('datasets.yml')
 
 for DATASET in datasets.items():
-    DATASET = datasets['FINLAND']
 
     source_path = DATASET['sovabids']['paths']['source_path']
     bids_path = DATASET['sovabids']['paths']['bids_path']
