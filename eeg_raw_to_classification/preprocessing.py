@@ -10,6 +10,9 @@ from mne.preprocessing import ICA
 from mne_icalabel import label_components
 from pyprep.prep_pipeline import PrepPipeline
 import logging
+import matplotlib
+matplotlib.use('Agg') # saves ram https://stackoverflow.com/questions/31156578/matplotlib-doesnt-release-memory-after-savefig-and-close
+
 
 LOGGER = logging.getLogger(__name__)
 

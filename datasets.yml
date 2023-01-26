@@ -1,73 +1,35 @@
 FINLAND:
-  raw_layout:
-    extension: ".vhdr"
-    suffix : 'eeg'
-    return_type : 'filename'
-    task : 'eyesClosed'
-  bids_root : "Y:/datasets/HenryRailo/bids/"
-  dataset_label : finland
-  ch_names:
-    - 'Fp1'
-    - 'Fp2'
-    - 'F3'
-    - 'F4'
-    - 'C3'
-    - 'C4'
-    - 'P3'
-    - 'P4'
-    - 'O1'
-    - 'O2'
-    - 'F7'
-    - 'F8'
-    - 'T7'
-    - 'T8'
-    - 'P7'
-    - 'P8'
-    - 'Fz'
-    - 'Cz'
-    - 'Pz'
-    - 'Iz'
-    - 'FC1'
-    - 'FC2'
-    - 'CP1'
-    - 'CP2'
-    - 'FC5'
-    - 'FC6'
-    - 'CP5'
-    - 'CP6'
-    - 'FT9'
-    - 'FT10'
-    - 'TP9'
-    - 'TP10'
-    - 'F1'
-    - 'F2'
-    - 'C1'
-    - 'C2'
-    - 'P1'
-    - 'P2'
-    - 'AF3'
-    - 'AF4'
-    - 'FC3'
-    - 'FC4'
-    - 'CP3'
-    - 'CP4'
-    - 'PO3'
-    - 'PO4'
-    - 'F5'
-    - 'F6'
-    - 'C5'
-    - 'C6'
-    - 'P5'
-    - 'P6'
-    - 'AF7'
-    - 'AF8'
-    - 'FT7'
-    - 'FT8'
-    - 'TP7'
-    - 'TP8'
-    - 'PO7'
-    - 'PO8'
-    - 'Fpz'
-    - 'CPz'
-    - 'POz'
-    - 'Oz'
+    raw_layout:
+      extension: ".vhdr"
+      suffix : 'eeg'
+      return_type : 'filename'
+      task : 'eyesClosed'
+    bids_root : "Y:/datasets/HenryRailo/bids/"
+    example_file: "Y:/datasets/HenryRailo/data/01_eyesOpen.set"
+    dataset_label : finland
+    ch_names: ['Fp1' ,'Fp2' ,'F3' ,'F4' ,'C3' ,'C4' ,'P3' ,'P4' ,'O1' ,'O2' ,'F7' ,'F8' ,'T7' ,'T8' ,'P7' ,'P8' ,'Fz' ,'Cz' ,'Pz' ,'Iz' ,'FC1' ,'FC2' ,'CP1' ,'CP2' ,'FC5' ,'FC6' ,'CP5' ,'CP6' ,'FT9' ,'FT10' ,'TP9' ,'TP10' ,'F1' ,'F2' ,'C1' ,'C2' ,'P1' ,'P2' ,'AF3' ,'AF4' ,'FC3' ,'FC4' ,'CP3' ,'CP4' ,'PO3' ,'PO4' ,'F5' ,'F6' ,'C5' ,'C6' ,'P5' ,'P6' ,'AF7' ,'AF8' ,'FT7' ,'FT8' ,'TP7' ,'TP8' ,'PO7' ,'PO8' ,'Fpz' ,'CPz' ,'POz' ,'Oz']
+    sovabids:
+      paths:
+        source_path : "Y:/datasets/HenryRailo/data"
+        bids_path : "Y:/datasets/HenryRailo/bids"
+        mapping_path : "Y:/datasets/HenryRailo/mappings.yml"
+      rules:
+        dataset_description:                            # Configuring the dataset_description.json file
+          Name : "Parkinson-RESEEG" # Name of the dataset, set up as a fixed string
+          Authors:                                      # Here I put the personnel involved in the acquisition of the dataset
+            - Henry Railo                            # See https://osf.io/pehj9/
+        sidecar:                                        # Configuring the sidecar eeg file
+          PowerLineFrequency : 50                       # Noted from the visual inspection of the eeg spectrum
+          EEGReference : Unknown                        
+        channels:                                       # Configuring the channels tsv
+          type :                                        # This property allow us to overwrite channel types inferred by MNE 'HEOG', 'VEOG'
+            VEOG : VEOG                                 # Here the syntax is <channel name> : <channel type according to bids notation>
+            HEOG : HEOG
+        non-bids:                                       # Additional configuration not belonging specifically to any of the previous objects
+          eeg_extension : .set                         # Sets which extension to read as an eeg file
+          path_analysis:                                # Some bids properties can be inferred from the path of the source files
+            pattern : data/%entities.subject%_%entities.task%.set
+          file_filter:
+            - exclude: '_PREP_preprocessed'
+
+

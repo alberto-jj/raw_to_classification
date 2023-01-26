@@ -1,0 +1,38 @@
+preprocess:
+  prepare:
+    epoch_length : 5
+    downsample : 500
+    ica_method : 'fastica'
+    skip_prep : True
+  overwrite : False
+
+features:
+  downsample : 500
+  num_epochs : 18
+  prefilter :
+    l_freq : 1
+    h_freq : 30
+  keep_channels : False
+  feature_list: # You can configure different features for the same function but different args
+    # The suffix will be the higher hierarchy name you put here
+    PowerSpectrum:
+      overwrite : False
+      function : spectrum
+      args:
+        multitaper:
+          adaptive : False
+          low_bias : True
+          normalization : 'full'
+          verbose : 0
+    RelativeBandPower:
+      overwrite : True
+      function: relative_bandpower
+      args :
+        bands:
+          delta : [1,4]
+          theta : [4,8]
+          alpha : [8,13]
+          beta  : [13,30]
+          pre_alpha : [5.5,8]
+          slow_theta : [4,5.5]
+        multitaper : {}

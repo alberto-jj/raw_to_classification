@@ -6,6 +6,7 @@ import mne
 import pandas as pd
 from eeg_raw_to_classification.utils import parse_bids
 
+
 def spectrum(data, sf, method='multitaper_average', window_sec=None):
     """Compute the spectrum of the signal x.
 
@@ -84,36 +85,45 @@ BANDS2 ={
     'beta3' : (21, 30),
 }
 
-def relative_power(eeg_file,downsample=500,num_epochs=None,keep_channels=None,bands=BANDS):
-    epochs = mne.read_epochs(eeg_file, preload = True)
-    standardize(epochs) #standardize ch_names
-    epochs = epochs.filter(l_freq=1, h_freq=30) #bandpassing 1-30Hz, TODO: Should we remove 1Hz as it was previously done?
-    epochs = epochs.resample(downsample)
+def spectrum(epochs,multitaper={}):
+    epochs = epochs.copy()
     sf = epochs.info['sfreq']
-    if num_epochs is None:
-        epochs_c = epochs.copy()
-    else:
-        epochs_c = mne.concatenate_epochs(epochs_list = [epochs[:][range(num_epochs)]], add_offset=False, on_mismatch='raise', verbose=None) # 18 WAS THE MINIMAL NUMBER OF EPOCHS ACROSS SUBJECTS
-    epochs = epochs_c
-    if keep_channels:
-        # We picked the common channels between datasets for simplicity
-        epochs = epochs.reorder_channels(keep_channels)
 
     space_names = epochs.info['ch_names']
-    trials,spaces,times = epochs.get_data().shape
 
-    psd,freqs = psd_array_multitaper(epochs.get_data(), sf, adaptive=True, low_bias = True,normalization='full', verbose=0)
-    psd = np.mean(psd,axis=0)
+    psd,freqs = psd_array_multitaper(epochs.get_data(), sf, **multitaper)
 
+    psd_mean = np.mean(psd,axis=0,keepdims=True) #epochs, spaces,freqs
+    fullpsd = np.concatenate([psd,psd_mean])
+    assert np.all(fullpsd[-1,:,:]==psd_mean) # Last Epoch is the mean
+    epochs_labels = [x for x in range(fullpsd.shape[0])]
+    epochs_labels[-1] = 'EPOCHS-MEAN'
     output = {}
-    output['metadata'] = {'type':'power','kwargs':{'bands':bands}}
+    output['metadata'] = {'type':'PowerSpectrum'}
+    output['metadata']['axes']={'epochs':epochs_labels,'spaces':space_names,'frequencies':freqs}
+    output['metadata']['order']=('epochs','spaces','frequencies')
+    output['values'] = fullpsd
+    return output
+
+def relative_bandpower(data,bands=BANDS,multitaper={}):
+    if isinstance(data,dict):
+      spectra = data # Assume we have the output of spectrum() if input is dict
+    else: # Else assume epochs mne object
+      spectra = spectrum(data,multitaper)
+    # Only the mean
+    psd = spectra['values'][-1,:,:] # last epoch is mean
+    spaces =  spectra['metadata']['axes']['spaces']
+    freqs =   spectra['metadata']['axes']['frequencies']
+    output = {}
     bands_list = list(bands.keys())
-    values = np.empty((len(bands_list),spaces))
-    output['metadata']['axes']={'bands':bands_list,'spaces':space_names}
-    for space in space_names:
-        space_idx = space_names.index(space)
+    values = np.empty((len(bands_list),len(spaces)))
+    output['metadata'] = {'type':'RelativeBandPower','kwargs':{'bands':bands,'multitaper':multitaper}}
+    output['metadata']['axes']={'bands':bands_list,'spaces':spaces}
+    output['metadata']['order']=('bands','spaces')
+    for space in spaces:
+        space_idx = spaces.index(space)
         for blabel,brange in BANDS.items():
             band_idx = bands_list.index(blabel)
-            values[band_idx,space_idx]= bandpower(psd[space_idx],freqs,brange,True)
+            values[band_idx,space_idx]= bandpower(psd[space_idx,:],freqs,brange,True)
     output['values'] = values
     return output
