@@ -109,3 +109,5 @@ data = {
     'train_idx':idx_train,
     'test_idx':idx_test
 }
+
+np.save(os.path.join(OUTPUT_DIR,'combatScaledData.npy'),data)
