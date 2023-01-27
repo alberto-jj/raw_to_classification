@@ -27,7 +27,7 @@ def rejlog2dict(rejlog):
     return d
 
 def prepare(filename, line_noise, keep_chans=None, epoch_length = 2,
-              downsample = 500, normalization = False, ica_method='infomax',skip_prep=False,njobs=1):
+              downsample = 500, normalization = False, ica_method='infomax',skip_prep=False,njobs=1,skip_reject=False):
     """
     Run PREPARE pipeline for resting-state EEG signal preprocessing.
     Returns the preprocessed mne object in BIDS derivatives path. 
@@ -106,52 +106,56 @@ def prepare(filename, line_noise, keep_chans=None, epoch_length = 2,
     epochs = mne.make_fixed_length_epochs(raw, duration = epoch_length, preload=True)
     epochs.resample(downsample)
 
-    # Automated epoch rejection
-    print('PREICA AUTOREJECT')
-    ar = autoreject.AutoReject(random_state=11,n_jobs=njobs, verbose=True)
-    ar.fit(epochs)
-    epochs_ar, reject_log = ar.transform(epochs, return_log=True)
-    figures = [reject_log.plot(show=False)]
-    info = {'prep':prep_info,'autoreject-preica': rejlog2dict(reject_log)}
-    # 1Hz high pass already done before
-    filt_epochs = epochs_ar.copy().filter(l_freq=None, h_freq=100.0) # bandpassing 100 Hz (as in the MATLAB implementation of ICLabel)
-    
-    if ica_method in ['infomax','picard']:
-        fit_params = dict(extended=True)
-    else:
-        fit_params = None
-    n_components = np.linalg.matrix_rank(raw.get_data())
-    ica = ICA(
-        n_components=n_components,
-        max_iter="auto",
-        method=ica_method,
-        random_state=97,
-        fit_params=fit_params)
-    print('ICA')
-    ica.fit(filt_epochs)
-    figures=figures+ica.plot_properties(filt_epochs,picks=list(range(n_components)),show=False)
-    # Annotate using mne-icalabel
-    ic_labels = label_components(filt_epochs, ica, method="iclabel")
-    labels = ic_labels["labels"]
-    ica_filter = ["brain", "other"]
-    ica_info = ic_labels
-    ica_info['y_pred_proba']= ica_info['y_pred_proba'].tolist()
-    ica_info.update({'included_filter':ica_filter})
-    exclude_idx = [idx for idx, label in enumerate(labels) if label not in ica_filter] # a conservative approach suggested in mne-icalabel
-    ica_info.update({'excluded_idx':exclude_idx})
-    print(f"Excluding these ICA components: {exclude_idx}")
-    #TODO: Save ica plots???
-    # ica.apply() changes the Raw object in-place, so let's make a copy first:
-    reconst_epochs = epochs.copy() # Use non autoreject epochs
-    ica.apply(reconst_epochs, exclude=exclude_idx)
-    print('POSTICA AUTOREJECT')
-    # Post ICA automated epoch rejection (suggested by Autoreject authors)
-    ar = autoreject.AutoReject(random_state=11, n_jobs=njobs, verbose=True)
-    ar.fit(reconst_epochs)
-    epochs_ar, reject_log = ar.transform(reconst_epochs, return_log=True)
-    figures+=[reject_log.plot(show=False)]
-    info['icalabel']=ica_info
-    info['autoreject-postica']=rejlog2dict(reject_log)
-    # Normalization of recording-specific variability (optional)
-    
+    if not skip_reject:
+        # Automated epoch rejection
+        print('PREICA AUTOREJECT')
+        ar = autoreject.AutoReject(random_state=11,n_jobs=njobs, verbose=True)
+        ar.fit(epochs)
+        epochs_ar, reject_log = ar.transform(epochs, return_log=True)
+        figures = [reject_log.plot(show=False)]
+        info = {'prep':prep_info,'autoreject-preica': rejlog2dict(reject_log)}
+        # 1Hz high pass already done before
+        filt_epochs = epochs_ar.copy().filter(l_freq=None, h_freq=100.0) # bandpassing 100 Hz (as in the MATLAB implementation of ICLabel)
+        
+        if ica_method in ['infomax','picard']:
+            fit_params = dict(extended=True)
+        else:
+            fit_params = None
+        n_components = np.linalg.matrix_rank(raw.get_data())
+        ica = ICA(
+            n_components=n_components,
+            max_iter="auto",
+            method=ica_method,
+            random_state=97,
+            fit_params=fit_params)
+        print('ICA')
+        ica.fit(filt_epochs)
+        figures=figures+ica.plot_properties(filt_epochs,picks=list(range(n_components)),show=False)
+        # Annotate using mne-icalabel
+        ic_labels = label_components(filt_epochs, ica, method="iclabel")
+        labels = ic_labels["labels"]
+        ica_filter = ["brain", "other"]
+        ica_info = ic_labels
+        ica_info['y_pred_proba']= ica_info['y_pred_proba'].tolist()
+        ica_info.update({'included_filter':ica_filter})
+        exclude_idx = [idx for idx, label in enumerate(labels) if label not in ica_filter] # a conservative approach suggested in mne-icalabel
+        ica_info.update({'excluded_idx':exclude_idx})
+        print(f"Excluding these ICA components: {exclude_idx}")
+        #TODO: Save ica plots???
+        # ica.apply() changes the Raw object in-place, so let's make a copy first:
+        reconst_epochs = epochs.copy() # Use non autoreject epochs
+        ica.apply(reconst_epochs, exclude=exclude_idx)
+        print('POSTICA AUTOREJECT')
+        # Post ICA automated epoch rejection (suggested by Autoreject authors)
+        ar = autoreject.AutoReject(random_state=11, n_jobs=njobs, verbose=True)
+        ar.fit(reconst_epochs)
+        epochs_ar, reject_log = ar.transform(reconst_epochs, return_log=True)
+        figures+=[reject_log.plot(show=False)]
+        info['icalabel']=ica_info
+        info['autoreject-postica']=rejlog2dict(reject_log)
+        # Normalization of recording-specific variability (optional)
+    else :
+        info = {}
+        figures = []
+        epochs_ar = epochs.copy()
     return epochs_ar,info,figures

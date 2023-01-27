@@ -73,16 +73,18 @@ def load_yaml(rules):
     else:
         raise ValueError(f'Expected str or dict as rules, got {type(rules)} instead.')
 
-def get_output_dict(eeg_file,FORMAT='WIDE',dataset_label=''):
+def get_output_dict(eeg_file,FORMAT='WIDE',dataset_label='',feature_suffix=''):
     output = np.load(eeg_file,allow_pickle=True).item()
     filename = os.path.basename(eeg_file)
     subject = parse_bids(filename)['sub']
+    task = parse_bids(filename)['task']
     dataset = dataset_label
-
+    # Assume python > 3.7, dictionaries retain order
     axes = list(output['metadata']['axes'].values())
     keys =list(output['metadata']['axes'].keys())
+    
     dict_list = []
-    d = {'dataset':dataset,'subject':subject,}
+    d = {'dataset':dataset,'subject':subject,'task':task}
 
     for combination in itertools.product(*axes):
         indexes = []
@@ -93,7 +95,7 @@ def get_output_dict(eeg_file,FORMAT='WIDE',dataset_label=''):
         if FORMAT == 'LONG':
             d = {'subject':subject,'dataset':dataset}
             for key,val in zip(keys,combination):
-                d[key]=val
+                d[feature_suffix+key]=val
             d['value']=value
             dict_list.append(d)
         elif FORMAT == 'WIDE':
@@ -106,7 +108,7 @@ def get_output_dict(eeg_file,FORMAT='WIDE',dataset_label=''):
                 else:
                     final_key += '.'+val
             #final_key = '_'.join(final_key)
-            d[final_key]=value
+            d[feature_suffix+final_key]=value
     if FORMAT=='WIDE':
         dict_list.append(d)
     return dict_list

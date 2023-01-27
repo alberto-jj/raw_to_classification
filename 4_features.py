@@ -10,11 +10,11 @@ from eeg_raw_to_classification import features as feat
 from eeg_raw_to_classification.utils import load_yaml
 
 datasets = load_yaml('datasets.yml')
-CFG = load_yaml('pipeline.yml')
+PIPELINE = load_yaml('pipeline.yml')
 
 for dslabel, DATASET in datasets.items():
 
-    CFG = CFG['features']
+    CFG = PIPELINE['features']
 
     pattern = os.path.join(DATASET.get('bids_root', None),'derivatives','prepare','**/*_epo.fif').replace('\\','/')
     eegs = glob.glob(pattern,recursive=True)
@@ -26,7 +26,7 @@ for dslabel, DATASET in datasets.items():
     keep_channels = CFG['keep_channels']     # We picked the common channels between datasets for simplicity TODO: Do this in aggregate script
 
     for eeg_file in eegs:
-
+        print(eeg_file)
 
         epochs = mne.read_epochs(eeg_file, preload = True)
         standardize(epochs) #standardize ch_names

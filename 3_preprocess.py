@@ -9,14 +9,14 @@ from eeg_raw_to_classification.utils import load_yaml
 
 datasets = load_yaml('datasets.yml')
 cfg = load_yaml('pipeline.yml')
-MAX_FILES = 3
+#MAX_FILES = 3 #TODO: erase this when ready
 
 for dslabel, DATASET in datasets.items():
-
-    line_noise = DATASET['sovabids']['rules']['sidecar']['PowerLineFrequency']
+    print(f'PREPROCESSING {dslabel}')
+    line_noise = DATASET['PowerLineFrequency']
     file_filter = DATASET.get('raw_layout', None)
     layout = bids.BIDSLayout(DATASET.get('bids_root', None))
-    eegs = layout.get(**file_filter)[:MAX_FILES]
+    eegs = layout.get(**file_filter)#[:MAX_FILES]
     eegs = [x.replace('\\','/') for x in eegs]
     print(len(eegs), eegs)
     derivatives_root = os.path.join(layout.root,'derivatives/prepare/')
@@ -27,7 +27,7 @@ for dslabel, DATASET in datasets.items():
         njobs = len(psutil.Process().cpu_affinity())
         print('NJOBS:',njobs)
         reject_path = get_derivative_path(layout,eeg_file,'reject','epo','.fif',DATASET['bids_root'],derivatives_root).replace('\\','/')
-
+        print(eeg_file)
         if not os.path.isfile(reject_path) or cfg['preprocess']['overwrite']:
 
             reject_eeg,info,figures = prepare(filename = eeg_file,keep_chans = DATASET['ch_names'],line_noise = line_noise,njobs=njobs,**cfg['preprocess']['prepare'])

@@ -1,13 +1,41 @@
 FINLAND:
+    url: https://osf.io/pehj9
+    dataset_label : finland
+    
+    # Participants 
+    participants_file : "Y:/datasets/HenryRailo/InfoAboutParticipants.xlsx"
+    reader : 
+      function : "pd.read_excel"
+      args : {}
+    df_transform : "df=df.dropna(subset =['id'])"
+
+    cleaned_participants : "Y:/datasets/HenryRailo/participants.csv"
+    columns:
+      id : subject
+      'PD group' : group
+      age : age
+      sex : sex
+    columns_mapping:
+      group:
+        0 : HC
+        1 : PD
+      subject : "lambda x: str(int(round(float(x)))).zfill(2)"
+
+    # Files to be included in the study
     raw_layout:
       extension: ".vhdr"
       suffix : 'eeg'
       return_type : 'filename'
       task : 'eyesClosed'
-    bids_root : "Y:/datasets/HenryRailo/bids/"
+
+    # Processing
     example_file: "Y:/datasets/HenryRailo/data/01_eyesOpen.set"
-    dataset_label : finland
     ch_names: ['Fp1' ,'Fp2' ,'F3' ,'F4' ,'C3' ,'C4' ,'P3' ,'P4' ,'O1' ,'O2' ,'F7' ,'F8' ,'T7' ,'T8' ,'P7' ,'P8' ,'Fz' ,'Cz' ,'Pz' ,'Iz' ,'FC1' ,'FC2' ,'CP1' ,'CP2' ,'FC5' ,'FC6' ,'CP5' ,'CP6' ,'FT9' ,'FT10' ,'TP9' ,'TP10' ,'F1' ,'F2' ,'C1' ,'C2' ,'P1' ,'P2' ,'AF3' ,'AF4' ,'FC3' ,'FC4' ,'CP3' ,'CP4' ,'PO3' ,'PO4' ,'F5' ,'F6' ,'C5' ,'C6' ,'P5' ,'P6' ,'AF7' ,'AF8' ,'FT7' ,'FT8' ,'TP7' ,'TP8' ,'PO7' ,'PO8' ,'Fpz' ,'CPz' ,'POz' ,'Oz']
+    PowerLineFrequency : 50
+
+  # BIDS
+    bids_root : "Y:/datasets/HenryRailo/bids/"
+
     sovabids:
       paths:
         source_path : "Y:/datasets/HenryRailo/data"
@@ -33,5 +61,46 @@ FINLAND:
               entities.task : "[b]"
           file_filter:
             - exclude: '_PREP_preprocessed'
+
+
+CALIFORNIA:
+  url : https://openneuro.org/datasets/ds002778/versions/
+  dataset_label : california
+
+  # Participants 
+  participants_file : "Y:/datasets/ds002778-download/participants.tsv"
+  reader : 
+    function : "pd.read_csv"
+    args : 
+      delimiter: "\\t"
+
+  cleaned_participants : "Y:/datasets/ds002778-download/participants.csv"
+
+  df_transform : "group=df['participant_id'].apply(lambda x: x.replace('sub-',''));group=group.apply(lambda x: ''.join(i for i in x if i.isalpha()));df['group'] = group"
+  columns:
+    participant_id : subject
+    group : group
+    age : age
+    gender : sex
+  columns_mapping:
+    group:
+      hc : HC
+      pd : PD
+    subject : "lambda x: x.replace('sub-','')"
+
+  # Files to be included in the study
+  raw_layout:
+    extension: ".bdf"
+    suffix : 'eeg'
+    return_type : 'filename'
+    task : 'rest'
+    session : ['hc', 'on']
+
+  # Processing
+  example_file: "Y:/datasets/ds002778-download/sub-hc1/ses-hc/eeg/sub-hc1_ses-hc_task-rest_eeg.bdf"
+  ch_names: ["Fp1","AF3","F7","F3","FC1","FC5","T7","C3","CP1","CP5","P7","P3","Pz","PO3","O1","Oz","O2","PO4","P4","P8","CP6","CP2","C4","T8","FC6","FC2","F4","F8","AF4","Fp2","Fz","Cz"]
+  PowerLineFrequency : 60
+  # BIDS
+  bids_root : "Y:/datasets/ds002778-download"
 
 

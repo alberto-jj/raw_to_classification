@@ -18,3 +18,5 @@ plotly
 tqdm
 shap
 psutil
+openpyxl
+kaleido
