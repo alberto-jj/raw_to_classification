@@ -75,7 +75,7 @@ harmonization:
     categorical:
       - sex
       - group
-      - dataset
+      - dataset # No estoy muy claro si esto va aqui??
   split:
     test : 0.3
     target : 'group'
