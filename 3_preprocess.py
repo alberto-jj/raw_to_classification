@@ -9,14 +9,14 @@ from eeg_raw_to_classification.utils import load_yaml
 
 datasets = load_yaml('datasets.yml')
 cfg = load_yaml('pipeline.yml')
-MAX_FILES = 3 #TODO: erase this when ready
+#MAX_FILES = 3 #TODO: erase this when ready
 
 for dslabel, DATASET in datasets.items():
     print(f'PREPROCESSING {dslabel}')
     line_noise = DATASET['PowerLineFrequency']
     file_filter = DATASET.get('raw_layout', None)
     layout = bids.BIDSLayout(DATASET.get('bids_root', None))
-    eegs = layout.get(**file_filter)[:MAX_FILES]
+    eegs = layout.get(**file_filter)#[:MAX_FILES]
     eegs = [x.replace('\\','/') for x in eegs]
     print(len(eegs), eegs)
     derivatives_root = os.path.join(layout.root,'derivatives/prepare/')
