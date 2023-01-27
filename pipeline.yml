@@ -75,7 +75,7 @@ harmonization:
     categorical:
       - sex
       - group
-      - dataset # No estoy muy claro si esto va aqui??
+      - dataset # Cuando entra en neurocombat el batch (Dataset) se quita de la lista
   split:
     test : 0.3
     target : 'group'
