@@ -79,3 +79,8 @@ harmonization:
   split:
     test : 0.3
     target : 'group'
+    folds : 5
+
+classification:
+  path: './data/classification'
+  MAX_FEATURES: 10

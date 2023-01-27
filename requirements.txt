@@ -19,3 +19,4 @@ tqdm
 shap
 psutil
 openpyxl
+kaleido
