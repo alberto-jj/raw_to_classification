@@ -6,6 +6,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 from eeg_raw_to_classification.utils import load_yaml
+import traceback
 
 datasets = load_yaml('datasets.yml')
 cfg = load_yaml('pipeline.yml')
@@ -23,31 +24,34 @@ for dslabel, DATASET in datasets.items():
     description = layout.get_dataset_description()
 
     for eeg_file in eegs:
-
         njobs = len(psutil.Process().cpu_affinity())
         print('NJOBS:',njobs)
         reject_path = get_derivative_path(layout,eeg_file,'reject','epo','.fif',DATASET['bids_root'],derivatives_root).replace('\\','/')
         print(eeg_file)
+        fifname = os.path.basename(reject_path)
+        fifpath = os.path.dirname(reject_path)
+        os.makedirs(fifpath,exist_ok=True)
+
         if not os.path.isfile(reject_path) or cfg['preprocess']['overwrite']:
+            try:
+                reject_eeg,info,figures = prepare(filename = eeg_file,keep_chans = DATASET['ch_names'],line_noise = line_noise,njobs=njobs,**cfg['preprocess']['prepare'])
+                # prepare should standarize name
+                figs_path = reject_path.replace('reject_epo.fif','reject_figs.html')
+                info_path = reject_path.replace('reject_epo.fif','reject_info.txt')
 
-            reject_eeg,info,figures = prepare(filename = eeg_file,keep_chans = DATASET['ch_names'],line_noise = line_noise,njobs=njobs,**cfg['preprocess']['prepare'])
-            # prepare should standarize name
-            figs_path = reject_path.replace('reject_epo.fif','reject_figs.html')
-            info_path = reject_path.replace('reject_epo.fif','reject_info.txt')
-            fifname = os.path.basename(reject_path)
-            fifpath = os.path.dirname(reject_path)
-            os.makedirs(fifpath,exist_ok=True)
+                # Save prepare info
+                save_figs_in_html(figs_path, figures)
+                save_dict_to_json(info_path,info)
 
-            # Save prepare info
-            save_figs_in_html(figs_path, figures)
-            save_dict_to_json(info_path,info)
+                # Export preprocessed data
 
-            # Export preprocessed data
-
-            reject_eeg.save(fifpath + '/' + fifname, split_naming='bids', overwrite=True)
-            plt.close('all')
+                reject_eeg.save(fifpath + '/' + fifname, split_naming='bids', overwrite=True)
+                plt.close('all')
+            except Exception:
+                print(traceback.format_exc())
+                save_dict_to_json(reject_path.replace('.fif','_problem.txt'),{'file':eeg_file,'problem':traceback.format_exc()})
         else:
             print(f'Already Exists:{reject_path}')
-
+            
 
 
