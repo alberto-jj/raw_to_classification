@@ -18,3 +18,4 @@ plotly
 tqdm
 shap
 psutil
+openpyxl

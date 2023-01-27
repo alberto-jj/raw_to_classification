@@ -24,8 +24,8 @@ features:
           low_bias : True
           normalization : 'full'
           verbose : 0
-    RelativeBandPower:
-      overwrite : True
+    RelativeBandPower1:
+      overwrite : False
       function: relative_bandpower
       args :
         bands:
@@ -36,3 +36,21 @@ features:
           pre_alpha : [5.5,8]
           slow_theta : [4,5.5]
         multitaper : {}
+    RelativeBandPower2:
+      overwrite : False
+      function: relative_bandpower
+      args :
+        bands:
+          alpha1 : [8.5, 10.5]
+          alpha2 : [10.5, 12.5]
+          beta1  : [12.5, 18.5]
+          beta2  : [18.5, 21]
+          beta3  : [21, 30]
+        multitaper : {}
+
+aggregate:
+  path : './data/aggregate'
+  id_splitter : '/'
+  features: 
+    - RelativeBandPower1
+    - RelativeBandPower2

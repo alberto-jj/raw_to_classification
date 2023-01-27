@@ -122,7 +122,7 @@ def relative_bandpower(data,bands=BANDS,multitaper={}):
     output['metadata']['order']=('bands','spaces')
     for space in spaces:
         space_idx = spaces.index(space)
-        for blabel,brange in BANDS.items():
+        for blabel,brange in bands.items():
             band_idx = bands_list.index(blabel)
             values[band_idx,space_idx]= bandpower(psd[space_idx,:],freqs,brange,True)
     output['values'] = values

@@ -1,4 +1,18 @@
 FINLAND:
+    participants_file : "Y:/datasets/HenryRailo/InfoAboutParticipants.xlsx"
+    cleaned_participants : "Y:/datasets/HenryRailo/participants.csv"
+    columns:
+      id : subject
+      'PD group' : group
+      age : age
+      sex : sex
+    columns_mapping:
+      group:
+        0 : HC
+        1 : PD
+      subject : "lambda x: str(int(round(float(x)))).zfill(2)"
+    df_transform : "df = df.dropna()"
+
     raw_layout:
       extension: ".vhdr"
       suffix : 'eeg'
@@ -8,6 +22,7 @@ FINLAND:
     example_file: "Y:/datasets/HenryRailo/data/01_eyesOpen.set"
     dataset_label : finland
     ch_names: ['Fp1' ,'Fp2' ,'F3' ,'F4' ,'C3' ,'C4' ,'P3' ,'P4' ,'O1' ,'O2' ,'F7' ,'F8' ,'T7' ,'T8' ,'P7' ,'P8' ,'Fz' ,'Cz' ,'Pz' ,'Iz' ,'FC1' ,'FC2' ,'CP1' ,'CP2' ,'FC5' ,'FC6' ,'CP5' ,'CP6' ,'FT9' ,'FT10' ,'TP9' ,'TP10' ,'F1' ,'F2' ,'C1' ,'C2' ,'P1' ,'P2' ,'AF3' ,'AF4' ,'FC3' ,'FC4' ,'CP3' ,'CP4' ,'PO3' ,'PO4' ,'F5' ,'F6' ,'C5' ,'C6' ,'P5' ,'P6' ,'AF7' ,'AF8' ,'FT7' ,'FT8' ,'TP7' ,'TP8' ,'PO7' ,'PO8' ,'Fpz' ,'CPz' ,'POz' ,'Oz']
+
     sovabids:
       paths:
         source_path : "Y:/datasets/HenryRailo/data"
@@ -35,3 +50,5 @@ FINLAND:
             - exclude: '_PREP_preprocessed'
 
 
+#CALIFORNIA:
+#  url : https://openneuro.org/datasets/ds002778/versions/
