@@ -53,7 +53,29 @@ features:
 
 aggregate:
   path : './data/aggregate'
+  filename : 'multidataset.csv'
   id_splitter : '/'
   features: 
     - RelativeBandPower1
     - RelativeBandPower2
+
+harmonization:
+  path : './data/harmonization'
+  neuroCombat:
+    batch : dataset
+    covars :
+      - dataset
+      - sex
+      - age
+      - group
+    drop :
+      - id
+      - subject
+      - task
+    categorical:
+      - sex
+      - group
+      - dataset
+  split:
+    test : 0.3
+    target : 'group'

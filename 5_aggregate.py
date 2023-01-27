@@ -5,12 +5,16 @@ import glob
 from eeg_raw_to_classification.utils import parse_bids,load_yaml,get_output_dict
 import itertools
 import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
+
 
 pipeline_name = 'aggregate'
 
 datasets = load_yaml('datasets.yml')
 cfg = load_yaml('pipeline.yml')
 OUTPUT = cfg['aggregate']['path']
+filename = cfg['aggregate']['filename']
 id_splitter = cfg['aggregate']['id_splitter']
 os.makedirs(OUTPUT,exist_ok=True)
 ALL = []
@@ -102,6 +106,6 @@ assert all(equal_cols)
 
 # Concatenate
 df = pd.concat(ALL,axis=0,ignore_index=True)
-df.to_csv(os.path.join(OUTPUT,'multidataset.csv'),index=False)
+df.to_csv(os.path.join(OUTPUT,filename),index=False)
 
 print('ok')
