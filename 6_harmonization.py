@@ -69,6 +69,7 @@ def combatModel(df,NC):
         batch_col=batch_col,
         categorical_cols=cat_no_batch)
     combat['data_cols']=data_cols
+    combat['data_axes']=('features','samples')
     return combat
 
 combat = combatModel(df,NC)
@@ -76,10 +77,35 @@ np.save(os.path.join(OUTPUT_DIR,'combatFullData.npy'),combat)
 
 df = dfFullNumber.copy()
 X_train, X_test, y_train, y_test = train_test_split(df, df[SP['target']], test_size=SP['test'], random_state=42, stratify=df[SP['target']])
-
+idx_train= y_train.index
+idx_test = y_test.index
 combat_train = combatModel(X_train,NC)
 combat_test = combatModel(X_test,NC)
-
+combat_train['idx']=idx_train
+combat_test['idx']=idx_test
 np.save(os.path.join(OUTPUT_DIR,'combatTrainData.npy'),combat_train)
 np.save(os.path.join(OUTPUT_DIR,'combatTestData.npy'),combat_test)
 
+# Scaling
+
+# fit the scaler on the training data
+scaler = MinMaxScaler()
+X_train = scaler.fit_transform(combat_train['data'].transpose())
+features = combat_train['data_cols']
+# apply the same transformation to the test data
+X_test = scaler.transform(combat_test['data'].transpose())
+data_axes = ('samples','features')
+target_axes = ('label')
+y_train = y_train.to_numpy()
+y_test = y_test.to_numpy()
+
+data = {
+    'X_train':X_train,
+    'X_test':X_test,
+    'y_train':y_train,
+    'y_test':y_test,
+    'X_axes':data_axes,
+    'y_axes':target_axes,
+    'train_idx':idx_train,
+    'test_idx':idx_test
+}
