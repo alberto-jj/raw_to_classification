@@ -1,3 +1,5 @@
+inspect:
+  path : './data/inspect'
 preprocess:
   prepare:
     epoch_length : 5

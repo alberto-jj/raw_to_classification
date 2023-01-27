@@ -8,18 +8,19 @@ for dslabel,DATASET in datasets.items():
 
     datafile = DATASET['participants_file']
     outfile = DATASET['cleaned_participants']
-    if '.csv' in datafile:
-        df = pd.read_csv(datafile)
-    else:
-        df = pd.read_excel(datafile)
+    reader = eval(DATASET['reader']['function'])
+    reader_args = DATASET['reader']['args']
+    df = reader(datafile,**reader_args)
+
+    # dataset specific
+    if 'df_transform' in DATASET:
+        exec(DATASET['df_transform'])
+
 
     df = df.rename(columns=DATASET['columns'])
     columns = list(DATASET['columns'].values())
     df = df[columns]
 
-    # dataset specific
-    if 'df_transform' in DATASET:
-        exec(DATASET['df_transform'])
 
     if 'columns_mapping' in DATASET:
 
