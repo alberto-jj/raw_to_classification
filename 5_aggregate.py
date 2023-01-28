@@ -2,7 +2,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import glob
-from eeg_raw_to_classification.utils import parse_bids,load_yaml,get_output_dict
+from eeg_raw_to_classification.utils import parse_bids,load_yaml,get_output_dict,save_dict_to_json
 import itertools
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -27,6 +27,7 @@ for dslabel, DATASET in datasets.items():
 common = set(MONTAGES[0])
 for montage in MONTAGES[1:]:
     common = common.intersection(set(montage))
+save_dict_to_json(os.path.join(OUTPUT,'common_montage.txt'),{'common_montage':list(common)})
 for dslabel, DATASET in datasets.items():
     perfeature =[]
     participants_file = DATASET['cleaned_participants']
