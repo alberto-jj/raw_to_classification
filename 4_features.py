@@ -7,7 +7,7 @@ import glob
 from mne.datasets.eegbci import standardize
 import mne
 from eeg_raw_to_classification import features as feat
-from eeg_raw_to_classification.utils import load_yaml
+from eeg_raw_to_classification.utils import load_yaml,save_dict_to_json
 
 datasets = load_yaml('datasets.yml')
 PIPELINE = load_yaml('pipeline.yml')
@@ -16,6 +16,7 @@ NUM_EPOCHS = PIPELINE['features']['num_epochs']
 
 if NUM_EPOCHS =='min':
     SHAPES = []
+    EEGS = []
     for dslabel, DATASET in datasets.items():
         CFG = PIPELINE['features']
         pattern = os.path.join(DATASET.get('bids_root', None),'derivatives','prepare','**/*_epo.fif').replace('\\','/')
@@ -23,8 +24,13 @@ if NUM_EPOCHS =='min':
         for eeg_file in eegs:
             print(eeg_file)
             epochs = mne.read_epochs(eeg_file, preload = True)
+            EEGS.append(eeg_file)
             SHAPES.append(epochs.get_data().shape[0])
     NUM_EPOCHS = np.min(SHAPES)
+    epoch_info_source={'epochs':list(zip(SHAPES,EEGS))}
+else:
+    epoch_info_source='user'
+print(f'Using {NUM_EPOCHS} epochs')
 for dslabel, DATASET in datasets.items():
 
     CFG = PIPELINE['features']
@@ -33,7 +39,7 @@ for dslabel, DATASET in datasets.items():
     eegs = glob.glob(pattern,recursive=True)
     pipeline_name = 'features'
     os.makedirs(os.path.join(DATASET.get('bids_root', None),'derivatives',pipeline_name),exist_ok=True)
-
+    save_dict_to_json(os.path.join(DATASET.get('bids_root', None),'derivatives',pipeline_name,'epochs.txt'),{'NUM_EPOCHS':int(NUM_EPOCHS),'source':epoch_info_source})
     DOWNSAMPLE = CFG['downsample']
     keep_channels = CFG['keep_channels']     # We picked the common channels between datasets for simplicity TODO: Do this in aggregate script
 

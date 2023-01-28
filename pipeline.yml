@@ -5,8 +5,8 @@ preprocess:
     epoch_length : 5
     downsample : 500
     ica_method : 'fastica'
-    skip_prep : True
-    skip_reject : True
+    skip_prep : False
+    skip_reject : False
   overwrite : False
 
 features:
