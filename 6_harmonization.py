@@ -20,7 +20,7 @@ os.makedirs(OUTPUT_DIR,exist_ok=True)
 df_path = os.path.join(PIPELINE['aggregate']['path'],PIPELINE['aggregate']['filename'])
 df = pd.read_csv(df_path)
 
-MAX_FEATURES=PIPELINE['classification']['MAX_FEATURES']
+MAX_FEATURES=PIPELINE['harmonization']['MAX_FEATURES']
 if MAX_FEATURES is not None:
     df = df.iloc[:,:MAX_FEATURES]
 

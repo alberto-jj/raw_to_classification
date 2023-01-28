@@ -61,6 +61,7 @@ aggregate:
 
 harmonization:
   path : './data/harmonization'
+  MAX_FEATURES: null
   neuroCombat:
     batch : dataset
     covars :
@@ -83,4 +84,3 @@ harmonization:
 
 classification:
   path: './data/classification'
-  MAX_FEATURES: 10
