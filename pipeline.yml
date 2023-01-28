@@ -57,7 +57,7 @@ aggregate:
   id_splitter : '/'
   features: 
     - RelativeBandPower1
-    - RelativeBandPower2
+    #- RelativeBandPower2
 
 harmonization:
   path : './data/harmonization'
