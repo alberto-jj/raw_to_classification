@@ -27,31 +27,19 @@ cd raw_to_classification
 pip install -e .
 ```
 
-## Running the workflow on publicly-available datasets
-
-Exemplary datasets can be analyzed using our pipeline to reproduce the results of our pre-print "Multi-site band power analysis of resting-state EEG: A tutorial workflow from raw data to group-level classification"
-
-Dataset 1 was collected in 31 subjects (15 Parkinson Disease Patients; and 16 Healthy Controls) at University of California - San Diego. [Available here](
-https://openneuro.org/datasets/ds002778/versions/1.0.2)
-
-Besides, Dataset 2 was collected in 38 subjects (19 Parkinson Disease Patients; and 19 Healthy Controls) at the University of Turku, Finland.
-[Available here](https://osf.io/pehj9/)
-
-
-## Getting started with the workflow
+## Getting started
 All configuration parameters can be defined in two core files: `datasets.yml` and `pipeline.yml`.
 
-1. Open the `datasets.yml` file and set a name for the dataset, then configure the parameters.
+First, open the `datasets.yml` file and set a name for the dataset(s), then configure parameters listed below:
 
-Parameters of the `datasets.yml` are listed below:
+- **url:** *(str, optional)* URL address of the dataset.
 
-- **url:**
+- **dataset_label:** *(str, required)* Identifier label for the dataset.
 
-- **dataset_label:**
 
-- **participants_file:**
+- **participants_file:** *(str, required)* Path to the participants metadata file. If data is in BIDS format, fill-in the path to the "participants.tsv" file.
 
-- **reader:** Reader function to be used for reading the participants metadata. ***Only useful for metadata not provided in BIDS format***
+- **reader:** Reader function to be used for reading the participants metadata. ***Only useful if metadata is NOT in BIDS format***
   - **function:**
   - **args:**
 
@@ -109,8 +97,23 @@ Parameters of the `pipeline.yml` are listed below:
 
 
 
- ```bash
-git clone https://github.com/alberto-jj/raw_to_classification.git
-cd raw_to_classification
-pip install -e .
-```         
+## Running the workflow on publicly-available datasets
+
+Exemplary datasets can be analyzed using our pipeline to reproduce the results of our pre-print "Multi-site band power analysis of resting-state EEG: A tutorial workflow from raw data to group-level classification"
+
+Dataset 1 was collected in 31 subjects (15 Parkinson Disease Patients; and 16 Healthy Controls) at University of California - San Diego. [Available here](
+https://openneuro.org/datasets/ds002778/versions/1.0.2)
+
+Besides, Dataset 2 was collected in 38 subjects (19 Parkinson Disease Patients; and 19 Healthy Controls) at the University of Turku, Finland.
+[Available here](https://osf.io/pehj9/)
+
+
+## References
+
+## License
+
+
+# TODO
+- [x] datasets.yml parameters
+- [ ] pipeline.yml parameters
+- [ ] Add delight to the experience when all tasks are complete :tada:     
