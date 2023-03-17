@@ -32,6 +32,14 @@ All configuration parameters can be defined in two core files: `datasets.yml` an
 
 First, open the `datasets.yml` file and set a name for the dataset(s), then configure parameters listed below:
 
+| Parameter | Input type | Description |
+| --- | --- | --- |
+| **url** | [`str`](https://docs.python.org/3/library/stdtypes.html#str), optional | URL address of the dataset. |
+| **dataset_label** | [`str`](https://docs.python.org/3/library/stdtypes.html#str), required | Identifier label for the dataset. |
+| **participants_file** | [`str`](https://docs.python.org/3/library/stdtypes.html#str), required | Path to the participants metadata file. If data is in BIDS format, fill-in the path to the "participants.tsv" file. |
+| **reader** | Function | Reader function to be used for reading the participants metadata. Only useful if metadata is NOT in BIDS format. |
+
+
 - **url:** *(str, optional)* URL address of the dataset.
 
 - **dataset_label:** *(str, required)* Identifier label for the dataset.
