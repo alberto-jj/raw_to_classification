@@ -34,40 +34,23 @@ First, open the `datasets.yml` file and set a name for the dataset(s), then conf
 
 | Parameter | Input type | Description |
 | --- | --- | --- |
-| **url** | [`str`](https://docs.python.org/3/library/stdtypes.html#str), optional | URL address of the dataset. |
-| **dataset_label** | [`str`](https://docs.python.org/3/library/stdtypes.html#str), required | Identifier label for the dataset. |
-| **participants_file** | [`str`](https://docs.python.org/3/library/stdtypes.html#str), required | Path to the participants metadata file. If data is in BIDS format, fill-in the path to the "participants.tsv" file. |
-| **reader** | Function | Reader function to be used for reading the participants metadata. Only useful if metadata is NOT in BIDS format. |
+| **`url`** | [`str`](https://docs.python.org/3/library/stdtypes.html#str), optional | URL address of the dataset. |
+| **`dataset_label`** | [`str`](https://docs.python.org/3/library/stdtypes.html#str), required | Identifier label for the dataset. |
+| **`participants_file`** | [`str`](https://docs.python.org/3/library/stdtypes.html#str), required | Path to the participants metadata file. If data is in BIDS format, fill-in the path to the "participants.tsv" file. |
+| **`reader`** | optional |  Fill below the desired <ins>reader function</ins> and its <ins>arguments</ins>. ***Only useful if metadata is NOT in BIDS format*** |
+| *`function`* | [`str`](https://docs.python.org/3/library/stdtypes.html#str), optional  | Reader function to be used to read the participants metadata (e.g. pd.read_excel, pd.read_csv).
+| *`args`* | [`str`](https://docs.python.org/3/library/stdtypes.html#str), optional  | Fill below the arguments for the reader function (e.g. delimiter: "\\t", or "{}" if no used arguments).
+| **`df_transform`** | [`str`](https://docs.python.org/3/library/stdtypes.html#str), optional |  Write any function to organize metadata file (e.g. "df=df.dropna(subset =['id'])"). ***Only useful if metadata is NOT in BIDS format*** |
+| **`cleaned_participants`** | [`str`](https://docs.python.org/3/library/stdtypes.html#str), optional  | Path to the resulting participants.tsv after using `reader` or `df_transform` functions.
+| **`raw_layout`** | required  | Fill below the arguments for the raw layout.
+| *`extension`* | [`str`](https://docs.python.org/3/library/stdtypes.html#str), required  | Extension of the raw files (e.g. ".edf", ".set").
+| *`suffix`* | [`str`](https://docs.python.org/3/library/stdtypes.html#str), required  | Suffix for BIDS format (e.g. "eeg").
+| *`return_type`* | [`str`](https://docs.python.org/3/library/stdtypes.html#str), required  | Return a list with the desired output (e.g. "filename").
+| *`task`* | [`str`](https://docs.python.org/3/library/stdtypes.html#str), required  | Task label according to BIDS specification (e.g. "rest", "eyesClosed").
+| **`example_file`** | [`str`](https://docs.python.org/3/library/stdtypes.html#str), required  | Path to an exemplary file wether in BIDS or Non-BIDS format.
+| **`ch_names`** | [`list`](https://docs.python.org/3/library/stdtypes.html#list), required  | List of Channel names in standard format (i.e. Fp1, Oz).
 
 
-- **url:** *(str, optional)* URL address of the dataset.
-
-- **dataset_label:** *(str, required)* Identifier label for the dataset.
-
-
-- **participants_file:** *(str, required)* Path to the participants metadata file. If data is in BIDS format, fill-in the path to the "participants.tsv" file.
-
-- **reader:** Reader function to be used for reading the participants metadata. ***Only useful if metadata is NOT in BIDS format***
-  - **function:**
-  - **args:**
-
-- **df_transform:** 
-
-- **cleaned_participants:**
-
-- **raw_layout:**
-
-  - **extension:**
-
-  - **suffix:**
-
-  - **return_type:**
-
-  - **task:**
-
-- **example_file:**
-
-- **ch_names:**
 
 - **PowerLineFrequency:**
 
