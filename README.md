@@ -30,7 +30,11 @@ pip install -e .
 ## Getting started
 All configuration parameters can be defined in two core files: `datasets.yml` and `pipeline.yml`.
 
-First, open the `datasets.yml` file and set a name for the dataset(s), then configure parameters listed below:
+1. Open the `datasets.yml` file and set a name for the dataset(s), then configure its parameters.
+
+<details>
+    <summary><b> Click to see the parameters for the <code style="font-family: consolas;">`datasets.yml`</code></b> </summary>
+    <p>
 
 | Parameter | Input type | Description |
 | --- | --- | --- |
@@ -76,10 +80,64 @@ First, open the `datasets.yml` file and set a name for the dataset(s), then conf
 | *`file_filter`* |  | | TBD
 | `exclude` |  | | TBD
 
+</p>
+</details>
 
 
+2. Open the pipeline.yml file and define its parameters.
+      
+<details>
+    <summary><b> Click here to see the parameters for the <code style="font-family: consolas;">`pipeline.yml`</code></b> </summary>
+    <p>
 
-Parameters of the `pipeline.yml` are listed below:
+| Parameter | Input type | Description |
+| --- | --- | --- |
+| **`url`** | [`str`](https://docs.python.org/3/library/stdtypes.html#str), optional | URL address of the dataset. |
+| **`dataset_label`** | [`str`](https://docs.python.org/3/library/stdtypes.html#str), required | Identifier label for the dataset. |
+| **`participants_file`** | [`str`](https://docs.python.org/3/library/stdtypes.html#str), required | Path to the participants metadata file. If data is in BIDS format, fill-in the path to the "participants.tsv" file. |
+| **`reader`** | optional |  Fill below the desired <ins>reader function</ins> and its <ins>arguments</ins>. ***Only useful if metadata is NOT in BIDS format*** |
+| *`function`* | [`str`](https://docs.python.org/3/library/stdtypes.html#str), optional  | Reader function to be used to read the participants metadata (e.g. pd.read_excel, pd.read_csv).
+| *`args`* | [`str`](https://docs.python.org/3/library/stdtypes.html#str), optional  | Fill below the arguments for the reader function (e.g. delimiter: "\\t", or "{}" if no used arguments).
+| **`df_transform`** | [`str`](https://docs.python.org/3/library/stdtypes.html#str), optional |  Write any function to organize metadata file (e.g. "df=df.dropna(subset =['id'])"). ***Only useful if metadata is NOT in BIDS format*** |
+| **`cleaned_participants`** | [`str`](https://docs.python.org/3/library/stdtypes.html#str), optional  | Path to the resulting participants.tsv after using `reader` or `df_transform` functions.
+| **`raw_layout`** | required  | Fill below the arguments for the raw layout.
+| *`extension`* | [`str`](https://docs.python.org/3/library/stdtypes.html#str), required  | Extension of the raw files (e.g. ".edf", ".set").
+| *`suffix`* | [`str`](https://docs.python.org/3/library/stdtypes.html#str), required  | Suffix for BIDS format (e.g. "eeg").
+| *`return_type`* | [`str`](https://docs.python.org/3/library/stdtypes.html#str), required  | Return a list with the desired output (e.g. "filename").
+| *`task`* | [`str`](https://docs.python.org/3/library/stdtypes.html#str), required  | Task label according to BIDS specification (e.g. "rest", "eyesClosed").
+| **`example_file`** | [`str`](https://docs.python.org/3/library/stdtypes.html#str), required  | Path to an exemplary file wether in BIDS or Non-BIDS format.
+| **`ch_names`** | [`list`](https://docs.python.org/3/library/stdtypes.html#list), required  | List of Channel names in standard format (i.e. Fp1, Oz).
+| **`PowerLineFrequency`** | [`int`](https://docs.python.org/3/library/functions.html#int), required  | Power line noise in Hz.
+| **`bids_root`** | [`str`](https://docs.python.org/3/library/stdtypes.html#str), required  | Path to the BIDS root folder.
+| **`sovabids`** | optional  | Use the `paths` and `rules` parameters to convert into BIDS.
+| *`paths`* | | Use the `source_path` and `bids_path` parameters as detailed below.
+| `source_path` |[`str`](https://docs.python.org/3/library/stdtypes.html#str)  | Path of the folder with the source files.
+| `bids_path` | [`str`](https://docs.python.org/3/library/stdtypes.html#str) | Path of the folder with the BIDS converted data.
+| *`rules`* | | Use the `source_path` and `bids_path` parameters as detailed below.
+| `dataset_description` | [`str`](https://docs.python.org/3/library/stdtypes.html#str) | Description of the current dataset.
+| `Name` |  [`str`](https://docs.python.org/3/library/stdtypes.html#str) | Dataset name.
+| `Authors` | [`str`](https://docs.python.org/3/library/stdtypes.html#str)  | Names of the authors of the dataset.
+| `sidecar` | | Define below the configurations of the sidecar file.
+| `PowerLineFrequency` | [`int`](https://docs.python.org/3/library/functions.html#int)  | Power line noise, noted for visualization and inspection.
+| `EEGReference` |  [`str`](https://docs.python.org/3/library/stdtypes.html#str) | Reference channel.
+| *`channels`* | | Define below the channels.tsv file. 
+| `type` |   | This property allow us to overwrite channel types inferred by MNE 'HEOG', 'VEOG'. Here the syntax is "<channel name> : <channel type according to bids notation>" (e.g. HEOG : HEOG).
+| `VEOG` |  [`str`](https://docs.python.org/3/library/stdtypes.html#str) | Vertical EOG channel.
+| `HEOG` |  [`str`](https://docs.python.org/3/library/stdtypes.html#str) | Horizontal EOG channel.
+| *`non-bids`* |   | Additional configuration not belonging specifically to any of the previous objects
+| `eeg_extension` |  | | Sets which extension to read as an eeg file.
+| `path_analysis` |  | | Some bids properties can be inferred from the path of the source files.
+| `pattern` |  | | TBD
+| `operation` |  | | TBD
+| `entities.subject` |  | | TBD
+| `entities.task` |  | | TBD
+| *`file_filter`* |  | | TBD
+| `exclude` |  | | TBD
+
+</p>
+</details>
+
+3. Start running the `raw_to_classification` pipeline `.py` files from 0 to 7.
 
 
 
