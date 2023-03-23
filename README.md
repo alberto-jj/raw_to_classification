@@ -49,37 +49,32 @@ First, open the `datasets.yml` file and set a name for the dataset(s), then conf
 | *`task`* | [`str`](https://docs.python.org/3/library/stdtypes.html#str), required  | Task label according to BIDS specification (e.g. "rest", "eyesClosed").
 | **`example_file`** | [`str`](https://docs.python.org/3/library/stdtypes.html#str), required  | Path to an exemplary file wether in BIDS or Non-BIDS format.
 | **`ch_names`** | [`list`](https://docs.python.org/3/library/stdtypes.html#list), required  | List of Channel names in standard format (i.e. Fp1, Oz).
-
-
-
-- **PowerLineFrequency:**
-
-- **bids_root:** (str). Path to the BIDS root folder. ***Required field***
-
-- **sovabids:**
-  - **paths:**
-    - **source_path:**
-    - **bids_path:**
-  - **rules:**
-    - **dataset_description**
-    - **Name:**
-    - **Authors:**
-    - **sidecar:**
-      - **PowerLineFrequency:**
-      - **EEGReference:**
-    - **channels:**
-      - **type:**
-        - **VEOG:**
-        - **HEOG:**
-      - **non-bids:**
-        - **eeg_extension:**
-        - **path_analysis:**
-          - **pattern:**
-          - **operation:**
-            - **entities.subject:**
-            - **entities.task:**
-        - **file_filter:**
-          - **exclude:**
+| **`PowerLineFrequency`** | [`int`](https://docs.python.org/3/library/functions.html#int), required  | Power line noise in Hz.
+| **`bids_root`** | [`str`](https://docs.python.org/3/library/stdtypes.html#str), required  | Path to the BIDS root folder.
+| **`sovabids`** | optional  | Use the `paths` and `rules` parameters to convert into BIDS.
+| *`paths`* | | Use the `source_path` and `bids_path` parameters as detailed below.
+| `source_path` |[`str`](https://docs.python.org/3/library/stdtypes.html#str)  | Path of the folder with the source files.
+| `bids_path` | [`str`](https://docs.python.org/3/library/stdtypes.html#str) | Path of the folder with the BIDS converted data.
+| *`rules`* | | Use the `source_path` and `bids_path` parameters as detailed below.
+| `dataset_description` | [`str`](https://docs.python.org/3/library/stdtypes.html#str) | Description of the current dataset.
+| `Name` |  [`str`](https://docs.python.org/3/library/stdtypes.html#str) | Dataset name.
+| `Authors` | [`str`](https://docs.python.org/3/library/stdtypes.html#str)  | Names of the authors of the dataset.
+| `sidecar` | | Define below the configurations of the sidecar file.
+| `PowerLineFrequency` | [`int`](https://docs.python.org/3/library/functions.html#int)  | Power line noise, noted for visualization and inspection.
+| `EEGReference` |  [`str`](https://docs.python.org/3/library/stdtypes.html#str) | Reference channel.
+| *`channels`* | | Define below the channels.tsv file. 
+| `type` |   | This property allow us to overwrite channel types inferred by MNE 'HEOG', 'VEOG'. Here the syntax is "<channel name> : <channel type according to bids notation>" (e.g. HEOG : HEOG).
+| `VEOG` |  [`str`](https://docs.python.org/3/library/stdtypes.html#str) | Vertical EOG channel.
+| `HEOG` |  [`str`](https://docs.python.org/3/library/stdtypes.html#str) | Horizontal EOG channel.
+| *`non-bids`* |   | Additional configuration not belonging specifically to any of the previous objects
+| `eeg_extension` |  | | Sets which extension to read as an eeg file.
+| `path_analysis` |  | | Some bids properties can be inferred from the path of the source files.
+| `pattern` |  | | TBD
+| `operation` |  | | TBD
+| `entities.subject` |  | | TBD
+| `entities.task` |  | | TBD
+| *`file_filter`* |  | | TBD
+| `exclude` |  | | TBD
 
 
 
