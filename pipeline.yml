@@ -6,7 +6,7 @@ preprocess:
     downsample : 500
     ica_method : 'fastica'
     skip_prep : False
-    skip_reject : False
+    skip_reject : True
   overwrite : False
 
 features:
