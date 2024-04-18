@@ -1,200 +1,145 @@
-import os
+#use automl environment
+import pandas as pd
+import pickle
+from itertools import product
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import ConfusionMatrixDisplay
+from sklearn.metrics import accuracy_score,balanced_accuracy_score,precision_score
+from sklearn.metrics import roc_curve, auc
+from sklearn.inspection import permutation_importance
+from sklearn.linear_model import LogisticRegression
+from sklearn.feature_selection import SelectKBest, chi2
+#import seaborn as sns
 import pandas as pd
 import numpy as np
-from mlxtend.feature_selection import SequentialFeatureSelector as SFS
-from mlxtend.plotting import plot_sequential_feature_selection as plot_sfs
-from xgboost import XGBClassifier
-from sklearn.model_selection import train_test_split
-import plotly.graph_objects as go
-from sklearn.model_selection import RepeatedKFold
-import xgboost as xgb
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.metrics import roc_auc_score, roc_curve
-import matplotlib.pyplot as plt
+from sklearn.model_selection import GridSearchCV
+from sklearn.preprocessing import StandardScaler
+from sklearn import tree
+from sklearn.model_selection import RandomizedSearchCV
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import StratifiedGroupKFold
 from sklearn.model_selection import StratifiedKFold
-import shap
+import copy
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+#import umap
+#import umap.plot
+from itertools import product
+import os
+import matplotlib
+from sklearn.svm import SVC
+import yaml
+import json
+from sklearn.ensemble import GradientBoostingClassifier
+from scipy.cluster.hierarchy import dendrogram, linkage
+from featurewiz import FeatureWiz
+from sklearn.model_selection import train_test_split
+from supervised.automl import AutoML
+from sklearn.model_selection import StratifiedKFold
 from eeg_raw_to_classification.utils import parse_bids,load_yaml,get_output_dict,save_dict_to_json,save_figs_in_html
-import psutil
-njobs = len(psutil.Process().cpu_affinity())
 
 datasets = load_yaml('datasets.yml')
 PIPELINE = load_yaml('pipeline.yml')
-OUTPUT_DIR = PIPELINE['classification']['path']
+OUTPUT_DIR = PIPELINE['ml']['path']
 os.makedirs(OUTPUT_DIR,exist_ok=True)
 
-
-#### Single Split
-
-input_datapath = os.path.join(PIPELINE['harmonization']['path'],'combatScaleSingleSplit.npy')
-data = np.load(input_datapath,allow_pickle=True).item()['data']
-
-X_train = data['X_train']
-X_test = data['X_test']
-y_train = data['y_train']
-y_test = data['y_test']
-features = data['features']
-
-lr = XGBClassifier(random_state=42, n_jobs=njobs, tree_method='gpu_hist' , gpu_id=0, predictor='auto')
-
-sfs = SFS(lr, 
-          k_features="parsimonious", 
-          forward=True, 
-          floating=False, 
-          scoring='f1',
-          verbose=2,
-          cv=5,
-          n_jobs = njobs)
-
-sfs = sfs.fit(X_train, y_train)
-
-plt.rcParams["figure.figsize"] = (40,10)
-fig,ax = plot_sfs(sfs.get_metric_dict(), kind='std_err')
-plt.title('Sequential Forward Selection (w. StdErr)')
-plt.grid()
-print(sfs.k_feature_names_)
-print(sfs.k_score_)
-save_figs_in_html(os.path.join(OUTPUT_DIR,'singleSFS.html'),[fig])
-plt.close('all')
-selected_feats = [int(x) for x in list(sfs.k_feature_names_)]
-
-selected_feats = [features[i]for i in selected_feats]
-save_dict_to_json(os.path.join(OUTPUT_DIR,'singleSFS.txt'),{'selected_features':selected_feats,'features':features})
+df_path = os.path.join(PIPELINE['aggregate']['path'],PIPELINE['aggregate']['filename'])
+df = pd.read_csv(df_path)
 
 
-###### CV
+targets=['age']
+drops=['id','sex','group','dataset','subject','task']#,'id_ultimo_jefe']
+all_drops=drops+targets
+scaler = StandardScaler()
+df_scaled = scaler.fit_transform(df.drop(all_drops, axis=1))
+df_scaled = pd.DataFrame(df_scaled, columns=df.drop(all_drops, axis=1).columns)
+num_folds=5
 
-input_datapath = os.path.join(PIPELINE['harmonization']['path'],'combatScaleCV.npy')
-data = np.load(input_datapath,allow_pickle=True).item()
+skf = StratifiedKFold(n_splits=num_folds, shuffle=True, random_state=123)
+# for train_index, test_index in skf.split(X_train, y_train):
+#     X_train_fold, X_val_fold = X_train[train_index], X_train[test_index]
+#     y_train_fold, y_val_fold = y_train[train_index], y_train[test_index]
 
-metrics = ['auc', 'fpr', 'tpr', 'thresholds']
-results = {
-    'train': {m:[] for m in metrics},
-    'val'  : {m:[] for m in metrics},
-    'test' : {m:[] for m in metrics}
+    # Your code for training and evaluating the model on each fold goes here
+
+
+
+
+fwiz = FeatureWiz(corr_limit=0.75, feature_engg='', category_encoders='', dask_xgboost_flag=False, nrows=None, verbose=0)
+X_train_selected = fwiz.fit(df_scaled, df[targets])
+### get list of selected features ###
+fwiz.features  
+
+
+#https://supervised.mljar.com/api/
+mode='Explain'#'Perform'#'Compete'#'Explain'
+imb = 'default'
+CV_TYPES={'kfold':{
+    "validation_type": "kfold",
+    "k_folds": 5,
+    "shuffle": True,
+    "stratify": True,
+    "random_seed": 123
+    },
+'custom':{'validation_type': 'custom'},
+'split':{
+    "validation_type": "split",
+    "train_ratio": 0.75,
+    "shuffle": True,
+    "stratify": True
+    }
 }
 
-params = {
-    'objective'   : 'binary:logistic',
-    'eval_metric' : 'logloss'
-}
+#algos = ['Baseline', 'Linear', 'Decision Tree','LightGBM', 'Xgboost', 'CatBoost']
+#'auto'#['Baseline', 'Linear', 'Decision Tree', 'Extra Trees', 'LightGBM', 'Xgboost', 'CatBoost', 'Nearest Neighbors']
+algos = ['Baseline', 'Linear', 'Decision Tree', 'Random Forest', 'Extra Trees', 'LightGBM', 'Xgboost', 'CatBoost', 'Neural Network', 'Nearest Neighbors']
+auto_init = dict(algorithms=algos, explain_level=0, ml_task='auto', mode=mode, eval_metric='rmse', validation_strategy=CV_TYPES['custom'], model_time_limit=60*60)
+internal_njobs=10
+automl = AutoML(**auto_init,n_jobs=internal_njobs)
+automl.fit(df_scaled, df[targets],cv=list(skf.split(df_scaled, df[targets])))
 
-plt.rcParams["figure.figsize"] = (10,10)
 
-for k,fold in data.items():
-    print(k)
-    dataFold = fold['data']
-    #print(dataFold.keys())
-    X_train = dataFold['X_train']
-    X_test  = dataFold['X_test']
-    y_train = dataFold['y_train']
-    y_test  = dataFold['y_test']
-    X_val = np.concatenate([X_train,X_test],axis=0)
-    y_val = np.concatenate([y_train,y_test],axis=0)
-    dtest = xgb.DMatrix(X_test, label=y_test)
-    dtrain = xgb.DMatrix(X_train, label=y_train)
-    dval   = xgb.DMatrix(X_val, label=y_val)
-    model  = xgb.train(
-        dtrain                = dtrain,
-        params                = params, 
-        evals                 = [(dtrain, 'train'), (dtest, 'val')],
-        num_boost_round       = 1000,
-        verbose_eval          = False,
-        early_stopping_rounds = 10,
-    )
-    sets = [dtrain, dtest,dval]
-    for i,ds in enumerate(results.keys()):
-        y_preds              = model.predict(sets[i])
-        labels               = sets[i].get_label()
-        fpr, tpr, thresholds = roc_curve(labels, y_preds)
-        results[ds]['fpr'].append(fpr)
-        results[ds]['tpr'].append(tpr)
-        results[ds]['thresholds'].append(thresholds)
-        results[ds]['auc'].append(roc_auc_score(labels, y_preds))
-        #print(ds)
 
-kind = 'val'
-c_fill      = 'rgba(52, 152, 219, 0.2)'
-c_line      = 'rgba(52, 152, 219, 0.5)'
-c_line_main = 'rgba(41, 128, 185, 1.0)'
-c_grid      = 'rgba(189, 195, 199, 0.5)'
-c_annot     = 'rgba(149, 165, 166, 0.5)'
-c_highlight = 'rgba(192, 57, 43, 1.0)'
-fpr_mean    = np.linspace(0, 1, 100)
-interp_tprs = []
-for i in range(4):
-    fpr           = results[kind]['fpr'][i]
-    tpr           = results[kind]['tpr'][i]
-    interp_tpr    = np.interp(fpr_mean, fpr, tpr)
-    interp_tpr[0] = 0.0
-    interp_tprs.append(interp_tpr)
-tpr_mean     = np.mean(interp_tprs, axis=0)
-tpr_mean[-1] = 1.0
-tpr_std      = np.std(interp_tprs, axis=0)
-tpr_upper    = np.clip(tpr_mean+tpr_std, 0, 1)
-tpr_lower    = tpr_mean-tpr_std
-auc          = np.mean(results[kind]['auc'])
-fig = go.Figure([
-    go.Scatter(
-        x          = fpr_mean,
-        y          = tpr_upper,
-        line       = dict(color=c_line, width=1),
-        hoverinfo  = "skip",
-        showlegend = False,
-        name       = 'upper'),
-    go.Scatter(
-        x          = fpr_mean,
-        y          = tpr_lower,
-        fill       = 'tonexty',
-        fillcolor  = c_fill,
-        line       = dict(color=c_line, width=1),
-        hoverinfo  = "skip",
-        showlegend = False,
-        name       = 'lower'),
-    go.Scatter(
-        x          = fpr_mean,
-        y          = tpr_mean,
-        line       = dict(color=c_line_main, width=2),
-        hoverinfo  = "skip",
-        showlegend = True,
-        name       = f'AUC: {auc:.3f}')
-])
-fig.add_shape(
-    type ='line', 
-    line =dict(dash='dash'),
-    x0=0, x1=1, y0=0, y1=1
+#https://auto.gluon.ai/stable/api/autogluon.tabular.TabularPredictor.html
+
+from autogluon.tabular import TabularDataset, TabularPredictor
+df_scaled_target=df_scaled.copy()
+df_scaled_target[targets[0]]=df[targets[0]]
+# test_data = TabularDataset(f'{data_url}test.csv')
+# predictor.evaluate(test_data, silent=True)
+# y_pred = predictor.predict(test_data.drop(columns=[label]))
+# y_pred.head()
+# predictor.leaderboard(test_data)
+
+params=dict(label=targets[0],
+problem_type=None,
+eval_metric='root_mean_squared_error',
+path='None',
+verbosity= 2, 
+log_to_file=True,
+log_file_path='auto',
+sample_weight= None,
+weight_evaluation= False,)
+#groups=targets[0])
+
+predictor = TabularPredictor(**params)
+
+predictor.fit(df_scaled_target, 
+tuning_data=None, 
+time_limit = None,
+presets = None,
+hyperparameters = None,
+feature_metadata='infer',
+infer_limit = None,
+infer_limit_batch_size = None,
+fit_weighted_ensemble = True, 
+fit_full_last_level_weighted_ensemble = True,
+full_weighted_ensemble_additionally  = False,
+dynamic_stacking = False,
+calibrate_decision_threshold = False,
+num_cpus=10,
+num_gpus='auto',
+num_bag_folds=5,
 )
-fig.update_layout(
-    template    = 'plotly_white', 
-    title_x     = 0.5,
-    xaxis_title = "1 - Specificity",
-    yaxis_title = "Sensitivity",
-    width       = 600,
-    height      = 600,
-    legend      = dict(
-        yanchor="bottom", 
-        xanchor="right", 
-        x=0.95,
-        y=0.01,
-    )
-)
-fig.update_yaxes(
-    range       = [0, 1],
-    gridcolor   = c_grid,
-    scaleanchor = "x", 
-    scaleratio  = 1,
-    linecolor   = 'black')
-fig.update_xaxes(
-    range       = [0, 1],
-    gridcolor   = c_grid,
-    constrain   = 'domain',
-    linecolor   = 'black')
 
-#fig.show()
-fig.write_image(os.path.join(OUTPUT_DIR,'CV_graph.png'))
-
-explainer = shap.TreeExplainer(model)
-shap_values = explainer.shap_values(X_val)
-fig, ax = plt.subplots(figsize=(16, 8))
-shap.summary_plot(shap_values, X_val,feature_names=features,plot_type="bar",show=False)
-fig.savefig(os.path.join(OUTPUT_DIR,'CV_SHAP.png'))
+predictor.leaderboard()

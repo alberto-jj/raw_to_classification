@@ -7,7 +7,7 @@ preprocess:
     ica_method : 'fastica'
     skip_prep : False
     skip_reject : True
-  overwrite : False
+  overwrite : True
 
 features:
   downsample : 500
@@ -82,5 +82,5 @@ harmonization:
     target : 'group'
     folds : 5
 
-classification:
-  path: './data/classification'
+ml:
+  path: './data/ml'

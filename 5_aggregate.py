@@ -34,7 +34,7 @@ for dslabel, DATASET in datasets.items():
     participants = pd.read_csv(participants_file)
     def parfun(query,field):
         try:
-            sub = int(query)
+            sub = int(query) # im not conviced this is a good idea
         except:
             sub = query
         idx = participants[participants['subject']==sub]
