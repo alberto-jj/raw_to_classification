@@ -14,6 +14,7 @@ PIPELINE = load_yaml('pipeline.yml')
 
 NUM_EPOCHS = PIPELINE['features']['num_epochs']
 
+
 if NUM_EPOCHS =='min':
     SHAPES = []
     EEGS = []
@@ -53,6 +54,9 @@ for dslabel, DATASET in datasets.items():
         if NUM_EPOCHS is None:
             epochs_c = epochs.copy()
         else:
+            # add a better logic to select the N epochs, just the first N? grab them randomly
+            #150 epocas
+            #min 50, agarrar en lotes?
             epochs_c = mne.concatenate_epochs(epochs_list = [epochs[:][range(NUM_EPOCHS)]], add_offset=False, on_mismatch='raise', verbose=None) # 18 WAS THE MINIMAL NUMBER OF EPOCHS ACROSS SUBJECTS
         epochs = epochs_c
         if keep_channels:

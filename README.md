@@ -209,9 +209,12 @@ Besides, Dataset 2 was collected in 38 subjects (19 Parkinson Disease Patients; 
 
 ## License
 
+## TODO
 
-# TODO
 - [x] datasets.yml parameters
 - [ ] pipeline.yml parameters
 - [ ] add nested-cross validation (shufflesplit CV) [here the paper ](https://www.nature.com/articles/s41598-022-23327-1) with the .py code 
-- [ ] Implement automljar as default for the ML module :tada:     
+- [ ] Implement automljar as default for the ML module :tada:
+- [ ] per epoch feature
+- [ ] add aggregation per roi
+- [ ] find fold N for nvars stratify

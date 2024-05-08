@@ -50,61 +50,93 @@ df = pd.read_csv(df_path)
 targets=['age']
 drops=['id','sex','group','dataset','subject','task']#,'id_ultimo_jefe']
 all_drops=drops+targets
+
+
+df
 scaler = StandardScaler()
 df_scaled = scaler.fit_transform(df.drop(all_drops, axis=1))
 df_scaled = pd.DataFrame(df_scaled, columns=df.drop(all_drops, axis=1).columns)
 num_folds=5
 
-skf = StratifiedKFold(n_splits=num_folds, shuffle=True, random_state=123)
-# for train_index, test_index in skf.split(X_train, y_train):
-#     X_train_fold, X_val_fold = X_train[train_index], X_train[test_index]
-#     y_train_fold, y_val_fold = y_train[train_index], y_train[test_index]
+if False:
+    skf = StratifiedKFold(n_splits=num_folds, shuffle=True, random_state=123)
+    # for train_index, test_index in skf.split(X_train, y_train):
+    #     X_train_fold, X_val_fold = X_train[train_index], X_train[test_index]
+    #     y_train_fold, y_val_fold = y_train[train_index], y_train[test_index]
 
-    # Your code for training and evaluating the model on each fold goes here
-
-
-
-
-fwiz = FeatureWiz(corr_limit=0.75, feature_engg='', category_encoders='', dask_xgboost_flag=False, nrows=None, verbose=0)
-X_train_selected = fwiz.fit(df_scaled, df[targets])
-### get list of selected features ###
-fwiz.features  
+        # Your code for training and evaluating the model on each fold goes here
 
 
-#https://supervised.mljar.com/api/
-mode='Explain'#'Perform'#'Compete'#'Explain'
-imb = 'default'
-CV_TYPES={'kfold':{
-    "validation_type": "kfold",
-    "k_folds": 5,
-    "shuffle": True,
-    "stratify": True,
-    "random_seed": 123
-    },
-'custom':{'validation_type': 'custom'},
-'split':{
-    "validation_type": "split",
-    "train_ratio": 0.75,
-    "shuffle": True,
-    "stratify": True
+
+
+    fwiz = FeatureWiz(corr_limit=0.75, feature_engg='', category_encoders='', dask_xgboost_flag=False, nrows=None, verbose=0)
+    X_train_selected = fwiz.fit(df_scaled, df[targets])
+    ### get list of selected features ###
+    fwiz.features  
+
+
+    #https://supervised.mljar.com/api/
+    mode='Explain'#'Perform'#'Compete'#'Explain'
+    imb = 'default'
+    CV_TYPES={'kfold':{
+        "validation_type": "kfold",
+        "k_folds": 5,
+        "shuffle": True,
+        "stratify": True,
+        "random_seed": 123
+        },
+    'custom':{'validation_type': 'custom'},
+    'split':{
+        "validation_type": "split",
+        "train_ratio": 0.75,
+        "shuffle": True,
+        "stratify": True
+        }
     }
-}
 
-#algos = ['Baseline', 'Linear', 'Decision Tree','LightGBM', 'Xgboost', 'CatBoost']
-#'auto'#['Baseline', 'Linear', 'Decision Tree', 'Extra Trees', 'LightGBM', 'Xgboost', 'CatBoost', 'Nearest Neighbors']
-algos = ['Baseline', 'Linear', 'Decision Tree', 'Random Forest', 'Extra Trees', 'LightGBM', 'Xgboost', 'CatBoost', 'Neural Network', 'Nearest Neighbors']
-auto_init = dict(algorithms=algos, explain_level=0, ml_task='auto', mode=mode, eval_metric='rmse', validation_strategy=CV_TYPES['custom'], model_time_limit=60*60)
-internal_njobs=10
-automl = AutoML(**auto_init,n_jobs=internal_njobs)
-automl.fit(df_scaled, df[targets],cv=list(skf.split(df_scaled, df[targets])))
+    #algos = ['Baseline', 'Linear', 'Decision Tree','LightGBM', 'Xgboost', 'CatBoost']
+    #'auto'#['Baseline', 'Linear', 'Decision Tree', 'Extra Trees', 'LightGBM', 'Xgboost', 'CatBoost', 'Nearest Neighbors']
+    algos = ['Baseline', 'Linear', 'Decision Tree', 'Random Forest', 'Extra Trees', 'LightGBM', 'Xgboost', 'CatBoost', 'Neural Network', 'Nearest Neighbors']
+    auto_init = dict(algorithms=algos, explain_level=0, ml_task='auto', mode=mode, eval_metric='rmse', validation_strategy=CV_TYPES['custom'], model_time_limit=60*60)
+    internal_njobs=10
+    automl = AutoML(**auto_init,n_jobs=internal_njobs)
+    automl.fit(df_scaled, df[targets],cv=list(skf.split(df_scaled, df[targets])))
 
 
 
 #https://auto.gluon.ai/stable/api/autogluon.tabular.TabularPredictor.html
 
 from autogluon.tabular import TabularDataset, TabularPredictor
+from sklearn.model_selection import LeaveOneGroupOut
+
+df['split']=df['id'].apply(lambda x: x.split('/')[0])
+
+logo = LeaveOneGroupOut()
+splits=logo.split(df_scaled, df[targets], df['split'])
+splitnum=0
+for train_index, test_index in splits:
+    X_train, X_test = df_scaled.iloc[train_index], df_scaled.iloc[test_index]
+    y_train, y_test = df[targets].iloc[train_index], df[targets].iloc[test_index]
+    groups=df['split'].iloc[train_index]
+    print(np.unique(groups,return_counts=True))
+    df_train=df.iloc[train_index]
+    #print(df_train.describe())
+    print(splitnum)
+    splitnum+=1
+
+
+numfolder=0
+while True:
+    numpath=f'./data/autogluon/autogluon_{numfolder}'
+    numpathlog=numpath.replace('autogluon','autogluonlogs')
+    if not os.path.exists(numpath):
+        #os.makedirs(numpath) autogluon will create it
+        break
+    numfolder+=1
+
 df_scaled_target=df_scaled.copy()
 df_scaled_target[targets[0]]=df[targets[0]]
+df_scaled_target['split']=df['split']
 # test_data = TabularDataset(f'{data_url}test.csv')
 # predictor.evaluate(test_data, silent=True)
 # y_pred = predictor.predict(test_data.drop(columns=[label]))
@@ -114,12 +146,14 @@ df_scaled_target[targets[0]]=df[targets[0]]
 params=dict(label=targets[0],
 problem_type=None,
 eval_metric='root_mean_squared_error',
-path='None',
+path=numpath,
 verbosity= 2, 
 log_to_file=True,
-log_file_path='auto',
+log_file_path=numpathlog,
 sample_weight= None,
-weight_evaluation= False,)
+weight_evaluation= False,
+groups='split',
+)
 #groups=targets[0])
 
 predictor = TabularPredictor(**params)
@@ -139,7 +173,9 @@ dynamic_stacking = False,
 calibrate_decision_threshold = False,
 num_cpus=10,
 num_gpus='auto',
-num_bag_folds=5,
+num_bag_folds=None,
 )
 
-predictor.leaderboard()
+leadf=predictor.leaderboard()
+leadf.shape
+
