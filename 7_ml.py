@@ -77,7 +77,6 @@ for _foldpath in foldinstances:
 
             mlmethod = mlparams['method']
             if mlmethod == 'AutoMLjar':
-                continue
                 # https://supervised.mljar.com/api/
                 AutoML = AutoML(**mlparams['init'] ,results_path=savepath)
                 AutoML.fit(dfX,dfY,cv=fold_tuples)
