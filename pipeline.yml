@@ -76,7 +76,7 @@ scalingAndFolding:
     - dataset
     - group
     - sex
-  scalings:
+  scalings: # dont use _ in the name (bids-like)
     scalingCombat : # name of this particular scaling config
         method : 'reCombat'
         init:
@@ -100,7 +100,7 @@ scalingAndFolding:
           - sex
     scalingStandard:
       method : 'StandardScaler'
-  splits :
+  splits : # dont use _ in the name (bids-like)
     folding:
       method : 'StratifiedKFold'
       num_folds: 5 # stratified by combination by default
@@ -116,6 +116,14 @@ scalingAndFolding:
       n_components : 2
       color_by : dataset
       colormap : 'viridis'
+  featurewiz:
+    init:
+      corr_limit : 0.75
+      feature_engg : ''
+      category_encoders : ''
+      dask_xgboost_flag : False
+      nrows : null # Dont use None here
+      verbose : 0
 
 ml:
   path: './data/ml'
