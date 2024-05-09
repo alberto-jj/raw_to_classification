@@ -32,7 +32,7 @@ import yaml
 import json
 from sklearn.ensemble import GradientBoostingClassifier
 from scipy.cluster.hierarchy import dendrogram, linkage
-from featurewiz import FeatureWiz
+#from featurewiz import FeatureWiz
 from sklearn.model_selection import train_test_split
 from supervised.automl import AutoML
 from sklearn.model_selection import StratifiedKFold
@@ -40,6 +40,7 @@ from eeg_raw_to_classification.utils import parse_bids,load_yaml,get_output_dict
 from sklearn.preprocessing import OrdinalEncoder
 from iterstrat.ml_stratifiers import MultilabelStratifiedKFold
 import itertools
+from reComBat import reComBat
 
 datasets = load_yaml('datasets.yml')
 PIPELINE = load_yaml('pipeline.yml')
@@ -56,6 +57,18 @@ targets=['age']
 dropsToOnlyFeatures=['id', 'sex','group', 'dataset', 'subject', 'task'] + targets
 stratifiedvars=['dataset','group','sex'] # these are categorical in general... , they should be the same as the covars in combat?
 # you may include or not some variables if too many combinations dont exist, for example only dataset (site)
+
+# COMBAT SETUP
+
+combat_covars = ['dataset','group','sex','age']
+combat_rename = {'age': 'age_numerical'}
+combat_str = ['dataset','group','sex']
+combat_batch = 'dataset' # which should be the one we drop from covars for the design matrix X in combat
+combat_params = dict(parametric=True,
+                        model='elastic_net',
+                        config={'alpha': 1e-5},
+                        n_jobs=7,
+                        verbose=True)
 
 # The thing here is that some combinations may not actually exist in the dataset
 # Guess we should just ignore those and collect up to the lowest represented
@@ -99,7 +112,7 @@ for comb_ in existing_combinations:
     df_balanced.append(subdf)
 
 df_orig = df.copy()
-df = pd.concat(df_balanced)
+df = pd.concat(df_balanced,ignore_index=True)
 dfX = df.drop(dropsToOnlyFeatures, axis=1)
 
 
@@ -126,6 +139,11 @@ for foldi,indexes in enumerate(skf.split(dfX,df['combination'])):
    folds[foldi] = {'train':train_index,'test':test_index}
    df['fold'].iloc[test_index]=foldi
 
+assert -1 not in df['fold'].unique()
+
+## fold -1 will be all_seen data
+folds[-1] = {'train':dfX.index.to_numpy(),'test':dfX.index.to_numpy()}
+
 # To maintain good account of column transformations
 
 dropsToOnlyFeatures += ['fold']
@@ -133,31 +151,64 @@ dropsToOnlyFeatures += ['fold']
 # Now with the fold column we should be able to leverage the OneGroupOut of Autogluon
 # But first apply scaling and transform from the training data of each fold
 
-for foldi,fold in folds.items():
-    train_index = folds['train']
-    test_index = folds['test']
+for foldi,this_fold in folds.items():
+    train_index = this_fold['train']
+    test_index = this_fold['test']
 
-    dfX = df.copy().drop(dropsToOnlyFeatures,axis=-1)
+    df_train = df.copy().iloc[train_index]
+    df_test = df.copy().iloc[test_index]
+
+    dfX = df.copy().drop(dropsToOnlyFeatures,axis=1)
     dfX_train = dfX.copy().iloc[train_index]
     dfX_test = dfX.copy().iloc[test_index]
+
     # we will have to save this scaled data for each fold as multiple scaling exist for the same row depending on which fold it is
     # remember that we scale on the training indexes (not unique across folds) rather than the test indexes (unique)
 
     if SCALING == 'combat':
-        pass
+
+        #Define my re-scaling model (reComBat) to be used before TabularPredictor.fit()
+        combat_model = reComBat(**combat_params)
+
+        #Defining adjustment covariates from X_train to perform my desired re-scaling
+        covars_train = df_train[combat_covars].copy()
+        covars_train = covars_train.rename(columns=combat_rename, inplace=False)
+        for col in combat_str:
+            covars_train[col] = covars_train[col].astype(str)
+
+        #Defining adjustment covariates from X_train to perform my desired re-scaling
+        covars_test = df_test[combat_covars].copy()
+        covars_test = covars_test.rename(columns=combat_rename, inplace=False)
+        for col in combat_str:
+            covars_test[col] = covars_test[col].astype(str)
+
+
+        #Fitting the re-scaling (reComBat) model on the train data
+        combat_model.fit(data=dfX_train, batches=covars_train[combat_batch],X=covars_train.drop([combat_batch],axis=1))
+
+        #Re-scaling the train data using the fitted model
+        dfX_train = combat_model.transform(data=dfX_train.copy(), batches=covars_train[combat_batch],X=covars_train.drop([combat_batch],axis=1))
+        dfX_test = combat_model.transform(data=dfX_test.copy(), batches=covars_test[combat_batch],X=covars_test.drop([combat_batch],axis=1))
+
+        folds[foldi]['X_train'] = dfX_train.copy()
+        folds[foldi]['X_test'] = dfX_test.copy() # this would be unique, but for simplicity just maintain with the same structure we have
+
     elif SCALING == 'standard':
         scaler = StandardScaler()
         scaler = scaler.fit(dfX_train)
-        dfX_train = scaler.transform(dfX_train)
-        dfX_test = scaler.transform(dfX_test)
+        dfX_train = scaler.transform(dfX_train.copy())
+        dfX_test = scaler.transform(dfX_test.copy())
         folds[foldi]['X_train'] = dfX_train.copy()
         folds[foldi]['X_test'] = dfX_test.copy() # this would be unique, but for simplicity just maintain with the same structure we have
         # dfX_scaled = pd.DataFrame(dfX_scaled, columns=df.drop(all_drops, axis=1).columns)
     else:
         # NO SCALING
-        dfX = df.drop(dropsToOnlyFeatures,axis=-1)
-# df this should be done later after getting the balanced dataset
+        folds[foldi]['X_train'] = dfX_train.copy()
+        folds[foldi]['X_test'] = dfX_test.copy() # this would be unique, but for simplicity just maintain with the same structure we have
 
+print(folds.keys())
+
+folds.
 ## BUILD A REDUNDANT DATAFRAME WITH TEST AND TRAIN OF EACH FOLD IN SEPARATE ROWS, WITH EXTRA COLUMNS OF FOLDS AND TYPE (TRAIN OR TEST)
 ## FOR AUTOMLJAR PASS THE APPROPIATE INDEXES FOR EACH FOLD'S TRAIN AND TEST
 ## FOR AUTOGULON IS HARDER, WE HAVE TO MANIPULATE THE LEAVEONEGROUPOUT
@@ -166,6 +217,10 @@ for foldi,fold in folds.items():
 ## MAYBE THE BEST IS TO USE AUTOGLUON FROM THE OUTSIDE, THAT IS PASS ONE FOR PER AUTOGLUON CALL (NO BAGGING/FOLDS)
 ## AND COLLECT THE RESULTING DATAFRAMES FROM STATITSTICS
 
+
+
+
+"""
 if False:
     skf = StratifiedKFold(n_splits=num_folds, shuffle=True, random_state=123)
     # for train_index, test_index in skf.split(X_train, y_train):
@@ -370,4 +425,4 @@ num_bag_folds=None,
 
 leadf=predictor.leaderboard()
 leadf.shape
-
+"""
