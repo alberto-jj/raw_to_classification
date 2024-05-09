@@ -59,28 +59,63 @@ aggregate:
     - RelativeBandPower1
     #- RelativeBandPower2
 
-harmonization:
-  path : './data/harmonization'
+scalingAndFolding:
   MAX_FEATURES: null
-  neuroCombat:
-    batch : dataset
-    covars :
-      - dataset
-      - sex
-      - age
-      - group
-    drop :
-      - id
-      - subject
-      - task
-    categorical:
-      - sex
-      - group
-      - dataset # Cuando entra en neurocombat el batch (Dataset) se quita de la lista
-  split:
-    test : 0.3
-    target : 'group'
-    folds : 5
+  path : './data/scalingAndFolding'
+  random_state : 0
+  targets :
+    - 'age'
+  dropsToOnlyFeatures: # the targets will be appended to this in the script
+    - id
+    - sex
+    - group
+    - dataset
+    - subject
+    - task
+  stratifiedvars :
+    - dataset
+    - group
+    - sex
+  scalings:
+    scalingCombat : # name of this particular scaling config
+        method : 'reCombat'
+        init:
+          parametric : True
+          model : 'elastic_net'
+          config : 
+            alpha : 0.00001
+          n_jobs : 7
+          verbose : True
+        covars :
+          - dataset
+          - sex
+          - age
+          - group
+        batch : dataset # which should be the one we drop from covars for the design matrix X in combat
+        rename :
+          age : age_numerical
+        categorical :
+          - dataset
+          - group
+          - sex
+    scalingStandard:
+      method : 'StandardScaler'
+  splits :
+    folding:
+      method : 'StratifiedKFold'
+      num_folds: 5 # stratified by combination by default
+    trainTestSplit:
+      method : 'train_test_split'
+      test_ratio : 0.3
+      stratify : True # Based on combination, see script for meaning...
+    all :
+      method : 'all'
+  visualizations:
+    PCAviz:
+      method : 'PCA'
+      n_components : 2
+      color_by : dataset
+      colormap : 'viridis'
 
 ml:
   path: './data/ml'
