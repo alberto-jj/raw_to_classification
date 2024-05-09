@@ -128,8 +128,6 @@ for scaling_name,split_name in split_scaling_combs:
             train_index = indexes[0]
             test_index = indexes[1]
             folds[foldi] = {'train':train_index,'test':test_index}
-            folds[foldi]['counts_train'] = {f'{var}_train':df[var].iloc[train_index].value_counts() for var in stratifiedvars}
-            folds[foldi]['counts_test'] = {f'{var}_test':df[var].iloc[test_index].value_counts() for var in stratifiedvars}
 
             df['foldSet'].iloc[test_index]=foldi
 
@@ -170,6 +168,9 @@ for scaling_name,split_name in split_scaling_combs:
 
         dfY_train = dfY.copy().iloc[train_index]
         dfY_test = dfY.copy().iloc[test_index]
+
+        folds[foldi]['counts_train'] = {f'{var}_train':df_train[var].value_counts() for var in stratifiedvars}
+        folds[foldi]['counts_test'] = {f'{var}_test':df_test[var].value_counts() for var in stratifiedvars}
 
         # Grab Unseen data (test sets across all folds)
         dfXacross_test = []

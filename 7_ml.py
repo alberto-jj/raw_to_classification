@@ -79,7 +79,8 @@ for _foldpath in foldinstances:
             for foldnum in foldnums:
                 # train,test
                 fold_tuples.append((df[(df['foldIter']==foldnum) & (df['phase']=='train')].index,df[(df['foldIter']==foldnum) & (df['phase']=='test')].index))
-                assert foldnum not in df[(df['foldIter']==foldnum) & (df['phase']=='train')]['foldSet'].unique()
+                if 'folding' in foldcomb:
+                    assert foldnum not in df[(df['foldIter']==foldnum) & (df['phase']=='train')]['foldSet'].unique()
 
             mlmethod = mlparams['method']
             if mlmethod == 'AutoMLjar':
