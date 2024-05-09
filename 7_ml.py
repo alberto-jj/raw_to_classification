@@ -78,7 +78,7 @@ for _foldpath in foldinstances:
             mlmethod = mlparams['method']
             if mlmethod == 'AutoMLjar':
                 # https://supervised.mljar.com/api/
-                #AutoML_ = AutoML(**mlparams['init'] ,results_path=savepath)
+                AutoML_ = AutoML(**mlparams['init'] ,results_path=savepath)
                 AutoML_.fit(dfX,dfY,cv=fold_tuples)
 
             if mlmethod == 'AutoGluon':
