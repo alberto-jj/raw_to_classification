@@ -20,6 +20,7 @@ os.makedirs(OUTPUT_DIR,exist_ok=True)
 fold_path = os.path.join(PIPELINE['scalingAndFolding']['path'])
 fold_pattern = os.path.join(fold_path,'**','folds-*.pkl')
 foldinstances = glob.glob(fold_pattern,recursive=True)
+#foldinstances = [x for x in foldinstances if 'folding' in x]
 
 for _foldpath in foldinstances:
 
@@ -62,18 +63,23 @@ for _foldpath in foldinstances:
             df_test = pd.concat(df_test,ignore_index=True)
             df_test['phase']='test'
 
-            dfX = pd.concat([dfX_train,dfX_test],ignore_index=True)
-            dfY= pd.concat([dfY_train,dfY_test],ignore_index=True)
+            drops=['phase']
+            dfX = pd.concat([dfX_train,dfX_test],ignore_index=True).drop(drops,axis=1)
+            dfY= pd.concat([dfY_train,dfY_test],ignore_index=True).drop(drops,axis=1)
             df = pd.concat([df_train,df_test],ignore_index=True)
 
             assert len(dfX)==len(dfY)==len(df)
+
+
+            # TODO: Add feature engineering/selection step here from previous insights (e.g. featurewiz)
+            # e.g. configure feature selection from the pipeline.yml
 
             # Make indexes for folds
             fold_tuples = []
             for foldnum in foldnums:
                 # train,test
-                fold_tuples.append((df[(df['fold']==foldnum) & (df['phase']=='train')].index,df[(df['fold']==foldnum) & (df['phase']=='test')].index))
-
+                fold_tuples.append((df[(df['foldIter']==foldnum) & (df['phase']=='train')].index,df[(df['foldIter']==foldnum) & (df['phase']=='test')].index))
+                assert foldnum not in df[(df['foldIter']==foldnum) & (df['phase']=='train')]['foldSet'].unique()
 
             mlmethod = mlparams['method']
             if mlmethod == 'AutoMLjar':

@@ -76,7 +76,7 @@ scalingAndFolding:
     - dataset
     - group
     - sex
-  scalings: # dont use _ - in the name (bids-like)
+  scalings : # dont use _ - in the name (bids-like)
     scalingCombat : # name of this particular scaling config
         method : 'reCombat'
         init:

@@ -100,11 +100,11 @@ for scaling_name,split_name in split_scaling_combs:
 
     df = pd.concat(df_balanced,ignore_index=True)
     assert lowest_representation*len(existing_combinations) == df.shape[0]
-    if 'fold' in dropsToOnlyFeatures:
-        dropsToOnlyFeatures.remove('fold')
+    if 'foldSet' in dropsToOnlyFeatures:
+        dropsToOnlyFeatures.remove('foldSet')
     dfX = df.drop(dropsToOnlyFeatures, axis=1)
     dfY = df[targets]
-    df['fold']=-1
+    df['foldSet']=-1
     folds = {}
 
     save_path = os.path.join(OUTPUT_DIR,f'{scaling_name}_{split_name}')
@@ -128,9 +128,13 @@ for scaling_name,split_name in split_scaling_combs:
             train_index = indexes[0]
             test_index = indexes[1]
             folds[foldi] = {'train':train_index,'test':test_index}
-            df['fold'].iloc[test_index]=foldi
+            folds[foldi]['counts_train'] = {f'{var}_train':df[var].iloc[train_index].value_counts() for var in stratifiedvars}
+            folds[foldi]['counts_test'] = {f'{var}_test':df[var].iloc[test_index].value_counts() for var in stratifiedvars}
 
-        assert -1 not in df['fold'].unique()
+            df['foldSet'].iloc[test_index]=foldi
+
+
+        assert -1 not in df['foldSet'].unique()
 
 
     elif split_cfg['method'] == 'all':
@@ -148,7 +152,7 @@ for scaling_name,split_name in split_scaling_combs:
 
 
     # To maintain good account of column transformations
-    dropsToOnlyFeatures += ['fold']
+    dropsToOnlyFeatures += ['foldSet']
 
     # Now with the fold column we should be able to leverage the OneGroupOut of Autogluon
     # But first apply scaling and transform from the training data of each fold
@@ -206,34 +210,24 @@ for scaling_name,split_name in split_scaling_combs:
             dfX_train = combat_model.transform(data=dfX_train.copy(), batches=covars_train[combat_batch],X=covars_train.drop([combat_batch],axis=1))
             dfX_test = combat_model.transform(data=dfX_test.copy(), batches=covars_test[combat_batch],X=covars_test.drop([combat_batch],axis=1))
 
-            folds[foldi]['X_train'] = dfX_train.copy()
-            folds[foldi]['X_test'] = dfX_test.copy() # this would be unique, but for simplicity just maintain with the same structure we have
-            folds[foldi]['Y_train'] = dfY_train.copy()
-            folds[foldi]['Y_test'] = dfY_test.copy()
-            folds[foldi]['df_train'] = df_train.copy()
-            folds[foldi]['df_test'] = df_test.copy()
 
         elif 'StandardScaler' in scaling_cfg['method']:
             scaler = StandardScaler()
             scaler = scaler.fit(dfX_train)
             dfX_train = pd.DataFrame(scaler.transform(dfX_train.copy()), columns=dfX_train.columns)
             dfX_test = pd.DataFrame(scaler.transform(dfX_test.copy()), columns=dfX_test.columns)
-            folds[foldi]['X_train'] = dfX_train.copy()
-            folds[foldi]['X_test'] = dfX_test.copy() # this would be unique, but for simplicity just maintain with the same structure we have
-            folds[foldi]['Y_train'] = dfY_train.copy()
-            folds[foldi]['Y_test'] = dfY_test.copy()
-            folds[foldi]['df_train'] = df_train.copy()
-            folds[foldi]['df_test'] = df_test.copy()
 
         else:
             # NO SCALING
-            folds[foldi]['X_train'] = dfX_train.copy()
-            folds[foldi]['X_test'] = dfX_test.copy() # this would be unique, but for simplicity just maintain with the same structure we have
-            folds[foldi]['Y_train'] = dfY_train.copy()
-            folds[foldi]['Y_test'] = dfY_test.copy()
-            folds[foldi]['df_train'] = df_train.copy()
-            folds[foldi]['df_test'] = df_test.copy()
-
+            pass
+        folds[foldi]['X_train'] = dfX_train.copy()
+        folds[foldi]['X_test'] = dfX_test.copy() # this would be unique, but for simplicity just maintain with the same structure we have
+        folds[foldi]['Y_train'] = dfY_train.copy()
+        folds[foldi]['Y_test'] = dfY_test.copy()
+        folds[foldi]['df_train'] = df_train.copy()
+        folds[foldi]['df_train']['foldIter']=foldi
+        folds[foldi]['df_test'] = df_test.copy()
+        folds[foldi]['df_test']['foldIter']=foldi
     # Save the folds in pkl
     with open(os.path.join(save_path,f'folds-{fullname}.pkl'),'wb') as f:
         pickle.dump(folds,f)
@@ -281,7 +275,14 @@ for scaling_name,split_name in split_scaling_combs:
             _dfYacross_test = _scaling_effect['Y']
             _dfacross = _scaling_effect['df']
             phase = effect
+
+            # TODO: waterfall plot from the code we did?
+
             if viz_cfg['method'] == 'PCA':
+
+                # TODO: save data to produce customized plots for paper later
+
+                # TODO: Look at Alberto's plots for inspiration
                 # PCA
                 pca = PCA(n_components=viz_cfg['n_components'])
                 pca.fit(_dfXacross_test)
@@ -315,6 +316,9 @@ for scaling_name,split_name in split_scaling_combs:
                 ax.legend(handles=legend_elements, title=viz_cfg['color_by'])
                 plt.savefig(os.path.join(save_path,f'PCA_{phase}.png'))
 
+                with open(os.path.join(save_path,'scaling_effectData.pkl'),'wb') as f:
+                    pickle.dump({'dfXacross_test_pca':dfXacross_test_pca},f)
+
     # Feature Engineering with all unseen transformed data
     # when split_method is all, the unseen data is the same as the seen data, so that would be the best to use for feature engineering insight
     # (the scaler knows all the data)
@@ -336,3 +340,4 @@ for scaling_name,split_name in split_scaling_combs:
 ## SO THIS IS NOT TRIVIAL...
 ## MAYBE THE BEST IS TO USE AUTOGLUON FROM THE OUTSIDE, THAT IS PASS ONE FOR PER AUTOGLUON CALL (NO BAGGING/FOLDS)
 ## AND COLLECT THE RESULTING DATAFRAMES FROM STATITSTICS
+
