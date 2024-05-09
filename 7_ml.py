@@ -78,7 +78,7 @@ for _foldpath in foldinstances:
             mlmethod = mlparams['method']
             if mlmethod == 'AutoMLjar':
                 # https://supervised.mljar.com/api/
-                AutoML_ = AutoML(**mlparams['init'] ,results_path=savepath)
+                #AutoML_ = AutoML(**mlparams['init'] ,results_path=savepath)
                 AutoML_.fit(dfX,dfY,cv=fold_tuples)
 
             if mlmethod == 'AutoGluon':
@@ -136,4 +136,4 @@ for _foldpath in foldinstances:
         except Exception as e:
             print(f'Error in {mlmodel}-{foldcomb} - {e}')
             msg=traceback.format_exc()
-            save_dict_to_json({'error':msg},os.path.join(savepath,f'error_ml-{mlmodel}_data-{foldcomb}.json'))
+            save_dict_to_json(os.path.join(savepath,f'error_ml-{mlmodel}_data-{foldcomb}.json'),{'error':msg})
