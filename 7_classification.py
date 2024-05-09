@@ -1,46 +1,14 @@
 #use automl environment
 import pandas as pd
 import pickle
-from itertools import product
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import ConfusionMatrixDisplay
-from sklearn.metrics import accuracy_score,balanced_accuracy_score,precision_score
-from sklearn.metrics import roc_curve, auc
-from sklearn.inspection import permutation_importance
-from sklearn.linear_model import LogisticRegression
-from sklearn.feature_selection import SelectKBest, chi2
 #import seaborn as sns
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import GridSearchCV
-from sklearn.preprocessing import StandardScaler
-from sklearn import tree
-from sklearn.model_selection import RandomizedSearchCV
-from sklearn.pipeline import Pipeline
-from sklearn.model_selection import StratifiedGroupKFold
-from sklearn.model_selection import StratifiedKFold
 import copy
 import matplotlib.pyplot as plt
-from sklearn.cluster import KMeans
-#import umap
-#import umap.plot
-from itertools import product
 import os
-import matplotlib
-from sklearn.svm import SVC
-import yaml
-import json
-from sklearn.ensemble import GradientBoostingClassifier
-from scipy.cluster.hierarchy import dendrogram, linkage
-#from featurewiz import FeatureWiz
-from sklearn.model_selection import train_test_split
 from supervised.automl import AutoML
-from sklearn.model_selection import StratifiedKFold
 from eeg_raw_to_classification.utils import parse_bids,load_yaml,get_output_dict,save_dict_to_json,save_figs_in_html
-from sklearn.preprocessing import OrdinalEncoder
-from iterstrat.ml_stratifiers import MultilabelStratifiedKFold
-import itertools
-from reComBat import reComBat
 import glob
 from autogluon.tabular import TabularDataset, TabularPredictor
 
@@ -52,7 +20,6 @@ os.makedirs(OUTPUT_DIR,exist_ok=True)
 fold_path = os.path.join(PIPELINE['scalingAndFolding']['path'])
 fold_pattern = os.path.join(fold_path,'**','folds-*.pkl')
 foldinstances = glob.glob(fold_pattern,recursive=True)
-foldinstances = [x for x in foldinstances if 'folding' in x]
 
 for _foldpath in foldinstances:
 
