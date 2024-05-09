@@ -41,388 +41,129 @@ from sklearn.preprocessing import OrdinalEncoder
 from iterstrat.ml_stratifiers import MultilabelStratifiedKFold
 import itertools
 from reComBat import reComBat
+import glob
+from autogluon.tabular import TabularDataset, TabularPredictor
 
 datasets = load_yaml('datasets.yml')
 PIPELINE = load_yaml('pipeline.yml')
 OUTPUT_DIR = PIPELINE['ml']['path']
 os.makedirs(OUTPUT_DIR,exist_ok=True)
 
-df_path = os.path.join(PIPELINE['aggregate']['path'],PIPELINE['aggregate']['filename'])
-df = pd.read_csv(df_path)
-
-# SETUP
-NUM_FOLDS = 5
-SCALING = 'combat' # combat or standard
-targets=['age']
-dropsToOnlyFeatures=['id', 'sex','group', 'dataset', 'subject', 'task'] + targets
-stratifiedvars=['dataset','group','sex'] # these are categorical in general... , they should be the same as the covars in combat?
-# you may include or not some variables if too many combinations dont exist, for example only dataset (site)
-
-# COMBAT SETUP
-
-combat_covars = ['dataset','group','sex','age']
-combat_rename = {'age': 'age_numerical'}
-combat_str = ['dataset','group','sex']
-combat_batch = 'dataset' # which should be the one we drop from covars for the design matrix X in combat
-combat_params = dict(parametric=True,
-                        model='elastic_net',
-                        config={'alpha': 1e-5},
-                        n_jobs=7,
-                        verbose=True)
-
-# The thing here is that some combinations may not actually exist in the dataset
-# Guess we should just ignore those and collect up to the lowest represented
-
-joined_stratifiedvars = [list(x) for i,x in df[stratifiedvars].iterrows()]
-joined_stratifiedvars = ['_'.join(x) for x in joined_stratifiedvars]
-df['combination']=joined_stratifiedvars
-dropsToOnlyFeatures +=['combination']
-existing_combinations = pd.unique(joined_stratifiedvars)
-lowest_representation = pd.value_counts(joined_stratifiedvars).min()
-
-# Another interesting check... (?)
-
-for stratifiedvar in stratifiedvars:
-    print(df[stratifiedvar].value_counts())
-
-possibilities = []
-for stratifiedvar in stratifiedvars:
-    uni=df[stratifiedvar].unique()
-    print(stratifiedvar,list(uni))
-    possibilities.append(list(uni))
-
-# See non existing combinations and report that
-
-possible_combinations=list(itertools.product(*possibilities))
-possible_combinations=['_'.join(x) for x in possible_combinations]
-
-nonexisting_combinations = set(possible_combinations).difference(joined_stratifiedvars)
-
-if len(nonexisting_combinations) > 0:
-    print('WARNING, the following combinations dont exist:')
-    print(nonexisting_combinations)
-
-# For now balanced withing the combinations that exist?
-
-random_seed = 0
-df_balanced = []
-for comb_ in existing_combinations:
-    subdf=df[df['combination']==comb_]
-    subdf=subdf.sample(n=lowest_representation,replace=False,random_state=random_seed)
-    df_balanced.append(subdf)
-
-df_orig = df.copy()
-df = pd.concat(df_balanced,ignore_index=True)
-dfX = df.drop(dropsToOnlyFeatures, axis=1)
-
-
-assert lowest_representation*len(existing_combinations) == df.shape[0]
-
-# Does this means that max val of NUM_FOLDS == lowest_representation, that is, if they are equal then 1 fold will only take 1 from each combination...
-assert NUM_FOLDS <= lowest_representation
-
-skf = StratifiedKFold(n_splits=NUM_FOLDS, shuffle=True, random_state=random_seed)
-
-# Verify correct features
-print(dfX.columns) # maybe this should go to some log...
-
-# stratification based on the "y" variable in these arguments, hence, combinations
-# But this would work better if all combinations were present...
-# See disparities when printing the value_counts of the stratifiedvars
-
-df['fold']=-1
-folds = {}
-for foldi,indexes in enumerate(skf.split(dfX,df['combination'])):
-   print(foldi)
-   train_index = indexes[0]
-   test_index = indexes[1]
-   folds[foldi] = {'train':train_index,'test':test_index}
-   df['fold'].iloc[test_index]=foldi
-
-assert -1 not in df['fold'].unique()
-
-## fold -1 will be all_seen data
-folds[-1] = {'train':dfX.index.to_numpy(),'test':dfX.index.to_numpy()}
-
-# To maintain good account of column transformations
-
-dropsToOnlyFeatures += ['fold']
-
-# Now with the fold column we should be able to leverage the OneGroupOut of Autogluon
-# But first apply scaling and transform from the training data of each fold
-
-for foldi,this_fold in folds.items():
-    train_index = this_fold['train']
-    test_index = this_fold['test']
-
-    df_train = df.copy().iloc[train_index]
-    df_test = df.copy().iloc[test_index]
-
-    dfX = df.copy().drop(dropsToOnlyFeatures,axis=1)
-    dfX_train = dfX.copy().iloc[train_index]
-    dfX_test = dfX.copy().iloc[test_index]
-
-    # we will have to save this scaled data for each fold as multiple scaling exist for the same row depending on which fold it is
-    # remember that we scale on the training indexes (not unique across folds) rather than the test indexes (unique)
-
-    if SCALING == 'combat':
-
-        #Define my re-scaling model (reComBat) to be used before TabularPredictor.fit()
-        combat_model = reComBat(**combat_params)
-
-        #Defining adjustment covariates from X_train to perform my desired re-scaling
-        covars_train = df_train[combat_covars].copy()
-        covars_train = covars_train.rename(columns=combat_rename, inplace=False)
-        for col in combat_str:
-            covars_train[col] = covars_train[col].astype(str)
-
-        #Defining adjustment covariates from X_train to perform my desired re-scaling
-        covars_test = df_test[combat_covars].copy()
-        covars_test = covars_test.rename(columns=combat_rename, inplace=False)
-        for col in combat_str:
-            covars_test[col] = covars_test[col].astype(str)
-
-
-        #Fitting the re-scaling (reComBat) model on the train data
-        combat_model.fit(data=dfX_train, batches=covars_train[combat_batch],X=covars_train.drop([combat_batch],axis=1))
-
-        #Re-scaling the train data using the fitted model
-        dfX_train = combat_model.transform(data=dfX_train.copy(), batches=covars_train[combat_batch],X=covars_train.drop([combat_batch],axis=1))
-        dfX_test = combat_model.transform(data=dfX_test.copy(), batches=covars_test[combat_batch],X=covars_test.drop([combat_batch],axis=1))
-
-        folds[foldi]['X_train'] = dfX_train.copy()
-        folds[foldi]['X_test'] = dfX_test.copy() # this would be unique, but for simplicity just maintain with the same structure we have
-
-    elif SCALING == 'standard':
-        scaler = StandardScaler()
-        scaler = scaler.fit(dfX_train)
-        dfX_train = scaler.transform(dfX_train.copy())
-        dfX_test = scaler.transform(dfX_test.copy())
-        folds[foldi]['X_train'] = dfX_train.copy()
-        folds[foldi]['X_test'] = dfX_test.copy() # this would be unique, but for simplicity just maintain with the same structure we have
-        # dfX_scaled = pd.DataFrame(dfX_scaled, columns=df.drop(all_drops, axis=1).columns)
-    else:
-        # NO SCALING
-        folds[foldi]['X_train'] = dfX_train.copy()
-        folds[foldi]['X_test'] = dfX_test.copy() # this would be unique, but for simplicity just maintain with the same structure we have
-
-print(folds.keys())
-
-folds.
-## BUILD A REDUNDANT DATAFRAME WITH TEST AND TRAIN OF EACH FOLD IN SEPARATE ROWS, WITH EXTRA COLUMNS OF FOLDS AND TYPE (TRAIN OR TEST)
-## FOR AUTOMLJAR PASS THE APPROPIATE INDEXES FOR EACH FOLD'S TRAIN AND TEST
-## FOR AUTOGULON IS HARDER, WE HAVE TO MANIPULATE THE LEAVEONEGROUPOUT
-## WHEN TRAINING FOLD 1 the training will include folds 2,3,4,5 training data which include for example data from fold 2 with multiple scalings
-## SO THIS IS NOT TRIVIAL...
-## MAYBE THE BEST IS TO USE AUTOGLUON FROM THE OUTSIDE, THAT IS PASS ONE FOR PER AUTOGLUON CALL (NO BAGGING/FOLDS)
-## AND COLLECT THE RESULTING DATAFRAMES FROM STATITSTICS
-
-
-
-
-"""
-if False:
-    skf = StratifiedKFold(n_splits=num_folds, shuffle=True, random_state=123)
-    # for train_index, test_index in skf.split(X_train, y_train):
-    #     X_train_fold, X_val_fold = X_train[train_index], X_train[test_index]
-    #     y_train_fold, y_val_fold = y_train[train_index], y_train[test_index]
-
-        # Your code for training and evaluating the model on each fold goes here
-
-
-
-
-    fwiz = FeatureWiz(corr_limit=0.75, feature_engg='', category_encoders='', dask_xgboost_flag=False, nrows=None, verbose=0)
-    X_train_selected = fwiz.fit(df_scaled, df[targets])
-    ### get list of selected features ###
-    fwiz.features  
-
-
-    #https://supervised.mljar.com/api/
-    mode='Explain'#'Perform'#'Compete'#'Explain'
-    imb = 'default'
-    CV_TYPES={'kfold':{
-        "validation_type": "kfold",
-        "k_folds": 5,
-        "shuffle": True,
-        "stratify": True,
-        "random_seed": 123
-        },
-    'custom':{'validation_type': 'custom'},
-    'split':{
-        "validation_type": "split",
-        "train_ratio": 0.75,
-        "shuffle": True,
-        "stratify": True
-        }
-    }
-
-    #algos = ['Baseline', 'Linear', 'Decision Tree','LightGBM', 'Xgboost', 'CatBoost']
-    #'auto'#['Baseline', 'Linear', 'Decision Tree', 'Extra Trees', 'LightGBM', 'Xgboost', 'CatBoost', 'Nearest Neighbors']
-    algos = ['Baseline', 'Linear', 'Decision Tree', 'Random Forest', 'Extra Trees', 'LightGBM', 'Xgboost', 'CatBoost', 'Neural Network', 'Nearest Neighbors']
-    auto_init = dict(algorithms=algos, explain_level=0, ml_task='auto', mode=mode, eval_metric='rmse', validation_strategy=CV_TYPES['custom'], model_time_limit=60*60)
-    internal_njobs=10
-    automl = AutoML(**auto_init,n_jobs=internal_njobs)
-    automl.fit(df_scaled, df[targets],cv=list(skf.split(df_scaled, df[targets])))
-
-
-
-#https://auto.gluon.ai/stable/api/autogluon.tabular.TabularPredictor.html
-
-from autogluon.tabular import TabularDataset, TabularPredictor
-from sklearn.model_selection import LeaveOneGroupOut
-from iterstrat.ml_stratifiers import RepeatedMultilabelStratifiedKFold
-
-
-
-np.unique()
-
-
-for train_index, test_index in mskf.split(X, y):
-   print("TRAIN:", train_index, "TEST:", test_index)
-   X_train, X_test = X[train_index], X[test_index]
-   y_train, y_test = y[train_index], y[test_index]
-
-df['multilabel']=[[i,j] for i,j in zip(df['split'],df['sex'])]
-
-# Determine the the leaveoutvar with least samples
-
-
-logo = LeaveOneGroupOut()
-splits=logo.split(df,df[targets],df[leaveoutvar])
-splitnum=0
-for train_index, test_index in splits:
-
-    for leaveoutInstance in df[leaveoutvar].unique():
-
-
-
-
-    X_train, X_test = df_scaled.iloc[train_index], df_scaled.iloc[test_index]
-    y_train, y_test = df[targets].iloc[train_index], df[targets].iloc[test_index]
-    groups=df['split'].iloc[train_index]
-    print(np.unique(groups,return_counts=True))
-    df_train=df.iloc[train_index]
-    #print(df_train.describe())
-    print(splitnum)
-    splitnum+=1
-
-
-
-mskf = MultilabelStratifiedKFold(n_splits=df['split'].unique().shape[0], shuffle=True, random_state=0)
-# this is cool, but this is not what i need, We want leaveonegroupout but also stratified
-for train_index, test_index in mskf.split(df_scaled, enc.transform(df[strata])):
-   #print("TRAIN:", train_index, "TEST:", test_index)
-   X_train, X_test = df_scaled.iloc[train_index], df_scaled.iloc[test_index]
-   y_train, y_test = df[targets].iloc[train_index], df[targets].iloc[test_index]
-   print(np.unique(df['split'].iloc[train_index],return_counts=True))
-
-
-unique_combinations = np.array([f"{gender}_{group}" for gender, group in zip(df['sex'], df['split'])])
-
-# Create folds while leaving one group out
-skf = StratifiedKFold(n_splits=len(df['split'].unique()), shuffle=True, random_state=42)
-
-for train_index, test_index in skf.split(df_scaled, unique_combinations):
-    train_data, test_data = df_scaled.iloc[train_index], df_scaled.iloc[test_index]
-    print(np.unique(df['split'].iloc[train_index],return_counts=True))
-    print(np.unique(df['sex'].iloc[train_index],return_counts=True))
-
-
-
-from sklearn.model_selection import StratifiedKFold
-import pandas as pd
-
-# Assuming 'df' is your DataFrame where each row contains features and labels, and 'sex' and 'split' are columns representing the respective variables
-
-# Split data by sex
-male_data = df[df['sex'] == 'M']
-female_data = df[df['sex'] == 'F']
-
-# Combine 'sex' and 'split' to create a unique identifier for each combination
-unique_combinations_male = male_data['sex'] + '_' + male_data['split']
-unique_combinations_female = female_data['sex'] + '_' + female_data['split']
-
-# Create folds leaving one group out
-skf = StratifiedKFold(n_splits=len(df['split'].unique()), shuffle=True, random_state=42)
-
-for male_index, female_index in skf.split(male_data, unique_combinations_male):
-    train_male, test_male = male_data.iloc[male_index], male_data.iloc[female_index]
-    train_female, test_female = female_data.iloc[male_index], female_data.iloc[female_index]
-    
-    train_data = pd.concat([train_male, train_female])
-    test_data = pd.concat([test_male, test_female])
-    
-    print(np.unique(df['split'].iloc[train_index],return_counts=True))
-    print(np.unique(df['sex'].iloc[train_index],return_counts=True))
-    # Now 'train_data' and 'test_data' contain balanced folds with respect to sex, leaving out one group in each fold
-
-
-logo = LeaveOneGroupOut()
-splits=logo.split(df_scaled, df[targets], df['split'])
-splitnum=0
-for train_index, test_index in splits:
-    X_train, X_test = df_scaled.iloc[train_index], df_scaled.iloc[test_index]
-    y_train, y_test = df[targets].iloc[train_index], df[targets].iloc[test_index]
-    groups=df['split'].iloc[train_index]
-    print(np.unique(groups,return_counts=True))
-    df_train=df.iloc[train_index]
-    #print(df_train.describe())
-    print(splitnum)
-    splitnum+=1
-
-
-numfolder=0
-while True:
-    numpath=f'./data/autogluon/autogluon_{numfolder}'
-    numpathlog=numpath.replace('autogluon','autogluonlogs')
-    if not os.path.exists(numpath):
-        #os.makedirs(numpath) autogluon will create it
-        break
-    numfolder+=1
-
-df_scaled_target=df_scaled.copy()
-df_scaled_target[targets[0]]=df[targets[0]]
-df_scaled_target['split']=df['split']
-# test_data = TabularDataset(f'{data_url}test.csv')
-# predictor.evaluate(test_data, silent=True)
-# y_pred = predictor.predict(test_data.drop(columns=[label]))
-# y_pred.head()
-# predictor.leaderboard(test_data)
-
-params=dict(label=targets[0],
-problem_type=None,
-eval_metric='root_mean_squared_error',
-path=numpath,
-verbosity= 2, 
-log_to_file=True,
-log_file_path=numpathlog,
-sample_weight= None,
-weight_evaluation= False,
-groups='split',
-)
-#groups=targets[0])
-
-predictor = TabularPredictor(**params)
-
-predictor.fit(df_scaled_target, 
-tuning_data=None, 
-time_limit = None,
-presets = None,
-hyperparameters = None,
-feature_metadata='infer',
-infer_limit = None,
-infer_limit_batch_size = None,
-fit_weighted_ensemble = True, 
-fit_full_last_level_weighted_ensemble = True,
-full_weighted_ensemble_additionally  = False,
-dynamic_stacking = False,
-calibrate_decision_threshold = False,
-num_cpus=10,
-num_gpus='auto',
-num_bag_folds=None,
-)
-
-leadf=predictor.leaderboard()
-leadf.shape
-"""
+fold_path = os.path.join(PIPELINE['scalingAndFolding']['path'])
+fold_pattern = os.path.join(fold_path,'**','folds-*.pkl')
+foldinstances = glob.glob(fold_pattern,recursive=True)
+foldinstances = [x for x in foldinstances if 'folding' in x]
+
+for _foldpath in foldinstances:
+
+    foldcomb = os.path.basename(_foldpath).split('-')[1].split('.')[0]
+    foldsavepath = os.path.join(OUTPUT_DIR,foldcomb)
+    os.makedirs(foldsavepath,exist_ok=True)
+
+    for mlmodel,mlparams in PIPELINE['ml']['models'].items():
+        _foldinstance = pickle.load(open(_foldpath,'rb'))
+
+        # Make superdataset
+        dfX_train = []
+        dfY_train = []
+        dfX_test = []
+        dfY_test = []
+        df_train = []
+        df_test = []
+        foldnums = list(_foldinstance.keys())
+        for foldnum,data in _foldinstance.items():
+            dfX_train.append(data['X_train'])
+            dfY_train.append(data['Y_train'])
+            dfX_test.append(data['X_test'])
+            dfY_test.append(data['Y_test'])
+            df_train.append(data['df_train'])
+            df_test.append(data['df_test'])
+        dfX_train = pd.concat(dfX_train,ignore_index=True)
+        dfX_train['phase']='train'
+        dfY_train = pd.concat(dfY_train,ignore_index=True)
+        dfY_train['phase']='train'
+        dfX_test = pd.concat(dfX_test,ignore_index=True)
+        dfX_test['phase']='test'
+        dfY_test = pd.concat(dfY_test,ignore_index=True)
+        dfY_test['phase']='test'
+        df_train = pd.concat(df_train,ignore_index=True)
+        df_train['phase']='train'
+        df_test = pd.concat(df_test,ignore_index=True)
+        df_test['phase']='test'
+
+        dfX = pd.concat([dfX_train,dfX_test],ignore_index=True)
+        dfY= pd.concat([dfY_train,dfY_test],ignore_index=True)
+        df = pd.concat([df_train,df_test],ignore_index=True)
+
+        assert len(dfX)==len(dfY)==len(df)
+
+        # Make indexes for folds
+        fold_tuples = []
+        for foldnum in foldnums:
+            # train,test
+            fold_tuples.append((df[(df['fold']==foldnum) & (df['phase']=='train')].index,df[(df['fold']==foldnum) & (df['phase']=='test')].index))
+
+#        index_train = df_train['fold']==
+
+        savepath = os.path.join(foldsavepath,mlmodel)
+        os.makedirs(savepath,exist_ok=True)
+
+        mlmethod = mlparams['method']
+        if mlmethod == 'AutoMLjar':
+            continue
+            # https://supervised.mljar.com/api/
+            AutoML = AutoML(**mlparams['init'] ,results_path=savepath)
+            AutoML.fit(dfX,dfY,cv=fold_tuples)
+
+        if mlmethod == 'AutoGluon':
+            #https://auto.gluon.ai/stable/api/autogluon.tabular.TabularPredictor.html
+
+            leads_train = []
+            leads_test = []
+            for foldnum,data in _foldinstance.items():
+                this_path = os.path.join(savepath,f'fold_{foldnum}')
+                this_path_log = os.path.join(savepath,f'fold_{foldnum}_logs')
+                # assume 1 single target
+                label=dfY_test.columns[0]
+                predictor = TabularPredictor(label=label,**mlparams['init'],path=this_path,log_file_path=this_path_log)
+
+                # We should fix the fact that folds would be reduced by cutting out tuning_data
+                # See: https://auto.gluon.ai/stable/api/autogluon.tabular.TabularPredictor.fit.html#tabularpredictor-fit
+                # If tuning_data = None, fit() will automatically hold out some random validation examples from train_data.
+                dfX_train = data['X_train']
+                dfY_train = data['Y_train']
+                dfX_train[label]=dfY_train[label] # Add target as it expects full dataframe
+
+                dfX_test = data['X_test']
+                dfY_test = data['Y_test']
+                dfX_test[label]=dfY_test[label]
+
+                predictor.fit(dfX_train, **mlparams['fit'])
+
+                leadf_train=predictor.leaderboard(dfX_train)
+                leadf_train['fold']=foldnum
+
+                predictor.evaluate(dfX_test, silent=True)
+                leadf_test = predictor.leaderboard(dfX_test)
+                leadf_test['fold']=foldnum
+
+                leads_train.append(leadf_train)
+                leads_test.append(leadf_test)
+            
+            leads_train = pd.concat(leads_train,ignore_index=True)
+            leads_test = pd.concat(leads_test,ignore_index=True)
+            leads_train.to_csv(os.path.join(savepath,'leaderboard_train.csv'))
+            leads_test.to_csv(os.path.join(savepath,'leaderboard_test.csv'))
+
+            def agg_func(x):
+                if x.dtype == object:
+                    return x.mode()[0]  # Return the most frequent value for strings
+                elif x.dtype == bool:
+                    return x.astype(int).mean()  # Convert bools to 0/1 and take mean
+                else:
+                    return x.mean()  # Return the mean for numerics
+
+            leadf_train = leads_train.drop(['fold'],axis=1).groupby('model').agg(agg_func).reset_index()
+            leadf_test = leads_test.drop(['fold'],axis=1).groupby('model').agg(agg_func).reset_index()
+            leadf_train.to_csv(os.path.join(savepath,'leaderboard_train_aggfolds.csv'))
+            leadf_test.to_csv(os.path.join(savepath,'leaderboard_test_aggfolds.csv'))

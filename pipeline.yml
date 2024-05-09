@@ -76,7 +76,7 @@ scalingAndFolding:
     - dataset
     - group
     - sex
-  scalings: # dont use _ in the name (bids-like)
+  scalings: # dont use _ - in the name (bids-like)
     scalingCombat : # name of this particular scaling config
         method : 'reCombat'
         init:
@@ -100,7 +100,7 @@ scalingAndFolding:
           - sex
     scalingStandard:
       method : 'StandardScaler'
-  splits : # dont use _ in the name (bids-like)
+  splits : # dont use _ - in the name (bids-like)
     folding:
       method : 'StratifiedKFold'
       num_folds: 5 # stratified by combination by default
@@ -127,3 +127,55 @@ scalingAndFolding:
 
 ml:
   path: './data/ml'
+  models:
+    automljar :
+      method : AutoMLjar
+      init :
+        algorithms :
+          - 'Baseline'
+          - 'Linear'
+          - 'Decision Tree'
+          # - 'Random Forest'
+          # - 'Extra Trees'
+          - 'LightGBM'
+          - 'Xgboost'
+          - 'CatBoost'
+          # - 'Neural Network'
+          # - 'Nearest Neighbors'
+        explain_level : 1
+        ml_task : 'auto'
+        mode : Explain
+        eval_metric : 'rmse'
+        validation_strategy : 
+          validation_type : custom
+        model_time_limit : 3600
+        n_jobs : 1
+
+    autogluon:
+      method: AutoGluon
+      init:
+        problem_type: 'regression'
+        eval_metric: 'root_mean_squared_error'
+        verbosity: 2
+        log_to_file: True
+        sample_weight: null
+        groups: null
+      fit :
+        tuning_data : null
+        time_limit : null
+        presets : null
+        hyperparameters : null
+        feature_metadata : 'infer'
+        infer_limit : null 
+        infer_limit_batch_size : null
+        fit_weighted_ensemble : True
+        fit_full_last_level_weighted_ensemble : True
+        full_weighted_ensemble_additionally  : False
+        dynamic_stacking : False
+        calibrate_decision_threshold : False
+        num_cpus : 10
+        num_gpus : auto
+        num_bag_folds : 0
+
+
+
