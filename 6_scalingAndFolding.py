@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import os
 import yaml
 import json
-#from featurewiz import FeatureWiz
+from featurewiz import FeatureWiz
 from sklearn.model_selection import train_test_split
 from eeg_raw_to_classification.utils import parse_bids,load_yaml,get_output_dict,save_dict_to_json,save_figs_in_html
 import itertools
@@ -37,6 +37,11 @@ targets=CFG['targets']
 dropsToOnlyFeatures= CFG['dropsToOnlyFeatures'] + targets
 stratifiedvars= CFG['stratifiedvars'] # these are categorical in general... , they should be the same as the covars in combat?
 # you may include or not some variables if too many combinations dont exist, for example only dataset (site)
+
+# TODO: we had max_features in the previous harmonization pipeline, should we include it here?
+# MAX_FEATURES=PIPELINE['harmonization']['MAX_FEATURES']
+# if MAX_FEATURES is not None:
+#     df = df.iloc[:,:MAX_FEATURES]
 
 
 # The thing here is that some combinations may not actually exist in the dataset
@@ -85,8 +90,13 @@ df_orig = df.copy()
 split_scaling_combs = list(product(CFG['scalings'].keys(),CFG['splits'].keys()))
 
 for scaling_name,split_name in split_scaling_combs:
+
+
     split_cfg = CFG['splits'][split_name]
     scaling_cfg = CFG['scalings'][scaling_name]
+    fullname = f'{scaling_name}@{split_name}'
+    print(fullname)
+
 
     df = pd.concat(df_balanced,ignore_index=True)
     assert lowest_representation*len(existing_combinations) == df.shape[0]
@@ -206,8 +216,8 @@ for scaling_name,split_name in split_scaling_combs:
         elif 'StandardScaler' in scaling_cfg['method']:
             scaler = StandardScaler()
             scaler = scaler.fit(dfX_train)
-            dfX_train = scaler.transform(dfX_train.copy())
-            dfX_test = scaler.transform(dfX_test.copy())
+            dfX_train = pd.DataFrame(scaler.transform(dfX_train.copy()), columns=dfX_train.columns)
+            dfX_test = pd.DataFrame(scaler.transform(dfX_test.copy()), columns=dfX_test.columns)
             folds[foldi]['X_train'] = dfX_train.copy()
             folds[foldi]['X_test'] = dfX_test.copy() # this would be unique, but for simplicity just maintain with the same structure we have
             folds[foldi]['Y_train'] = dfY_train.copy()
@@ -225,16 +235,16 @@ for scaling_name,split_name in split_scaling_combs:
             folds[foldi]['df_test'] = df_test.copy()
 
     # Save the folds in pkl
-    with open(os.path.join(save_path,'folds.pkl'),'wb') as f:
+    with open(os.path.join(save_path,f'folds-{fullname}.pkl'),'wb') as f:
         pickle.dump(folds,f)
 
     for foldi,this_fold in folds.items():
         dfXacross_test.append(this_fold['X_test'])
         dfYacross_test.append(this_fold['Y_test'])
         dfacross.append(this_fold['df_test'])
-    dfXacross_test = np.concatenate(dfXacross_test,axis=0)
-    dfYacross_test = np.concatenate(dfYacross_test,axis=0)
-    dfacross = pd.concat(dfacross,axis=0)
+    dfXacross_test = pd.concat(dfXacross_test,axis=0,ignore_index=True)
+    dfYacross_test = pd.concat(dfYacross_test,axis=0,ignore_index=True)
+    dfacross = pd.concat(dfacross,axis=0,ignore_index=True)
     
     dfXBefore =df.copy().drop(dropsToOnlyFeatures,axis=1) # The before data is the complete feature set, the folds dont matter here
     dfBefore = df.copy()
@@ -263,12 +273,13 @@ for scaling_name,split_name in split_scaling_combs:
     for vizname,viz_cfg in CFG['visualizations'].items():
 
         # Note that When split_method is all, the unseen data is the same as the seen data
+        # so that would be the one to review for seeing what happens when the scaler knows all the data
         
-        for effect,scaling_effect in scaling_effect.items():
+        for effect,_scaling_effect in scaling_effect.items():
         
-            _dfXacross_test = scaling_effect['X']
-            _dfYacross_test = scaling_effect['Y']
-            _dfacross = scaling_effect['df']
+            _dfXacross_test = _scaling_effect['X']
+            _dfYacross_test = _scaling_effect['Y']
+            _dfacross = _scaling_effect['df']
             phase = effect
             if viz_cfg['method'] == 'PCA':
                 # PCA
@@ -304,6 +315,19 @@ for scaling_name,split_name in split_scaling_combs:
                 ax.legend(handles=legend_elements, title=viz_cfg['color_by'])
                 plt.savefig(os.path.join(save_path,f'PCA_{phase}.png'))
 
+    # Feature Engineering with all unseen transformed data
+    # when split_method is all, the unseen data is the same as the seen data, so that would be the best to use for feature engineering insight
+    # (the scaler knows all the data)
+
+    for effect,_scaling_effect in scaling_effect.items():
+        fwiz = FeatureWiz(**CFG['featurewiz']['init'])
+        print(fullname,effect)
+        print(_scaling_effect['X'].shape,_scaling_effect['Y'].shape)
+        X_train_selected = fwiz.fit(_scaling_effect['X'], _scaling_effect['Y'])
+
+        save_dict_to_json(os.path.join(save_path,f'fwiz_{effect}.json'),{'features':fwiz.features})
+        with open(os.path.join(save_path,f'fwiz_{effect}.pkl'),'wb') as f:
+            pickle.dump(fwiz,f)
 
 ## BUILD A REDUNDANT DATAFRAME WITH TEST AND TRAIN OF EACH FOLD IN SEPARATE ROWS, WITH EXTRA COLUMNS OF FOLDS AND TYPE (TRAIN OR TEST)
 ## FOR AUTOMLJAR PASS THE APPROPIATE INDEXES FOR EACH FOLD'S TRAIN AND TEST
