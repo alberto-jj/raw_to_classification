@@ -5,6 +5,68 @@ import numpy as np
 import mne
 import pandas as pd
 from eeg_raw_to_classification.utils import parse_bids
+import os
+from fooof import FOOOF
+import copy
+
+def process_feature(epochs,relevantpath,CFG,feature,pipeline_name):
+    featdict = CFG['feature_cfg'][feature]
+    overwrite = featdict['overwrite']
+    output = epochs.copy()
+
+    for i_f,stage in enumerate(featdict['chain']):
+        input_data = output
+        if 'feature' in stage.keys():
+            # is a feature that is saved or should be saved
+            suffix = stage['feature']
+            outputfile = relevantpath.replace('_epo.fif',f'_{suffix}.npy')
+            inner_featdict = CFG['feature_cfg'][suffix]
+            if not os.path.isfile(outputfile) or inner_featdict['overwrite']:
+                print(f'Feature {suffix} not found')
+                output = process_feature(input_data,relevantpath,CFG,suffix,pipeline_name)
+                os.makedirs(os.path.dirname(outputfile),exist_ok=True)
+                np.save(outputfile,output)
+            else:
+                print(f'Already Exists:{outputfile}')
+                output = np.load(outputfile,allow_pickle=True).item()
+
+        if 'function' in stage.keys():
+            inner_featdict = stage
+            if i_f == len(featdict['chain'])-1:
+                # Last stage, assume we want to save it with the feature name
+                suffix = feature
+                outputfile = relevantpath.replace('_epo.fif',f'_{suffix}.npy')
+                if not os.path.isfile(outputfile) or overwrite:
+                    fun = eval(f"{inner_featdict['function']}")
+                    output = fun(input_data,**inner_featdict['args'])
+                    os.makedirs(os.path.dirname(outputfile),exist_ok=True)
+                    np.save(outputfile,output)
+                else:
+                    print(f'Already Exists:{outputfile}')
+                    output = np.load(outputfile,allow_pickle=True).item()
+            else:
+                output = eval(f"inner_featdict['function']")(input_data,**inner_featdict['args'])
+        input_data = output
+    return output
+
+
+def agg_numpy(x,numpyfun,axisname='epochs',max_numitem=None): # or give a more complex indexing for items
+    x = copy.deepcopy(x)
+    # input is the dict from np.load
+    # a function like this could help for rois
+    # spaces gets mapped to rois for example, and you modify the metadata appropiately
+    axis= x['metadata']['order']
+    axis = axis.index(axisname)
+
+    if max_numitem is not None:
+        x['values'] = np.take(x['values'], indices=range(max_numitem), axis=axis)
+    # handle metadata appropriately
+    x['values'] = numpyfun(x['values'],axis=axis)
+    order = list(x['metadata']['order'])
+    order.remove(axisname)
+    x['metadata']['order'] = tuple(order)
+    del x['metadata']['axes'][axisname]
+    return x
 
 
 def spectrum(data, sf, method='multitaper_average', window_sec=None):
@@ -85,19 +147,20 @@ BANDS2 ={
     'beta3' : (21, 30),
 }
 
-def spectrum(epochs,multitaper={}):
+def spectrum_multitaper(epochs,multitaper={}):
     epochs = epochs.copy()
     sf = epochs.info['sfreq']
 
     space_names = epochs.info['ch_names']
 
     psd,freqs = psd_array_multitaper(epochs.get_data(), sf, **multitaper)
-
-    psd_mean = np.mean(psd,axis=0,keepdims=True) #epochs, spaces,freqs
-    fullpsd = np.concatenate([psd,psd_mean])
-    assert np.all(fullpsd[-1,:,:]==psd_mean) # Last Epoch is the mean
+    fullpsd = psd
+    # I think that having the mean here at the last position is confusing
+    #psd_mean = np.mean(psd,axis=0,keepdims=True) #epochs, spaces,freqs
+    #fullpsd = np.concatenate([psd,psd_mean])
+    #assert np.all(fullpsd[-1,:,:]==psd_mean) # Last Epoch is the mean
     epochs_labels = [x for x in range(fullpsd.shape[0])]
-    epochs_labels[-1] = 'EPOCHS-MEAN'
+    #epochs_labels[-1] = 'EPOCHS-MEAN'
     output = {}
     output['metadata'] = {'type':'PowerSpectrum'}
     output['metadata']['axes']={'epochs':epochs_labels,'spaces':space_names,'frequencies':freqs}
@@ -105,13 +168,73 @@ def spectrum(epochs,multitaper={}):
     output['values'] = fullpsd
     return output
 
-def relative_bandpower(data,bands=BANDS,multitaper={}):
+def single_fooof(freqs, psds, internal_kwargs={'FOOOF':{},'fit':{}}):
+    kwargs = copy.deepcopy(internal_kwargs)
+    for key,val in kwargs.items():
+        for k,v in val.items():
+            if isinstance(v,str) and 'eval%' in v:
+                expression = v.replace('eval%','')
+                kwargs[key][k] = eval(expression)
+
+    fm = FOOOF(verbose=False,**kwargs['FOOOF'])
+    fm.fit(freqs, psds,**kwargs['fit']) # correct, if we used add_data it would ignore for examle freq_range
+    return fm
+
+def fooof_from_average(data,agg_fun=None,internal_kwargs={'FOOOF':{},'fit':{}}):
+    #data,internal_kwargs={'compute_psd':{},'single_fooof':{}},extra_metadata={},n_jobs=1):
+    # we can view this as a new feature or as an aggregate
     if isinstance(data,dict):
       spectra = data # Assume we have the output of spectrum() if input is dict
     else: # Else assume epochs mne object
-      spectra = spectrum(data,multitaper)
+      raise ValueError('Only dict input supported')
+    kwargs = copy.deepcopy(internal_kwargs)
+    for key,val in kwargs.items():
+        for k,v in val.items():
+            if isinstance(v,str) and 'eval%' in v:
+                expression = v.replace('eval%','')
+                kwargs[key][k] = eval(expression)
+
+    if agg_fun is None:
+      psd = data['values'].mean(axis=axes.index('epochs'))
+    else:
+      agg_fun = eval(agg_fun.replace('eval%',''))
+      spectra = agg_fun(data)
+      psd = spectra['values']
+
+    spaces =  spectra['metadata']['axes']['spaces']
+    freqs =   spectra['metadata']['axes']['frequencies']
     # Only the mean
-    psd = spectra['values'][-1,:,:] # last epoch is mean
+    axes= spectra['metadata']['order']
+
+    output = {}
+
+    values = np.empty(len(spaces),dtype=object)
+    output['metadata'] = {'type':'fooofFromAverageSpectrum','kwargs':{'internal_kwargs':internal_kwargs},'freqs':freqs}
+    output['metadata']['axes']={'spaces':spaces}
+    output['metadata']['order']=('spaces')
+    for space in spaces:
+        space_idx = spaces.index(space)
+        thispsd = np.take(psd,indices=space_idx,axis=axes.index('spaces'))
+        fm = single_fooof(freqs, thispsd,kwargs)
+        values[space_idx]= fm
+    output['values'] = values
+    return output
+
+def relative_bandpower(data,bands=BANDS,multitaper={},agg_fun=None):
+    # we can view this as a new feature or as an aggregate
+    if isinstance(data,dict):
+      spectra = data # Assume we have the output of spectrum() if input is dict
+    else: # Else assume epochs mne object
+      spectra = spectrum_multitaper(data,multitaper)
+    # Only the mean
+    axes= spectra['metadata']['order']
+
+    if agg_fun is None:
+      psd = spectra['values'].mean(axis=axes.index('epochs'))
+    else:
+      agg_fun = eval(agg_fun.replace('eval%',''))
+      spectra = agg_fun(spectra)
+      psd = spectra['values']
     spaces =  spectra['metadata']['axes']['spaces']
     freqs =   spectra['metadata']['axes']['frequencies']
     output = {}

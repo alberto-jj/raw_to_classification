@@ -9,54 +9,88 @@ preprocess:
     skip_reject : True
   overwrite : True
 
+prep_inspection:
+  path : './data/prep_inspection'
+  overwrite : True
+
 features:
+  pipeline_name : 'features-epochs'
   downsample : 500
-  num_epochs : min
   prefilter :
     l_freq : 1
     h_freq : 30
   keep_channels : False
-  feature_list: # You can configure different features for the same function but different args
+  feature_list: # To say which features actually compute rather than configure
+    - FooofFromAverage
+    - PowerSpectrum
+    - RelativeBandPower1
+    - RelativeBandPower2
+  feature_cfg: # You can configure different features for the same function but different args
     # The suffix will be the higher hierarchy name you put here
     PowerSpectrum:
       overwrite : False
-      function : spectrum
-      args:
-        multitaper:
-          adaptive : False
-          low_bias : True
-          normalization : 'full'
-          verbose : 0
+      chain: # Chain is a list of either dict of defined functions (outputs not saved) or dict of defined features (output saved)
+      # input of chain is assumed to be mne epochs unless it first item is directly a feature
+      - function : spectrum_multitaper
+        args:
+          multitaper:
+            adaptive : False
+            low_bias : True
+            normalization : 'full'
+            verbose : 0
     RelativeBandPower1:
       overwrite : False
-      function: relative_bandpower
-      args :
-        bands:
-          delta : [1,4]
-          theta : [4,8]
-          alpha : [8,13]
-          beta  : [13,30]
-          pre_alpha : [5.5,8]
-          slow_theta : [4,5.5]
-        multitaper : {}
+      chain :
+        - feature : PowerSpectrum # this will save PowerSpectrum if not already saved
+        - function: relative_bandpower
+          args :
+            bands:
+              delta : [1,4]
+              theta : [4,8]
+              alpha : [8,13]
+              beta  : [13,30]
+              pre_alpha : [5.5,8]
+              slow_theta : [4,5.5]
+            multitaper : {}
+            agg_fun : "eval%lambda x: agg_numpy(x,np.mean,axisname='epochs',max_numitem=24)" # You can set up max epochs by max_numitem obtained from prep_inspection
     RelativeBandPower2:
       overwrite : False
-      function: relative_bandpower
-      args :
-        bands:
-          alpha1 : [8.5, 10.5]
-          alpha2 : [10.5, 12.5]
-          beta1  : [12.5, 18.5]
-          beta2  : [18.5, 21]
-          beta3  : [21, 30]
-        multitaper : {}
+      chain :
+        - feature : PowerSpectrum
+        - function: relative_bandpower
+          args :
+            bands:
+              alpha1 : [8.5, 10.5]
+              alpha2 : [10.5, 12.5]
+              beta1  : [12.5, 18.5]
+              beta2  : [18.5, 21]
+              beta3  : [21, 30]
+            multitaper : {}
+            agg_fun : "eval%lambda x: agg_numpy(x,np.mean,axisname='epochs',max_numitem=24)" # You can set up max epochs by max_numitem obtained from prep_inspection
+    FooofFromAverage:
+      overwrite : False
+      chain:
+        - feature : PowerSpectrum
+        - function : fooof_from_average
+          args :
+            agg_fun : "eval%lambda x: agg_numpy(x,np.mean,axisname='epochs',max_numitem=24)" # You can set up max epochs by max_numitem obtained from prep_inspection
+            internal_kwargs:
+              FOOOF:
+                aperiodic_mode : knee
+              fit:
+                freq_range : [2,35]
 
 aggregate:
   path : './data/aggregate'
   filename : 'multidataset.csv'
   id_splitter : '/'
-  features: 
-    - RelativeBandPower1
+  feature_return:
+    RelativeBandPower1: # Could be the original name or a post-processed name
+      return_function : "eval%lambda x: x"
+      file_suffix : RelativeBandPower1
+
+  feature_list:
+    - RelativeBandPower1 # could be the original name or a post-processed name
     #- RelativeBandPower2
 
 scalingAndFolding:

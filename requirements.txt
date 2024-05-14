@@ -20,3 +20,4 @@ shap
 psutil
 openpyxl
 kaleido
+specparam

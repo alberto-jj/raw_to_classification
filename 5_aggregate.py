@@ -7,6 +7,7 @@ import itertools
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
+from eeg_raw_to_classification.aggregates import *
 
 
 pipeline_name = 'aggregate'
@@ -40,16 +41,18 @@ for dslabel, DATASET in datasets.items():
         idx = participants[participants['subject']==sub]
         assert idx.shape[0]==1 #unique
         return idx[field].item()
-    for feature in cfg['aggregate']['features']:
+    for feature in cfg['aggregate']['features_list']:
         pattern = os.path.join(DATASET.get('bids_root', None),'derivatives','features',f'**/*_{feature}.npy').replace('\\','/')
         eegs = glob.glob(pattern,recursive=True)
         #output =os.path.join(DATASET.get('bids_root', None),'derivatives',pipeline_name,f'{feature}.csv')
         #os.makedirs(os.path.dirname(output),exist_ok=True)
         dict_list=[]
+        foodict = cfg['aggregate']['feature_return'][feature]
+        foo = eval(foodict['return_function'].replace('eval%',''))
 
         for eeg_file in eegs:
             suffix = os.path.basename(eeg_file).split('_')[-1].split('.')[0] +'.'
-            dict_list += get_output_dict(eeg_file,'WIDE',DATASET['dataset_label'],suffix)
+            dict_list += get_output_dict(eeg_file,'WIDE',DATASET['dataset_label'],suffix,agg_fun=None)
 
 
         df = pd.DataFrame(dict_list)

@@ -73,7 +73,7 @@ def load_yaml(rules):
     else:
         raise ValueError(f'Expected str or dict as rules, got {type(rules)} instead.')
 
-def get_output_dict(eeg_file,FORMAT='WIDE',dataset_label='',feature_suffix=''):
+def get_output_dict(eeg_file,FORMAT='WIDE',dataset_label='',feature_suffix='', agg_fun= None):
     output = np.load(eeg_file,allow_pickle=True).item()
     filename = os.path.basename(eeg_file)
     subject = parse_bids(filename)['sub']
