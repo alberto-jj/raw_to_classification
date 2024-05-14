@@ -89,7 +89,7 @@ aggregate:
       return_function : "eval%lambda x: x"
       file_suffix : RelativeBandPower1
 
-  feature_list:
+  feature_list: # CHOOSE FEATURES WITH SAME DIMENSIONS, OTHERWISE THE DATAFRAME CANT BE MADE
     - RelativeBandPower1 # could be the original name or a post-processed name
     #- RelativeBandPower2
 
