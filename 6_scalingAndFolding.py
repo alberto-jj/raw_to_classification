@@ -43,6 +43,7 @@ stratifiedvars= CFG['stratifiedvars'] # these are categorical in general... , th
 # if MAX_FEATURES is not None:
 #     df = df.iloc[:,:MAX_FEATURES]
 
+# TODO: make roi space features here...
 
 # The thing here is that some combinations may not actually exist in the dataset
 # Guess we should just ignore those and collect up to the lowest represented

@@ -21,3 +21,4 @@ psutil
 openpyxl
 kaleido
 specparam
+cmasher

@@ -211,5 +211,34 @@ ml:
         num_gpus : auto
         num_bag_folds : 0
 
+eda:
+  path: './data/eda'
+  
+  # ols
+  category_vars:
+    - dataset
+    - sex
+  desired_threshold: 0.05
+  formula: "{feature} ~ C(group, Treatment(reference='HC')) + age + sex"
 
-
+  # plot based on feature type (1st level)
+  # define functions (or a map-dictionary)
+  feature_categories:
+    category_name : band
+    category_mapping: |
+      def category_mapping(x):
+        for b in ['pre_alpha','alpha','beta','gamma','delta','slow_theta','theta']:
+            if b in x:
+                return b
+        else:
+            return 'NoBand'
+    input_column_mapping : Feature
+    color_map:
+      pre_alpha : blue
+      alpha : green
+      beta : yellow
+      gamma : orange
+      delta : red
+      slow_theta : magenta
+      theta : brown
+      NoBand : black

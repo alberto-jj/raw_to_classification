@@ -218,3 +218,4 @@ Besides, Dataset 2 was collected in 38 subjects (19 Parkinson Disease Patients; 
 - [x] per epoch feature
 - [x] add aggregation per roi ---> should be trivial now with custom aggregation functions
 - [-] find fold N for nvars stratify ---> deprecated
+- [ ] solve TODOs: ROIS, different configs, etc

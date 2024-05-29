@@ -68,13 +68,13 @@ for dslabel, DATASET in datasets.items():
         df = df.iloc[:,keep]
 
         df.insert(loc=0,column='id',value=df['dataset']+id_splitter+df['subject']+id_splitter+df['task'])
-        for field in ['group','age','sex']:
+        for field in ['group','age','sex']: #TODO: maybe this should be configured from outside 
             auxdf = df['subject'].apply(lambda x: parfun(x,field))
             df.insert(loc=1,column=field,value=auxdf)
         perfeature.append(df)
     df = perfeature[0]
     for a in perfeature[1:]:
-        omit_cols = a.drop(['age','dataset','group','sex','subject','task'],axis='columns')
+        omit_cols = a.drop(['age','dataset','group','sex','subject','task'],axis='columns') #TODO: maybe this should be configured from outside
         df = pd.merge(df, omit_cols, on="id",validate='1:1',suffixes=(None,'_y'))
 
     ALL.append(df)
