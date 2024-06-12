@@ -77,4 +77,3 @@ for preplabel in cfg['preprocess']['prep_list']:
         #description = layout.get_dataset_description()
 
         Parallel(n_jobs=external_njobs)(delayed(foo)(eeg_file,this_prep,DATASET) for eeg_file in eegs)
-        break

@@ -23,7 +23,7 @@ prep_inspection:
 
 features:
   feature_pipeline_cfg:
-    features-epochs@prep-defaultprep: #you set the name of the feature pipeline with the key
+    features30@prep-defaultprep: #you set the name of the feature pipeline with the key
       prep_pipeline : 'defaultprep' # This is the name of the preprocessing pipeline previously defined (must exist in derivatives)
       downsample : 500
       prefilter :
@@ -35,23 +35,29 @@ features:
         - PowerSpectrum
         - RelativeBandPower1
         - RelativeBandPower2
+        - FooofFromAverageROI
         - PowerSpectrumROI
+        - RelativeBandPower1ROI
+
     # another feature set pipeline as an example
-    features-epochs@prep-defaultprep-2:
+    features25@prep-defaultprep:
       prep_pipeline : 'defaultprep' # This is the name of the preprocessing pipeline previously defined (must exist in derivatives)
       downsample : 500
       prefilter :
         l_freq : 1
-        h_freq : 50
+        h_freq : 25
       keep_channels : False
       feature_list: # To say which features actually compute rather than configure
         - FooofFromAverage
         - PowerSpectrum
         - RelativeBandPower1
         - RelativeBandPower2
+        - FooofFromAverageROI
+        - PowerSpectrumROI
+        - RelativeBandPower1ROI
   feature_pipeline_list: #which feature pipelines to run
-    - features-epochs@prep-defaultprep
-    - features-epochs@prep-defaultprep-2
+    - features30@prep-defaultprep
+    - features25@prep-defaultprep
   feature_cfg: # You can configure different features for the same function but different args
     # The suffix will be the higher hierarchy name you put here
     PowerSpectrum:
@@ -126,7 +132,7 @@ features:
                 else:
                     return 'none'
             numpy_fun : "eval%np.mean"
-            ignore : []
+            ignore : ['none']
     FooofFromAverageROI:
       overwrite : False
       chain:
@@ -139,22 +145,51 @@ features:
                 aperiodic_mode : knee
               fit:
                 freq_range : [2,35]
+    RelativeBandPower1ROI:
+      overwrite : False
+      chain :
+        - feature : PowerSpectrumROI # this will save PowerSpectrum if not already saved
+        - function: relative_bandpower
+          args :
+            bands:
+              delta : [1,4]
+              theta : [4,8]
+              alpha : [8,13]
+              beta  : [13,30]
+              pre_alpha : [5.5,8]
+              slow_theta : [4,5.5]
+            multitaper : {}
+            agg_fun : "eval%lambda x: agg_numpy(x,np.mean,axisname='epochs',max_numitem=24)" # You can set up max epochs by max_numitem obtained from prep_inspection
 
 aggregate:
   path : './data/aggregate'
   filename : 'aggregate.csv'
-  feature_folders :
-   - 'features-epochs@prep-defaultprep'
-   - 'features-epochs@prep-defaultprep-2'
   id_splitter : '/'
   feature_return:
     RelativeBandPower1: # Could be the original name or a post-processed name
       return_function : "eval%lambda x: x"
       file_suffix : RelativeBandPower1
+    RelativeBandPower1ROI: # Could be the original name or a post-processed name
+      return_function : "eval%lambda x: x"
+      file_suffix : RelativeBandPower1ROI
+    fooofSlope:
+      return_function : "eval%lambda x: x.aperiodic_params_[0]"
+      file_suffix : FooofFromAverage
+    fooofSlopeROI:
+      return_function : "eval%lambda x: x.aperiodic_params_[0]"
+      file_suffix : FooofFromAverageROI
+  aggregate_cfgs:
+    FeaturesROI@30@prep-defaultprep:
+      feature_folder : 'features30@prep-defaultprep'
+      feature_list: # CHOOSE FEATURES WITH SAME DIMENSIONS, OTHERWISE THE DATAFRAME CANT BE MADE
+        - fooofSlopeROI
+        - RelativeBandPower1ROI # could be the original name or a post-processed name
 
-  feature_list: # CHOOSE FEATURES WITH SAME DIMENSIONS, OTHERWISE THE DATAFRAME CANT BE MADE
-    - RelativeBandPower1 # could be the original name or a post-processed name
-    #- RelativeBandPower2
+    FeaturesChannels@30@prep-defaultprep:
+      feature_folder : 'features30@prep-defaultprep'
+      feature_list: # CHOOSE FEATURES WITH SAME DIMENSIONS, OTHERWISE THE DATAFRAME CANT BE MADE
+        - RelativeBandPower1 # could be the original name or a post-processed name
+        - fooofSlope
 
 scalingAndFolding:
   aggregate_folders:

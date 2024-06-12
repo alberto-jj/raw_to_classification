@@ -74,14 +74,6 @@ def prepare(filename, line_noise, keep_chans=None, epoch_length = 2,
     # Extract some info
     sample_rate = raw.info["sfreq"]
 
-    if normalization:
-        # It is debatable where to normalize the data. Here we do it before PyPREP.
-
-        # Sanity check, the argmin of the zscored data should be the same as the argmin of the raw data
-        assert np.argmin(raw.get_data()[0,:])==np.argmin(scipy.stats.zscore(raw.get_data(),axis=1)[0,:])
-        raw._data = scipy.stats.zscore(raw.get_data(),axis=1)
-        print('AMPLITUDE NORMALIZATION DONE')
-
     # PyPREP
     # parameters
     if not skip_prep:
@@ -107,6 +99,15 @@ def prepare(filename, line_noise, keep_chans=None, epoch_length = 2,
         raw = raw.copy()
         raw.set_montage(montage)
         prep_info={'status':'skipped'}
+
+    if normalization:
+        # It is debatable where to normalize the data. Here we do it after PyPREP.
+
+        # Sanity check, the argmin of the zscored data should be the same as the argmin of the raw data
+        assert np.argmin(raw.get_data()[0,:])==np.argmin(scipy.stats.zscore(raw.get_data(),axis=1)[0,:])
+        raw._data = scipy.stats.zscore(raw.get_data(),axis=1)
+        print('AMPLITUDE NORMALIZATION DONE')
+
     # Filter the data
     raw.filter(l_freq=1, h_freq=None) # bandpassing 1 Hz
 

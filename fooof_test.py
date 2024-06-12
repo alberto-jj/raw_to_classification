@@ -3,16 +3,19 @@ import pickle
 import matplotlib.pyplot as plt
 from antropy import detrended_fluctuation,lziv_complexity,sample_entropy,spectral_entropy,app_entropy,hjorth_params,num_zerocross,perm_entropy,svd_entropy,higuchi_fd,katz_fd,petrosian_fd
 import scipy
-path = r"Y:\datasets\HenryRailo\bids\derivatives\features-epochs\sub-02\eeg\sub-02_task-eyesClosed_desc-reject_FooofFromAverage.npy"
-
+p1=r"Y:\datasets\HenryRailo\bids\derivatives\features30@prep-defaultprep\sub-02\eeg\sub-02_task-eyesClosed_desc-reject_FooofFromAverageROI.npy"
+p2=r"Y:\datasets\ds004504-download\derivatives\features-epochs\sub-024\eeg\sub-024_task-eyesclosed_desc-reject_FooofFromAverage.npy"
+path = p1
 
 data = np.load(path, allow_pickle=True)
 
 data = data.item()
 
-plt.show()
+#plt.show()
 
-dir(data['values'][0])
+#[0] offset, [1] knee, [-1] slope
+#"eval%lambda x: x.aperiodic_params_[0]"
+dir(data['values'][0].aperiodic_params_)
 
 import mne
 

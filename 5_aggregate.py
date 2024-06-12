@@ -13,27 +13,16 @@ from sklearn.preprocessing import MinMaxScaler
 datasets = load_yaml('datasets.yml')
 cfg = load_yaml('pipeline.yml')
 OUTPUTBASE = cfg['aggregate']['path']
-filename = cfg['aggregate']['filename']
+csvfilename = cfg['aggregate']['filename']
 id_splitter = cfg['aggregate']['id_splitter']
 os.makedirs(OUTPUTBASE,exist_ok=True)
 
-for feature_folder in cfg['aggregate']['feature_folders']:
-    OUTPUT = os.path.join(OUTPUTBASE,feature_folder)
+for agg_cfg_label,agg_cfg in cfg['aggregate']['aggregate_cfgs'].items():
+    OUTPUT = os.path.join(OUTPUTBASE,agg_cfg_label)
     os.makedirs(OUTPUT,exist_ok=True)
-    ALL = []
+    ALL_INHOMOGENEUS = []
+    COMMON_FEATURES = []
 
-    # Find Common Montage
-    MONTAGES = []
-    for dslabel, DATASET in datasets.items():
-        MONTAGES.append(DATASET['ch_names'])
-
-    common = set(MONTAGES[0])
-    union_montage = set(MONTAGES[0])
-    for montage in MONTAGES[1:]:
-        common = common.intersection(set(montage))
-        union_montage = union_montage.union(set(montage))
-    save_dict_to_json(os.path.join(OUTPUT,'common_montage.txt'),{'common_montage':list(common)})
-    save_dict_to_json(os.path.join(OUTPUT,'union_montage.txt'),{'union_montage':list(union_montage)})
 
     for dslabel, DATASET in datasets.items():
         perfeature =[]
@@ -47,8 +36,11 @@ for feature_folder in cfg['aggregate']['feature_folders']:
             idx = participants[participants['subject']==sub]
             assert idx.shape[0]==1 #unique
             return idx[field].item()
-        for feature in cfg['aggregate']['feature_list']:
-            pattern = os.path.join(DATASET.get('bids_root', None),'derivatives','features',f'**/*_{feature}.npy').replace('\\','/')
+        for feature in agg_cfg['feature_list']:
+            featfolder=agg_cfg['feature_folder']
+            foodict = cfg['aggregate']['feature_return'][feature]
+            filesuffix = foodict['file_suffix']
+            pattern = os.path.join(DATASET.get('bids_root', None),'derivatives',featfolder,f'**/*_{filesuffix}.npy').replace('\\','/')
             eegs = glob.glob(pattern,recursive=True)
             #output =os.path.join(DATASET.get('bids_root', None),'derivatives',pipeline_name,f'{feature}.csv')
             #os.makedirs(os.path.dirname(output),exist_ok=True)
@@ -58,34 +50,51 @@ for feature_folder in cfg['aggregate']['feature_folders']:
 
             for eeg_file in eegs:
                 suffix = os.path.basename(eeg_file).split('_')[-1].split('.')[0] +'.'
-                dict_list += get_output_dict(eeg_file,'WIDE',DATASET['dataset_label'],suffix,agg_fun=None)
+                desired_label = feature + '.' # dot is important for combination format
+                dict_list += get_output_dict(eeg_file,'WIDE',DATASET['dataset_label'],desired_label,agg_fun=foo)
 
-
+            if len(dict_list)==0:
+                print(f'No files found for {feature} in {dslabel}')
+                continue
             df = pd.DataFrame(dict_list)
 
             # Get metadata of that feature using last eeg_file
             metafeature = np.load(eeg_file,allow_pickle=True).item()['metadata']
-            idx_space = metafeature['order'].index('spaces') + 1 # increase 1 because col name includes type at start
+            idx_space = metafeature['order'].index('spaces') + 1 # increase 1 because col name includes feature type at start
 
-            # Remove non commmon features
-            derivative_cols = [x.split('.')[idx_space] if '.' in x else 'IGNORE' for x in df.columns ] # All derivatives must have a dot at least, to indicate the type
-            common = common.union({'IGNORE'})
-            keep = [True if derivative_cols[i] in common else False for i,x in enumerate(derivative_cols)]
-            df = df.iloc[:,keep]
 
             df.insert(loc=0,column='id',value=df['dataset']+id_splitter+df['subject']+id_splitter+df['task'])
             for field in ['group','age','sex']: #TODO: maybe this should be configured from outside 
                 auxdf = df['subject'].apply(lambda x: parfun(x,field))
                 df.insert(loc=1,column=field,value=auxdf)
+            omit_cols=['age','dataset','group','sex','subject','task']
+            df=df.drop(omit_cols,axis='columns')
+
+            # Identify derivative(feature) columns
+            derivative_cols = [x if '.' in x else 'IGNORE' for x in df.columns ] # All derivatives must have a dot at least, to indicate the type
+
             perfeature.append(df)
+
+        if len(perfeature)==0:
+            print(f'No features found for {dslabel}')
+            continue
         df = perfeature[0]
         for a in perfeature[1:]:
-            omit_cols = a.drop(['age','dataset','group','sex','subject','task'],axis='columns') #TODO: maybe this should be configured from outside
-            df = pd.merge(df, omit_cols, on="id",validate='1:1',suffixes=(None,'_y'))
+            df = pd.merge(df, a, on="id",validate='1:1',suffixes=(None,'_y'))
 
-        ALL.append(df)
+        ALL_INHOMOGENEUS.append(df)
 
     # Verify Features
+    column_sets = [x.columns for x in ALL_INHOMOGENEUS]
+    common=set(column_sets[0])
+    for feature_set in column_sets[1:]:
+        common = common.intersection(set(feature_set))
+    
+    ALL=[]
+    for df,this_set in zip(ALL_INHOMOGENEUS,column_sets):
+        ALL.append(df[list(common)])
+
+
     num_features = [x.shape[1] for x in ALL]
     assert len(set(num_features)) == 1
     cols = [x.columns for x in ALL]
@@ -96,15 +105,12 @@ for feature_folder in cfg['aggregate']['feature_folders']:
 
     # Force same order of columns
     # find first derivative column
-    new_orders = []
-    for i in range(len(cols)):
-        dots = ['.' in x for x in cols[i]]
-        first_der = dots.index(True)
-        feats = list(cols[i][first_der:])
-        feats.sort()
-        feats = list(cols[i][:first_der])+feats
-        new_orders.append(feats)
-    ALL = [x[new_orders[i]] for i,x in enumerate(ALL)]
+    feature_cols = [x for x in common if '.' in x]
+    non_feature_cols = [x for x in common if not '.' in x]
+    feature_cols.sort()
+    non_feature_cols.sort()
+    new_order=non_feature_cols+feature_cols
+    ALL = [x[new_order] for i,x in enumerate(ALL)]
 
     # Verify order
     cols = [x.columns for x in ALL]
@@ -114,8 +120,13 @@ for feature_folder in cfg['aggregate']['feature_folders']:
         equal_cols.append(all(ref==x))
     assert all(equal_cols)
 
+    save_dict_to_json(os.path.join(OUTPUT,'common_cols.txt'),{'common_cols':new_order})
+
     # Concatenate
     df = pd.concat(ALL,axis=0,ignore_index=True)
-    df.to_csv(os.path.join(OUTPUT,filename),index=False)
+    # drop rows with nans
+    df.to_csv(os.path.join(OUTPUT,csvfilename+'@withNaNs.csv'),index=False)
+    df = df.dropna()
+    df.to_csv(os.path.join(OUTPUT,csvfilename),index=False)
 
     print('ok')

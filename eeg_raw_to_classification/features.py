@@ -234,7 +234,7 @@ def roi_aggregator(data,mapping,numpy_fun=None,axisname='spaces',ignore=['none']
     exec(mapping, scope)
     roi_mapping = scope['roi_mapping']  # Access the function from the scope
     rois = [roi_mapping(x) for x in spaces]
-    rois = set(rois) - set(ignore)
+    rois = list(set(rois) - set(ignore))
 
     if numpy_fun is None:
         numpy_fun = np.mean
