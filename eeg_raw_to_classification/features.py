@@ -8,6 +8,9 @@ from eeg_raw_to_classification.utils import parse_bids
 import os
 from fooof import FOOOF
 import copy
+from antropy import detrended_fluctuation,lziv_complexity,sample_entropy,spectral_entropy,app_entropy,hjorth_params,num_zerocross,perm_entropy,svd_entropy,higuchi_fd,katz_fd,petrosian_fd
+from neurokit2 import entropy_multiscale
+import copy
 
 def process_feature(epochs,relevantpath,CFG,feature,pipeline_name):
     featdict = CFG[feature]
@@ -38,6 +41,8 @@ def process_feature(epochs,relevantpath,CFG,feature,pipeline_name):
                 outputfile = relevantpath.replace('_epo.fif',f'_{suffix}.npy')
                 if not os.path.isfile(outputfile) or overwrite:
                     fun = eval(f"{inner_featdict['function']}")
+                    if isinstance(fun,str):
+                        fun=eval(fun)
                     output = fun(input_data,**inner_featdict['args'])
                     os.makedirs(os.path.dirname(outputfile),exist_ok=True)
                     np.save(outputfile,output)
@@ -45,12 +50,24 @@ def process_feature(epochs,relevantpath,CFG,feature,pipeline_name):
                     print(f'Already Exists:{outputfile}')
                     output = np.load(outputfile,allow_pickle=True).item()
             else:
-                output = eval(f"inner_featdict['function']")(input_data,**inner_featdict['args'])
+                innerfun=eval(f"inner_featdict['function']")
+                innerfun=eval(innerfun)
+                output = innerfun(input_data,**inner_featdict['args'])
         input_data = output
     return output
 
-
+def extract_item(x,fun,newtype):
+    if isinstance(fun,str):
+        fun=eval(fun.replace('eval%',''))
+    x = copy.deepcopy(x)
+    newfoo=np.vectorize(fun)
+    x['values'] = newfoo(x['values'])
+    if newtype:
+        x['metadata']['type'] = newtype
+    return x
 def agg_numpy(x,numpyfun,axisname='epochs',max_numitem=None): # or give a more complex indexing for items
+    if isinstance(numpyfun,str):
+        numpyfun=eval(numpyfun.replace('eval%',''))
     x = copy.deepcopy(x)
     # input is the dict from np.load
     # a function like this could help for rois
@@ -166,6 +183,7 @@ def spectrum_multitaper(epochs,multitaper={}):
     output['metadata']['axes']={'epochs':epochs_labels,'spaces':space_names,'frequencies':freqs}
     output['metadata']['order']=('epochs','spaces','frequencies')
     output['values'] = fullpsd
+    output['metadata']['times']=epochs.times #TODO: times is not standarized across all features
     return output
 
     
@@ -214,6 +232,7 @@ def fooof_from_average(data,agg_fun=None,internal_kwargs={'FOOOF':{},'fit':{}}):
     output['metadata'] = {'type':'fooofFromAverageSpectrum','kwargs':{'internal_kwargs':internal_kwargs},'freqs':freqs}
     output['metadata']['axes']={'spaces':spaces}
     output['metadata']['order']=('spaces')
+    
     for space in spaces:
         space_idx = spaces.index(space)
         thispsd = np.take(psd,indices=space_idx,axis=axes.index('spaces'))
@@ -222,7 +241,7 @@ def fooof_from_average(data,agg_fun=None,internal_kwargs={'FOOOF':{},'fit':{}}):
     output['values'] = values
     return output
 
-def roi_aggregator(data,mapping,numpy_fun=None,axisname='spaces',ignore=['none']):
+def roi_aggregator(data,mapping,numpyfun=None,axisname='spaces',ignore=['none']):
     # maybe a similar strategy could also work when the epochs are inhomoegeneous (different tasks?)
     # numpy fun should be a function that takes data,axis and keepdims
     # we can view this as a new feature or as an aggregate
@@ -236,10 +255,10 @@ def roi_aggregator(data,mapping,numpy_fun=None,axisname='spaces',ignore=['none']
     rois = [roi_mapping(x) for x in spaces]
     rois = list(set(rois) - set(ignore))
 
-    if numpy_fun is None:
-        numpy_fun = np.mean
-    elif isinstance(numpy_fun,str):
-        numpy_fun = eval(numpy_fun.replace('eval%',''))
+    if numpyfun is None:
+        numpyfun = np.mean
+    elif isinstance(numpyfun,str):
+        numpyfun = eval(numpyfun.replace('eval%',''))
     # Do aggregation for each roi
 
     new_values=[]
@@ -248,7 +267,7 @@ def roi_aggregator(data,mapping,numpy_fun=None,axisname='spaces',ignore=['none']
     for roi in rois:
         roi_idx = [i for i,x in enumerate(spaces) if roi_mapping(x)==roi]
         thisdata = np.take(data['values'],indices=roi_idx,axis=axes.index(axisname))
-        new_values.append(numpy_fun(thisdata,axis=axes.index(axisname),keepdims=True))
+        new_values.append(numpyfun(thisdata,axis=axes.index(axisname),keepdims=True))
 
     new_data = np.concatenate(new_values,axis=axes.index(axisname))
     data['values'] = new_data
@@ -286,3 +305,72 @@ def relative_bandpower(data,bands=BANDS,multitaper={},agg_fun=None):
             values[band_idx,space_idx]= bandpower(psd[space_idx,:],freqs,brange,True)
     output['values'] = values
     return output
+
+#%% Antropy Features
+
+def to_camel_case(text):
+    s = text.replace("-", " ").replace("_", " ")
+    s = s.split()
+    if len(text) == 0:
+        return text
+    return s[0] + ''.join(i.capitalize() for i in s[1:])
+
+funs = ['detrended_fluctuation','lziv_complexity','sample_entropy','spectral_entropy','app_entropy','hjorth_params','num_zerocross','perm_entropy','svd_entropy','higuchi_fd','katz_fd','petrosian_fd','entropy_multiscale']#,'chaos_pipeline']
+labels = [to_camel_case(x) for x in funs]
+
+
+
+
+fun_template="""
+def compute_%label%(eeg, suffix='%label%',internal_kwargs=dict(),extra_metadata={},prefoo=lambda x: x):
+
+    if isinstance(prefoo,str) and 'eval%' in prefoo:
+        prefoo=eval(prefoo.replace('eval%',''))
+
+    kwargs = copy.deepcopy(internal_kwargs)
+    for key,val in kwargs.items():
+        for k,v in val.items():
+            if isinstance(v,str) and 'eval%' in v:
+                expression = v.replace('eval%','')
+                kwargs[key][k] = eval(expression)
+
+    if len(eeg.get_data().shape)==3:
+        nepochs = eeg.get_data().shape[0]
+        data = eeg.get_data()
+    else:
+        nepochs = 1
+        data = eeg.get_data()[None,:,:]
+
+    epochs = []
+    for e in range(nepochs):
+        result = [%fun%(prefoo(data[e,i,:]),**kwargs['%fun%']) for i in range(len(eeg.ch_names))]
+        epochs.append([ {i:v for i,v in enumerate(x)} if isinstance(x,tuple) else x for x in result])
+
+
+    values = np.array(epochs)
+
+    if len(eeg.get_data().shape)==3:
+        axes = {'epochs':list(range(eeg.get_data().shape[0])),'spaces':eeg.info['ch_names']}
+        order = ('epochs','spaces')
+    else:
+        axes = {'spaces':eeg.info['ch_names']}
+        order = ('spaces')
+        values = np.squeeze(values)
+
+    output = {}
+    output['metadata']={'type':suffix}
+    output['metadata']['axes']=axes
+    output['metadata']['order']=order
+    output['metadata']['times']=eeg.times
+    output['values']= values
+    output['metadata'].update(extra_metadata)
+    return output
+"""
+antropy_definitions = [fun_template.replace('%label%',label).replace('%fun%',fun) for label,fun in zip(labels,funs)]
+for foo in antropy_definitions:
+    exec(foo)
+
+
+if __name__ == '__main__':
+    [print(label,fun) for label,fun in zip(labels,funs)]
+    print(fun_template.replace('%label%',labels[-1]).replace('%fun%',funs[-1]))

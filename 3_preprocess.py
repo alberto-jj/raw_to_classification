@@ -10,7 +10,7 @@ import traceback
 from joblib import delayed, Parallel
 datasets = load_yaml('datasets.yml')
 cfg = load_yaml('pipeline.yml')
-MAX_FILES = 3 #3 #TODO: erase this when ready
+MAX_FILES = 10 #3 #TODO: erase this when ready
 external_njobs = 10 # len(psutil.Process().cpu_affinity())
 
 def foo(eeg_file,this_prep,DATASET):

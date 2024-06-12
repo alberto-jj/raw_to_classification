@@ -215,7 +215,6 @@ for aggregate_folder in PIPELINE['scalingAndFolding']['aggregate_folders']:
                 dfX_train = combat_model.transform(data=dfX_train.copy(), batches=covars_train[combat_batch],X=covars_train.drop([combat_batch],axis=1))
                 dfX_test = combat_model.transform(data=dfX_test.copy(), batches=covars_test[combat_batch],X=covars_test.drop([combat_batch],axis=1))
 
-
             elif 'StandardScaler' in scaling_cfg['method']:
                 scaler = StandardScaler()
                 scaler = scaler.fit(dfX_train)

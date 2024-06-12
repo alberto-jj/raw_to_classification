@@ -103,10 +103,10 @@ def get_output_dict(eeg_file,FORMAT='WIDE',dataset_label='',feature_suffix='', a
             first = True
             for key,val in zip(keys,combination):
                 if first:
-                    final_key += val
+                    final_key += str(val)
                     first=False
                 else:
-                    final_key += '.'+val
+                    final_key += '.'+str(val)
             #final_key = '_'.join(final_key)
             d[feature_suffix+final_key]=agg_fun(value)
     if FORMAT=='WIDE':

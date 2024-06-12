@@ -67,8 +67,9 @@ for agg_cfg_label,agg_cfg in cfg['aggregate']['aggregate_cfgs'].items():
             for field in ['group','age','sex']: #TODO: maybe this should be configured from outside 
                 auxdf = df['subject'].apply(lambda x: parfun(x,field))
                 df.insert(loc=1,column=field,value=auxdf)
-            omit_cols=['age','dataset','group','sex','subject','task']
-            df=df.drop(omit_cols,axis='columns')
+            # why do we need to drop these cols
+            # omit_cols=['age','dataset','group','sex','subject','task']
+            # df=df.drop(omit_cols,axis='columns')
 
             # Identify derivative(feature) columns
             derivative_cols = [x if '.' in x else 'IGNORE' for x in df.columns ] # All derivatives must have a dot at least, to indicate the type
@@ -80,7 +81,13 @@ for agg_cfg_label,agg_cfg in cfg['aggregate']['aggregate_cfgs'].items():
             continue
         df = perfeature[0]
         for a in perfeature[1:]:
-            df = pd.merge(df, a, on="id",validate='1:1',suffixes=(None,'_y'))
+            df = pd.merge(df, a, on="id", validate='1:1', suffixes=(None, '_y'))
+            # verify overlapping columns have the same info
+            overlapping_cols = [col for col in df.columns if col.endswith('_y')]
+            for col in overlapping_cols:
+                col_name = col[:-2]
+                if df[col_name].equals(df[col]):
+                    df=df.drop(col, axis=1, inplace=False)
 
         ALL_INHOMOGENEUS.append(df)
 

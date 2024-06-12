@@ -15,7 +15,7 @@ preprocess:
     - defaultprep
 prep_inspection:
   path : './data/prep_inspection'
-  overwrite : True
+  overwrite : False
   checks:
     - 'epochs'
   prep_list :
@@ -36,8 +36,24 @@ features:
         - RelativeBandPower1
         - RelativeBandPower2
         - FooofFromAverageROI
+        - FooofFromAverageNoKnee
         - PowerSpectrumROI
         - RelativeBandPower1ROI
+        - detrendedFluctuation
+        - lzivComplexity
+        #- sampleEntropy
+        - spectralEntropy
+        #- spectralEntropytr
+        #- appEntropy
+        - hjorthMobility
+        - hjorthComplexity
+        - numZerocross
+        - permEntropy
+        - svdEntropy
+        - higuchiFd
+        - katzFd
+        - petrosianFd
+        #- entropyMultiscale
 
     # another feature set pipeline as an example
     features25@prep-defaultprep:
@@ -112,6 +128,18 @@ features:
                 aperiodic_mode : knee
               fit:
                 freq_range : [2,35]
+    FooofFromAverageNoKnee:
+      overwrite : False
+      chain:
+        - feature : PowerSpectrum
+        - function : fooof_from_average
+          args :
+            agg_fun : "eval%lambda x: agg_numpy(x,np.mean,axisname='epochs',max_numitem=24)" # You can set up max epochs by max_numitem obtained from prep_inspection
+            internal_kwargs:
+              FOOOF:
+                aperiodic_mode : fixed
+              fit:
+                freq_range : [2,35]
     PowerSpectrumROI:
       overwrite : False
       chain :
@@ -131,7 +159,7 @@ features:
                     return 'occipital'
                 else:
                     return 'none'
-            numpy_fun : "eval%np.mean"
+            numpyfun : "eval%np.mean"
             ignore : ['none']
     FooofFromAverageROI:
       overwrite : False
@@ -160,6 +188,226 @@ features:
               slow_theta : [4,5.5]
             multitaper : {}
             agg_fun : "eval%lambda x: agg_numpy(x,np.mean,axisname='epochs',max_numitem=24)" # You can set up max epochs by max_numitem obtained from prep_inspection
+    detrendedFluctuation:
+      overwrite: False
+      chain:
+        - function: compute_detrendedFluctuation
+          args:
+            internal_kwargs:
+              detrended_fluctuation : {}
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: 24
+    lzivComplexity:
+      overwrite: False
+      chain:
+        - function: compute_lzivComplexity
+          args:
+            prefoo : "eval%lambda x: (x > np.median(x)).astype(int)"
+            internal_kwargs:
+              lziv_complexity :
+                normalize: True
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: 24
+
+    sampleEntropy:
+      overwrite: False
+      chain:
+        - function: compute_sampleEntropy
+          args:
+            internal_kwargs:
+              sample_entropy :
+                order : 2
+                metric : chebyshev
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: 24
+
+    spectralEntropy:
+      overwrite: False
+      chain:
+        - function: compute_spectralEntropy
+          args:
+            internal_kwargs:
+              spectral_entropy :
+                sf : eval%eeg.info['sfreq']
+                method : 'welch'
+                nperseg : eval%int(np.round(eeg.info['sfreq']/1))
+                normalize : True
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: 24
+
+    spectralEntropytr:
+      overwrite: False
+      chain:
+        - function: compute_spectralEntropy
+          args:
+            internal_kwargs:
+              spectral_entropy :
+                sf : eval%eeg.info['sfreq']
+                method : 'welch'
+                nperseg : eval%int(np.round(eeg.info['sfreq']/5))
+                normalize : True
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: 24
+
+    appEntropy:
+      overwrite: False
+      chain:
+        - function: compute_appEntropy
+          args:
+            internal_kwargs:
+              app_entropy :
+                order : 2
+                metric : chebyshev
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: 24
+
+    hjorthParams:
+      overwrite: False
+      chain:
+        - function: compute_hjorthParams
+          args:
+            internal_kwargs:
+              hjorth_params: {}
+
+    hjorthMobility:
+      overwrite: False
+      chain:
+        - feature: hjorthParams
+        - function: extract_item
+          args:
+            fun: "eval%lambda x: x[0]"
+            newtype: hjorthMobility
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: 24
+
+    hjorthComplexity:
+      overwrite: False
+      chain:
+        - feature: hjorthParams
+        - function: extract_item
+          args:
+            fun: "eval%lambda x: x[1]"
+            newtype: hjorthComplexity
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: 24
+
+    numZerocross:
+      overwrite: False
+      chain:
+        - function: compute_numZerocross
+          args:
+            internal_kwargs:
+              num_zerocross:
+                normalize: True
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: 24
+
+    permEntropy:
+      overwrite: False
+      chain:
+        - function: compute_permEntropy
+          args:
+            internal_kwargs:
+              perm_entropy:
+                order: 3
+                delay: 1
+                normalize: True
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: 24
+
+    svdEntropy:
+      overwrite: False
+      chain:
+        - function: compute_svdEntropy
+          args:
+            internal_kwargs:
+              svd_entropy:
+                order: 3
+                delay: 1
+                normalize: True
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: 24
+
+    higuchiFd:
+      overwrite: False
+      chain:
+        - function: compute_higuchiFd
+          args:
+            internal_kwargs:
+              higuchi_fd:
+                kmax: 10
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: 24
+
+    katzFd:
+      overwrite: False
+      chain:
+        - function: compute_katzFd
+          args:
+            internal_kwargs:
+              katz_fd: {}
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: 24
+
+    petrosianFd:
+      overwrite: False
+      chain:
+        - function: compute_petrosianFd
+          args:
+            internal_kwargs:
+              petrosian_fd: {}
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: 24
+
+    entropyMultiscale: #TODO: i think the aggregation wont work here because multiscale return a complex datatype, check this
+      overwrite: False
+      chain:
+        - function: compute_entropyMultiscale
+          args:
+            internal_kwargs:
+              entropy_multiscale:
+                scale : "default"
+                dimension : 3
+                tolerance : "sd"
+                method : "MSEn"
+                show : False
+        - function: extract_item
+          args:
+            fun: "eval%lambda x: x[0]"
+            newtype: null
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: 24
+
 
 aggregate:
   path : './data/aggregate'
@@ -172,12 +420,61 @@ aggregate:
     RelativeBandPower1ROI: # Could be the original name or a post-processed name
       return_function : "eval%lambda x: x"
       file_suffix : RelativeBandPower1ROI
+    fooofSlopeNoKnee:
+      return_function : "eval%lambda x: x.aperiodic_params_[0]"
+      file_suffix : FooofFromAverageNoKnee
     fooofSlope:
       return_function : "eval%lambda x: x.aperiodic_params_[0]"
       file_suffix : FooofFromAverage
     fooofSlopeROI:
       return_function : "eval%lambda x: x.aperiodic_params_[0]"
       file_suffix : FooofFromAverageROI
+    detrendedFluctuation: # no text
+      return_function : "eval%lambda x: x"
+      file_suffix : detrendedFluctuation
+    lzivComplexity: # text
+      return_function : "eval%lambda x: x"
+      file_suffix : lzivComplexity
+    sampleEntropy: # text
+      return_function : "eval%lambda x: x"
+      file_suffix : sampleEntropy
+    spectralEntropy: # text
+      return_function : "eval%lambda x: x"
+      file_suffix : spectralEntropy
+    spectralEntropytr: # text
+      return_function : "eval%lambda x: x"
+      file_suffix : spectralEntropytr
+    appEntropy: # text
+      return_function : "eval%lambda x: x"
+      file_suffix : appEntropy
+    hjorthMobility: # text
+      return_function : "eval%lambda x: x"
+      file_suffix : hjorthMobility
+    hjorthComplexity: # text
+      return_function : "eval%lambda x: x"
+      file_suffix : hjorthComplexity
+    numZerocross: # text
+      return_function : "eval%lambda x: x"
+      file_suffix : numZerocross
+    permEntropy: # text
+      return_function : "eval%lambda x: x"
+      file_suffix : permEntropy
+    svdEntropy  : # text
+      return_function : "eval%lambda x: x"
+      file_suffix : svdEntropy
+    higuchiFd: # text
+      return_function : "eval%lambda x: x"
+      file_suffix : higuchiFd
+    katzFd: # text
+      return_function : "eval%lambda x: x"
+      file_suffix : katzFd
+    petrosianFd : # text
+      return_function : "eval%lambda x: x"
+      file_suffix : petrosianFd
+    entropyMultiscale:
+      return_function: "eval%lambda x: x[0]"
+      file_suffix : entropyMultiscale
+
   aggregate_cfgs:
     FeaturesROI@30@prep-defaultprep:
       feature_folder : 'features30@prep-defaultprep'
@@ -190,11 +487,27 @@ aggregate:
       feature_list: # CHOOSE FEATURES WITH SAME DIMENSIONS, OTHERWISE THE DATAFRAME CANT BE MADE
         - RelativeBandPower1 # could be the original name or a post-processed name
         - fooofSlope
+        - fooofSlopeNoKnee
+        - detrendedFluctuation
+        - lzivComplexity
+        #- sampleEntropy
+        - spectralEntropy
+        #- spectralEntropytr
+        #- appEntropy
+        - hjorthMobility
+        - hjorthComplexity
+        - numZerocross
+        - permEntropy
+        - svdEntropy
+        - higuchiFd
+        - katzFd
+        - petrosianFd
+        #- entropyMultiscale
 
 scalingAndFolding:
   aggregate_folders:
-    - 'features-epochs@prep-defaultprep'
-    - 'features-epochs@prep-defaultprep-2'
+    - 'FeaturesROI@30@prep-defaultprep'
+    - 'FeaturesChannels@30@prep-defaultprep'
   MAX_FEATURES: null
   path : './data/scalingAndFolding'
   random_state : 0
@@ -209,8 +522,8 @@ scalingAndFolding:
     - task
   stratifiedvars :
     - dataset
-    - group
-    - sex
+    #- group make it easier to balance for test purposes
+    #- sex
   scalings : # dont use _ - in the name (bids-like)
     scalingCombat : # name of this particular scaling config
         method : 'reCombat'
@@ -225,17 +538,19 @@ scalingAndFolding:
           - dataset
           - sex
           - age
-          - group
+          #- group # seems we are missing data in testing conditions
         batch : dataset # which should be the one we drop from covars for the design matrix X in combat
-        rename :
+        rename : # sync to covars, otherwise design matrix inconsistencies will throw an error
           age : age_numerical
-        categorical :
+        categorical : # sync to covars, otherwise design matrix inconsistencies will throw an error
           - dataset
-          - group
+          #- group
           - sex
     scalingStandard:
       method : 'StandardScaler'
     # we should implement a none scaling...
+    noScaling:
+      method: 'noScaling'
   splits : # dont use _ - in the name (bids-like)
     folding:
       method : 'StratifiedKFold'
