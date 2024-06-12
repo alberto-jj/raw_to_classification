@@ -35,6 +35,7 @@ features:
         - PowerSpectrum
         - RelativeBandPower1
         - RelativeBandPower2
+        - PowerSpectrumROI
     # another feature set pipeline as an example
     features-epochs@prep-defaultprep-2:
       prep_pipeline : 'defaultprep' # This is the name of the preprocessing pipeline previously defined (must exist in derivatives)
@@ -105,6 +106,39 @@ features:
                 aperiodic_mode : knee
               fit:
                 freq_range : [2,35]
+    PowerSpectrumROI:
+      overwrite : False
+      chain :
+        - feature : PowerSpectrum
+        - function: roi_aggregator
+          args :
+            # function name must be roi_mapping, could define a dictionary inside and return the value from the key
+            mapping : | # you have to put None in those channels that you dont want to include, Fp1,Fp2,Fz,Cz will be ignored in this example mapping
+              def roi_mapping(x): 
+                if x[0] == 'F' and x[1].isdigit():
+                    return 'frontal'
+                elif x[0] == 'C' and x[1].isdigit():
+                    return 'central'
+                elif x[0]== 'P' and x[1].isdigit():
+                    return 'parietal'
+                elif x[0]== 'O' and x[1].isdigit():
+                    return 'occipital'
+                else:
+                    return 'none'
+            numpy_fun : "eval%np.mean"
+            ignore : []
+    FooofFromAverageROI:
+      overwrite : False
+      chain:
+        - feature : PowerSpectrumROI
+        - function : fooof_from_average
+          args :
+            agg_fun : "eval%lambda x: agg_numpy(x,np.mean,axisname='epochs',max_numitem=24)" # You can set up max epochs by max_numitem obtained from prep_inspection
+            internal_kwargs:
+              FOOOF:
+                aperiodic_mode : knee
+              fit:
+                freq_range : [2,35]
 
 aggregate:
   path : './data/aggregate'
@@ -166,6 +200,7 @@ scalingAndFolding:
           - sex
     scalingStandard:
       method : 'StandardScaler'
+    # we should implement a none scaling...
   splits : # dont use _ - in the name (bids-like)
     folding:
       method : 'StratifiedKFold'

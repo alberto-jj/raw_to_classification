@@ -28,9 +28,13 @@ for feature_folder in cfg['aggregate']['feature_folders']:
         MONTAGES.append(DATASET['ch_names'])
 
     common = set(MONTAGES[0])
+    union_montage = set(MONTAGES[0])
     for montage in MONTAGES[1:]:
         common = common.intersection(set(montage))
+        union_montage = union_montage.union(set(montage))
     save_dict_to_json(os.path.join(OUTPUT,'common_montage.txt'),{'common_montage':list(common)})
+    save_dict_to_json(os.path.join(OUTPUT,'union_montage.txt'),{'union_montage':list(union_montage)})
+
     for dslabel, DATASET in datasets.items():
         perfeature =[]
         participants_file = DATASET['cleaned_participants']

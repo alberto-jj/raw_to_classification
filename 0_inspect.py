@@ -31,6 +31,9 @@ for dslabel,DATASET in datasets.items():
         if max_files and i>max_files:
             break
     common = set(MONTAGES[0])
+    union_montage = set(MONTAGES[0])
     for montage in MONTAGES[1:]:
         common = common.intersection(set(montage))
+        union_montage = union_montage.union(set(montage))
     save_dict_to_json(os.path.join(inspect_path,dslabel,'common_montage.txt'),{'common_montage':list(common)})
+    save_dict_to_json(os.path.join(inspect_path,dslabel,'union_montage.txt'),{'union_montage':list(union_montage)})

@@ -192,8 +192,9 @@ for _foldpath in foldinstances:
 
     for catmap,catmapdict in PIPELINE['eda']['feature_categories'].items() :
         category_mapping = lambda x:x
-        exec(catmapdict['category_mapping']) # category_mapping defined here
-        
+        scope={}
+        exec(catmapdict['category_mapping'],scope) # category_mapping defined here
+        category_mapping=scope['category_mapping']
         # Create a new column "type_features" based on conditions
         category_map_name = catmapdict['category_name']
         input_column_mapping = catmapdict['input_column_mapping']

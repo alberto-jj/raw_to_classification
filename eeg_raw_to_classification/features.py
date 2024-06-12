@@ -168,6 +168,8 @@ def spectrum_multitaper(epochs,multitaper={}):
     output['values'] = fullpsd
     return output
 
+    
+
 def single_fooof(freqs, psds, internal_kwargs={'FOOOF':{},'fit':{}}):
     kwargs = copy.deepcopy(internal_kwargs)
     for key,val in kwargs.items():
@@ -219,6 +221,40 @@ def fooof_from_average(data,agg_fun=None,internal_kwargs={'FOOOF':{},'fit':{}}):
         values[space_idx]= fm
     output['values'] = values
     return output
+
+def roi_aggregator(data,mapping,numpy_fun=None,axisname='spaces',ignore=['none']):
+    # maybe a similar strategy could also work when the epochs are inhomoegeneous (different tasks?)
+    # numpy fun should be a function that takes data,axis and keepdims
+    # we can view this as a new feature or as an aggregate
+    # assume dict output format from other features
+
+    # first map spaces to rois
+    spaces =  data['metadata']['axes'][axisname]
+    scope = {}
+    exec(mapping, scope)
+    roi_mapping = scope['roi_mapping']  # Access the function from the scope
+    rois = [roi_mapping(x) for x in spaces]
+    rois = set(rois) - set(ignore)
+
+    if numpy_fun is None:
+        numpy_fun = np.mean
+    elif isinstance(numpy_fun,str):
+        numpy_fun = eval(numpy_fun.replace('eval%',''))
+    # Do aggregation for each roi
+
+    new_values=[]
+    new_spaces=[]
+    axes= data['metadata']['order']
+    for roi in rois:
+        roi_idx = [i for i,x in enumerate(spaces) if roi_mapping(x)==roi]
+        thisdata = np.take(data['values'],indices=roi_idx,axis=axes.index(axisname))
+        new_values.append(numpy_fun(thisdata,axis=axes.index(axisname),keepdims=True))
+
+    new_data = np.concatenate(new_values,axis=axes.index(axisname))
+    data['values'] = new_data
+    data['metadata']['axes'][axisname] = rois
+
+    return data
 
 def relative_bandpower(data,bands=BANDS,multitaper={},agg_fun=None):
     # we can view this as a new feature or as an aggregate
