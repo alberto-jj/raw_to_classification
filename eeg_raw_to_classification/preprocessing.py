@@ -5,6 +5,7 @@ import sys
 import autoreject
 import numpy as np
 import bids
+import scipy
 from mne.datasets.eegbci import standardize
 from mne.preprocessing import ICA
 from mne_icalabel import label_components
@@ -27,7 +28,7 @@ def rejlog2dict(rejlog):
     return d
 
 def prepare(filename, line_noise, keep_chans=None, epoch_length = 2,
-              downsample = 500, normalization = False, ica_method='infomax',skip_prep=False,njobs=1,skip_reject=False):
+              downsample = 500, normalization = False, ica_method='infomax',skip_prep=False,njobs=1,skip_reject=False,amp_norm=False):
     """
     Run PREPARE pipeline for resting-state EEG signal preprocessing.
     Returns the preprocessed mne object in BIDS derivatives path. 
@@ -46,8 +47,8 @@ def prepare(filename, line_noise, keep_chans=None, epoch_length = 2,
         Sampling frequency (in Hz) for downsamlping.
     bandwidth : float
         The bandwidth of the multi taper windowing function in Hz.
-    normalization : bool NOT IMPLEMENTED
-        Returns both non-normalized and normalized .fif MNE objects.
+    normalization : bool 
+        Whether to normalize the data or not (currently z transform).
     ica_method : str
         ica method param as per MNE ICA class
 
@@ -72,7 +73,15 @@ def prepare(filename, line_noise, keep_chans=None, epoch_length = 2,
 
     # Extract some info
     sample_rate = raw.info["sfreq"]
-    
+
+    if normalization:
+        # It is debatable where to normalize the data. Here we do it before PyPREP.
+
+        # Sanity check, the argmin of the zscored data should be the same as the argmin of the raw data
+        assert np.argmin(raw.get_data()[0,:])==np.argmin(scipy.stats.zscore(raw.get_data(),axis=1)[0,:])
+        raw._data = scipy.stats.zscore(raw.get_data(),axis=1)
+        print('AMPLITUDE NORMALIZATION DONE')
+
     # PyPREP
     # parameters
     if not skip_prep:

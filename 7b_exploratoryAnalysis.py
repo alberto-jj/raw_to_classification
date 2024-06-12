@@ -27,11 +27,12 @@ fold_path = os.path.join(PIPELINE['scalingAndFolding']['path'])
 fold_pattern = os.path.join(fold_path,'**','folds-*.pkl')
 foldinstances = glob.glob(fold_pattern,recursive=True)
 #foldinstances = [x for x in foldinstances if 'folding' in x]
-
+scalingAndFolding_path = PIPELINE['scalingAndFolding']['path']
+eda_path = PIPELINE['eda']['path']
 for _foldpath in foldinstances:
     foldingtype=os.path.splitext(os.path.basename(_foldpath))[0]
     foldcomb = os.path.basename(_foldpath).split('-')[1].split('.')[0]
-    foldsavepath = os.path.join(OUTPUT_DIR,foldcomb)
+    foldsavepath = _foldpath.replace(scalingAndFolding_path, eda_path)
     os.makedirs(foldsavepath,exist_ok=True)
 
 
@@ -187,46 +188,52 @@ for _foldpath in foldinstances:
     plt.savefig(os.path.join(foldsavepath,f'{foldcomb}-resultsols@significant@sns.png'))
     plt.close('all')
 
+    ## Color by categorical_mapping
 
-
-    ## Color by feature type
-    category_mapping = lambda x: x
-    exec(PIPELINE['eda']['feature_categories']['category_mapping']) # category_mapping defined here
-    # Create a new column "type_features" based on conditions
-    category_map_name = PIPELINE['eda']['feature_categories']['category_name']
-    significant_results[category_map_name]=significant_results['Feature'].apply(category_mapping)
-
-    # Sort F-values within each subplot in descending order
-    significant_results_sorted = significant_results.sort_values(by=[category_map_name, 'F-value'], ascending=[True, False])
-
-    # Set up colors for different types
-    type_colors = {'spectral': 'red', 'complexity': 'blue', 'connectivity': 'green' }
-
-    # Create a figure and axis with different heights for the subplots
-    fig, axes = plt.subplots(nrows=len(type_colors), ncols=1, figsize=(8, 4 * len(type_colors)),
-                            sharex=True, gridspec_kw={'height_ratios': [0.9, 0.5, 0.1]})
-
-    # Loop through types and create horizontal bar plots with different colors
-    for i, (type_feature, color) in enumerate(type_colors.items()):
-        subset = significant_results_sorted[significant_results_sorted['type_features'] == type_feature]
+    for catmap,catmapdict in PIPELINE['eda']['feature_categories'].items() :
+        category_mapping = lambda x:x
+        exec(catmapdict['category_mapping']) # category_mapping defined here
         
-        # Adjust subplot size for connectivity
-        if type_feature == 'connectivity':
-            axes[i].barh(subset['Feature'], subset['F-value'], color=color)
+        # Create a new column "type_features" based on conditions
+        category_map_name = catmapdict['category_name']
+        input_column_mapping = catmapdict['input_column_mapping']
+        significant_results[category_map_name]=significant_results[input_column_mapping].apply(category_mapping)
+        significant_results[category_map_name].unique()
+        # Sort F-values within each subplot in descending order
+        significant_results_sorted = significant_results.sort_values(by=[category_map_name, 'F-value'], ascending=[True, False])
+
+        # Set up colors for different types
+        # type_colors = {'spectral': 'red', 'complexity': 'blue', 'connectivity': 'green' }
+        type_colors = {x:cmr.gem_r(i/len(significant_results[category_map_name].unique())) for i,x in enumerate(significant_results[category_map_name].unique())}
+
+
+        height_ratios = []
+        for i, (type_feature, color) in enumerate(type_colors.items()):
+            subset = significant_results_sorted[significant_results_sorted[category_map_name] == type_feature]
+            height_ratios.append(len(subset)/len(significant_results_sorted))
+
+        # Create a figure and axis with different heights for the subplots
+        fig, axes = plt.subplots(nrows=len(type_colors), ncols=1, figsize=(8, 4 * len(type_colors)),
+                                sharex=True, gridspec_kw={'height_ratios': height_ratios})
+
+        # Loop through types and create horizontal bar plots with different colors
+        for i, (type_feature, color) in enumerate(type_colors.items()):
+            subset = significant_results_sorted[significant_results_sorted[category_map_name] == type_feature]
+
+
+            axes[i].barh(subset[input_column_mapping], subset['F-value'], color=color)
             axes[i].set_xlabel('F-value')
             axes[i].set_title(f'{type_feature.capitalize()} Features - F-values')
             axes[i].tick_params(axis='y', labelrotation=0, size=8)  # Set rotation to 0 for horizontal labels on y-axis
-            axes[i].set_ylabel('Feature')
-        else:
-            axes[i].barh(subset['Feature'], subset['F-value'], color=color)
-            axes[i].set_xlabel('F-value')
-            axes[i].set_title(f'{type_feature.capitalize()} Features - F-values')
-            axes[i].tick_params(axis='y', labelrotation=0, size=8)  # Set rotation to 0 for horizontal labels on y-axis
-            axes[i].set_ylabel('Feature')
-            axes[i].invert_yaxis()  # Invert y-axis to have higher F-values at the top
+            axes[i].set_ylabel(input_column_mapping)
 
-    # Adjust layout for better appearance
-    plt.tight_layout()
-    plt.show()
+            # Adjust subplot size for connectivity
+            if type_feature == 'connectivity':
+                pass
+            else:
+                axes[i].invert_yaxis()  # Invert y-axis to have higher F-values at the top
 
-
+        # Adjust layout for better appearance
+        plt.savefig(os.path.join(foldsavepath,f'{foldcomb}-resultsols@significant@{category_map_name}.png'))
+        plt.close('all')
+    break

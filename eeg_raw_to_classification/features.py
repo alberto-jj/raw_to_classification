@@ -10,7 +10,7 @@ from fooof import FOOOF
 import copy
 
 def process_feature(epochs,relevantpath,CFG,feature,pipeline_name):
-    featdict = CFG['feature_cfg'][feature]
+    featdict = CFG[feature]
     overwrite = featdict['overwrite']
     output = epochs.copy()
 
@@ -20,7 +20,7 @@ def process_feature(epochs,relevantpath,CFG,feature,pipeline_name):
             # is a feature that is saved or should be saved
             suffix = stage['feature']
             outputfile = relevantpath.replace('_epo.fif',f'_{suffix}.npy')
-            inner_featdict = CFG['feature_cfg'][suffix]
+            inner_featdict = CFG[suffix]
             if not os.path.isfile(outputfile) or inner_featdict['overwrite']:
                 print(f'Feature {suffix} not found')
                 output = process_feature(input_data,relevantpath,CFG,suffix,pipeline_name)

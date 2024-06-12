@@ -1,30 +1,56 @@
 inspect:
   path : './data/inspect'
 preprocess:
-  prepare:
-    epoch_length : 5
-    downsample : 500
-    ica_method : 'fastica'
-    skip_prep : False
-    skip_reject : True
-  overwrite : True
-
+  prep_cfg:
+    defaultprep: # This is the name of the preprocessing pipeline
+      prepare:
+        epoch_length : 5
+        downsample : 500
+        ica_method : 'fastica'
+        skip_prep : False
+        skip_reject : True
+        normalization : True
+      overwrite : True
+  prep_list :
+    - defaultprep
 prep_inspection:
   path : './data/prep_inspection'
   overwrite : True
+  checks:
+    - 'epochs'
+  prep_list :
+    - defaultprep
 
 features:
-  pipeline_name : 'features-epochs'
-  downsample : 500
-  prefilter :
-    l_freq : 1
-    h_freq : 30
-  keep_channels : False
-  feature_list: # To say which features actually compute rather than configure
-    - FooofFromAverage
-    - PowerSpectrum
-    - RelativeBandPower1
-    - RelativeBandPower2
+  feature_pipeline_cfg:
+    features-epochs@prep-defaultprep: #you set the name of the feature pipeline with the key
+      prep_pipeline : 'defaultprep' # This is the name of the preprocessing pipeline previously defined (must exist in derivatives)
+      downsample : 500
+      prefilter :
+        l_freq : 1
+        h_freq : 30
+      keep_channels : False
+      feature_list: # To say which features actually compute rather than configure
+        - FooofFromAverage
+        - PowerSpectrum
+        - RelativeBandPower1
+        - RelativeBandPower2
+    # another feature set pipeline as an example
+    features-epochs@prep-defaultprep-2:
+      prep_pipeline : 'defaultprep' # This is the name of the preprocessing pipeline previously defined (must exist in derivatives)
+      downsample : 500
+      prefilter :
+        l_freq : 1
+        h_freq : 50
+      keep_channels : False
+      feature_list: # To say which features actually compute rather than configure
+        - FooofFromAverage
+        - PowerSpectrum
+        - RelativeBandPower1
+        - RelativeBandPower2
+  feature_pipeline_list: #which feature pipelines to run
+    - features-epochs@prep-defaultprep
+    - features-epochs@prep-defaultprep-2
   feature_cfg: # You can configure different features for the same function but different args
     # The suffix will be the higher hierarchy name you put here
     PowerSpectrum:
@@ -82,7 +108,10 @@ features:
 
 aggregate:
   path : './data/aggregate'
-  filename : 'multidataset.csv'
+  filename : 'aggregate.csv'
+  feature_folders :
+   - 'features-epochs@prep-defaultprep'
+   - 'features-epochs@prep-defaultprep-2'
   id_splitter : '/'
   feature_return:
     RelativeBandPower1: # Could be the original name or a post-processed name
@@ -94,6 +123,9 @@ aggregate:
     #- RelativeBandPower2
 
 scalingAndFolding:
+  aggregate_folders:
+    - 'features-epochs@prep-defaultprep'
+    - 'features-epochs@prep-defaultprep-2'
   MAX_FEATURES: null
   path : './data/scalingAndFolding'
   random_state : 0
@@ -224,21 +256,41 @@ eda:
   # plot based on feature type (1st level)
   # define functions (or a map-dictionary)
   feature_categories:
-    category_name : band
-    category_mapping: |
-      def category_mapping(x):
-        for b in ['pre_alpha','alpha','beta','gamma','delta','slow_theta','theta']:
-            if b in x:
-                return b
-        else:
-            return 'NoBand'
-    input_column_mapping : Feature
-    color_map:
-      pre_alpha : blue
-      alpha : green
-      beta : yellow
-      gamma : orange
-      delta : red
-      slow_theta : magenta
-      theta : brown
-      NoBand : black
+      by_band :
+        category_name : byband
+        category_mapping: |
+          def category_mapping(x):
+            for b in ['pre_alpha','alpha','beta','gamma','delta','slow_theta','theta']:
+                if b in x:
+                    return b
+            else:
+                return 'NoBand'
+        input_column_mapping : Feature
+        color_map:
+          pre_alpha : blue
+          alpha : green
+          beta : yellow
+          gamma : orange
+          delta : red
+          slow_theta : magenta
+          theta : brown
+          NoBand : black
+      by_ROI :
+        category_name : band
+        category_mapping: |
+          def category_mapping(x):
+            for b in ['pre_alpha','alpha','beta','gamma','delta','slow_theta','theta']:
+                if b in x:
+                    return b
+            else:
+                return 'NoBand'
+        input_column_mapping : Feature
+        color_map:
+          pre_alpha : blue
+          alpha : green
+          beta : yellow
+          gamma : orange
+          delta : red
+          slow_theta : magenta
+          theta : brown
+          NoBand : black

@@ -21,11 +21,13 @@ fold_path = os.path.join(PIPELINE['scalingAndFolding']['path'])
 fold_pattern = os.path.join(fold_path,'**','folds-*.pkl')
 foldinstances = glob.glob(fold_pattern,recursive=True)
 #foldinstances = [x for x in foldinstances if 'folding' in x]
-
+scalingAndFolding_path = PIPELINE['scalingAndFolding']['path']
+ml_path=PIPELINE['ml']['path']
 for _foldpath in foldinstances:
 
     foldcomb = os.path.basename(_foldpath).split('-')[1].split('.')[0]
-    foldsavepath = os.path.join(OUTPUT_DIR,foldcomb)
+    #foldsavepath = os.path.join(OUTPUT_DIR,foldcomb) # this is already in _foldpath
+    foldsavepath=os.path.dirname(_foldpath.replace(scalingAndFolding_path,ml_path))
     os.makedirs(foldsavepath,exist_ok=True)
 
     for mlmodel,mlparams in PIPELINE['ml']['models'].items():
