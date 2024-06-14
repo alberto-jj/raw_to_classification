@@ -52,6 +52,7 @@ for agg_cfg_label,agg_cfg in cfg['aggregate']['aggregate_cfgs'].items():
                 suffix = os.path.basename(eeg_file).split('_')[-1].split('.')[0] +'.'
                 desired_label = feature + '.' # dot is important for combination format
                 dict_list += get_output_dict(eeg_file,'WIDE',DATASET['dataset_label'],desired_label,agg_fun=foo)
+                #TODO per aggregate save feature ontology
 
             if len(dict_list)==0:
                 print(f'No files found for {feature} in {dslabel}')
