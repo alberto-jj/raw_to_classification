@@ -48,17 +48,19 @@ for agg_cfg_label,agg_cfg in cfg['aggregate']['aggregate_cfgs'].items():
             foodict = cfg['aggregate']['feature_return'][feature]
             foo = eval(foodict['return_function'].replace('eval%',''))
 
+            #dict_list_long = []
             for eeg_file in eegs:
                 suffix = os.path.basename(eeg_file).split('_')[-1].split('.')[0] +'.'
                 desired_label = feature + '.' # dot is important for combination format
-                dict_list += get_output_dict(eeg_file,'WIDE',DATASET['dataset_label'],desired_label,agg_fun=foo)
+                dict_list += get_output_dict(eeg_file,'WIDE',DATASET['dataset_label'],desired_label,agg_fun=foo,keyvalformat=True)
+                #dict_list_long += get_output_dict(eeg_file,'LONG',DATASET['dataset_label'],desired_label[:-1],agg_fun=foo,keyvalformat=True) # no dot
                 #TODO per aggregate save feature ontology
 
             if len(dict_list)==0:
                 print(f'No files found for {feature} in {dslabel}')
                 continue
             df = pd.DataFrame(dict_list)
-
+            #df_long=pd.DataFrame(dict_list_long)
             # Get metadata of that feature using last eeg_file
             metafeature = np.load(eeg_file,allow_pickle=True).item()['metadata']
             idx_space = metafeature['order'].index('spaces') + 1 # increase 1 because col name includes feature type at start

@@ -15,8 +15,12 @@ data = data.item()
 
 #[0] offset, [1] knee, [-1] slope
 #"eval%lambda x: x.aperiodic_params_[0]"
-dir(data['values'][0].aperiodic_params_)
+dir(data['values'][0])
+dir(data['values'][0].power_spectrum)
 
+
+data['values'][0].power_spectrum.shape
+data['values'][0].freqs.shape
 import mne
 
 lempel_ziv_complexity(data['values'][0],normalize=True)

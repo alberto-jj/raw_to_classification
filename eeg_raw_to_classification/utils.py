@@ -73,7 +73,7 @@ def load_yaml(rules):
     else:
         raise ValueError(f'Expected str or dict as rules, got {type(rules)} instead.')
 
-def get_output_dict(eeg_file,FORMAT='WIDE',dataset_label='',feature_suffix='', agg_fun= None):
+def get_output_dict(eeg_file,FORMAT='WIDE',dataset_label='',feature_suffix='', agg_fun= None,keyvalformat=False):
     output = np.load(eeg_file,allow_pickle=True).item()
     filename = os.path.basename(eeg_file)
     subject = parse_bids(filename)['sub']
@@ -89,26 +89,35 @@ def get_output_dict(eeg_file,FORMAT='WIDE',dataset_label='',feature_suffix='', a
     for combination in itertools.product(*axes):
         indexes = []
         for i,j in enumerate(combination):
-            indexes.append(axes[i].index(j))
+            indexes.append(list(axes[i]).index(j)) # list for nparrays
 
         value = eval(f'output["values"]{indexes}')
         if FORMAT == 'LONG':
-            d = {'subject':subject,'dataset':dataset}
+            d = {'subject':subject,'dataset':dataset,'feature':feature_suffix}
             for key,val in zip(keys,combination):
-                d[feature_suffix+key]=val
-            d['value']=value
+                d[key]=val
+            d['value']=agg_fun(value)
             dict_list.append(d)
         elif FORMAT == 'WIDE':
             final_key = ''
             first = True
             for key,val in zip(keys,combination):
                 if first:
-                    final_key += str(val)
+                    if keyvalformat:
+                        final_key += str(key)+'-'+str(val)
+                    else:
+                        final_key += str(val)
                     first=False
                 else:
-                    final_key += '.'+str(val)
+                    if keyvalformat:
+                        final_key += '.'+str(key)+'-'+str(val)
+                    else:
+                        final_key += '.'+str(val)
             #final_key = '_'.join(final_key)
-            d[feature_suffix+final_key]=agg_fun(value)
+            if keyvalformat:
+                d['feature-'+feature_suffix+final_key]=agg_fun(value)
+            else:
+                d[feature_suffix+final_key]=agg_fun(value)
     if FORMAT=='WIDE':
         dict_list.append(d)
     return dict_list

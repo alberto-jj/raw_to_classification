@@ -54,6 +54,8 @@ features:
         - katzFd
         - petrosianFd
         #- entropyMultiscale
+        - PowerSpectrumAverage
+        - PowerSpectrumAverageROI
 
     # another feature set pipeline as an example
     features25@prep-defaultprep:
@@ -66,6 +68,8 @@ features:
       feature_list: # To say which features actually compute rather than configure
         - FooofFromAverage
         - PowerSpectrum
+        - PowerSpectrumAverage
+        - PowerSpectrumAverageROI
         - RelativeBandPower1
         - RelativeBandPower2
         - FooofFromAverageROI
@@ -87,6 +91,25 @@ features:
             low_bias : True
             normalization : 'full'
             verbose : 0
+        
+    PowerSpectrumAverage:
+      overwrite : False
+      chain:
+        - feature : PowerSpectrum
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: 24
+            axisname: 'epochs'
+    PowerSpectrumAverageROI:
+      overwrite : False
+      chain:
+        - feature : PowerSpectrumROI
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: 24
+            axisname: 'epochs'
     RelativeBandPower1:
       overwrite : False
       chain :
@@ -474,6 +497,12 @@ aggregate:
     entropyMultiscale:
       return_function: "eval%lambda x: x[0]"
       file_suffix : entropyMultiscale
+    PowerSpectrumAverage:
+      return_function: "eval%lambda x: x"
+      file_suffix : PowerSpectrumAverage
+    PowerSpectrumAverageROI:
+      return_function: "eval%lambda x: x"
+      file_suffix : PowerSpectrumAverageROI
 
   aggregate_cfgs:
     FeaturesROI@30@prep-defaultprep:
@@ -481,7 +510,7 @@ aggregate:
       feature_list: # CHOOSE FEATURES WITH SAME DIMENSIONS, OTHERWISE THE DATAFRAME CANT BE MADE
         - fooofSlopeROI
         - RelativeBandPower1ROI # could be the original name or a post-processed name
-
+        # - PowerSpectrumAverageROI
     FeaturesChannels@30@prep-defaultprep:
       feature_folder : 'features30@prep-defaultprep'
       feature_list: # CHOOSE FEATURES WITH SAME DIMENSIONS, OTHERWISE THE DATAFRAME CANT BE MADE
@@ -503,6 +532,7 @@ aggregate:
         - katzFd
         - petrosianFd
         #- entropyMultiscale
+        #- PowerSpectrumAverage
 
 scalingAndFolding:
   aggregate_folders:
