@@ -1,13 +1,20 @@
 import pandas as pd
 from eeg_raw_to_classification.utils import load_yaml
 import pandas as pd
-
+import shutil
 datasets = load_yaml('datasets.yml')
 
 for dslabel,DATASET in datasets.items():
 
     datafile = DATASET['participants_file']
     outfile = DATASET['cleaned_participants']
+
+    # create copy if datafile is the same as outfile
+
+    if datafile == outfile:
+        datafile2 = datafile + '.copy'
+        shutil.copy(outfile,datafile2)
+
     reader = eval(DATASET['reader']['function'])
     reader_args = DATASET['reader']['args']
     df = reader(datafile,**reader_args)

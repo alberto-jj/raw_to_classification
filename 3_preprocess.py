@@ -10,7 +10,7 @@ import traceback
 from joblib import delayed, Parallel
 datasets = load_yaml('datasets.yml')
 cfg = load_yaml('pipeline.yml')
-MAX_FILES = 10 #3 #TODO: erase this when ready
+MAX_FILES = None #3 #TODO: erase this when ready
 external_njobs = 10 # len(psutil.Process().cpu_affinity())
 
 def foo(eeg_file,this_prep,DATASET):
@@ -64,13 +64,14 @@ for preplabel in cfg['preprocess']['prep_list']:
         print(f'PREPROCESSING {dslabel} with {preplabel} pipeline')
         file_filter = DATASET.get('raw_layout', None)
         layout = bids.BIDSLayout(DATASET.get('bids_root', None))
-        eegs = layout.get(**file_filter)[:MAX_FILES]
+        eegs = layout.get(**file_filter)#[:MAX_FILES]
 
-        if MAX_FILES > len(eegs):
-            limit = len(eegs)
-        else:
-            limit = MAX_FILES
-        eegs = eegs[:limit]
+        if MAX_FILES:
+            if MAX_FILES > len(eegs):
+                limit = len(eegs)
+            else:
+                limit = MAX_FILES
+            eegs = eegs[:limit]
         eegs = [x.replace('\\','/') for x in eegs]
         print(len(eegs), eegs)
         derivatives_root = os.path.join(layout.root,f'derivatives/{preplabel}/')

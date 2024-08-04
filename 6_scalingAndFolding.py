@@ -323,7 +323,7 @@ for aggregate_folder in PIPELINE['scalingAndFolding']['aggregate_folders']:
                     with open(os.path.join(save_path,'scaling_effectData.pkl'),'wb') as f:
                         pickle.dump({'dfXacross_test_pca':dfXacross_test_pca},f)
 
-        # Feature Engineering with all unseen transformed data
+        # Feature Engineering with all unseen transformed data #TODO: feature eng should be with the seen data, not the unseen data (thats cheating)
         # when split_method is all, the unseen data is the same as the seen data, so that would be the best to use for feature engineering insight
         # (the scaler knows all the data)
 

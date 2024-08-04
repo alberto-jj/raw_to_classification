@@ -31,13 +31,14 @@ features:
         h_freq : 30
       keep_channels : False
       feature_list: # To say which features actually compute rather than configure
-        - FooofFromAverage
-        - PowerSpectrum
-        - RelativeBandPower1
-        - RelativeBandPower2
-        - FooofFromAverageROI
-        - FooofFromAverageNoKnee
-        - PowerSpectrumROI
+        #- FooofFromAverage
+       # - PowerSpectrum
+        #- RelativeBandPower1
+        #- RelativeBandPower2
+        - FooofFromAverageROI # revisar no knee,  solo offset y slope
+        # fooof revisar params de center (nuevo feature) freq, bandwith, relative power, en alpha extendido
+        #- FooofFromAverageNoKnee
+        #- PowerSpectrumROI
         - RelativeBandPower1ROI
         - detrendedFluctuation
         - lzivComplexity
@@ -47,15 +48,16 @@ features:
         #- appEntropy
         - hjorthMobility
         - hjorthComplexity
-        - numZerocross
+        #- numZerocross
         - permEntropy
         - svdEntropy
         - higuchiFd
         - katzFd
-        - petrosianFd
+        #- petrosianFd
         #- entropyMultiscale
-        - PowerSpectrumAverage
-        - PowerSpectrumAverageROI
+        ##- PowerSpectrumAverage
+        #- PowerSpectrumAverageROI
+        # 15+12+27
 
     # another feature set pipeline as an example
     features25@prep-defaultprep:
@@ -77,7 +79,7 @@ features:
         - RelativeBandPower1ROI
   feature_pipeline_list: #which feature pipelines to run
     - features30@prep-defaultprep
-    - features25@prep-defaultprep
+    #- features25@prep-defaultprep
   feature_cfg: # You can configure different features for the same function but different args
     # The suffix will be the higher hierarchy name you put here
     PowerSpectrum:
@@ -121,8 +123,8 @@ features:
               theta : [4,8]
               alpha : [8,13]
               beta  : [13,30]
-              pre_alpha : [5.5,8]
-              slow_theta : [4,5.5]
+              #pre_alpha : [5.5,8]
+              #slow_theta : [4,5.5]
             multitaper : {}
             agg_fun : "eval%lambda x: agg_numpy(x,np.mean,axisname='epochs',max_numitem=24)" # You can set up max epochs by max_numitem obtained from prep_inspection
     RelativeBandPower2:
