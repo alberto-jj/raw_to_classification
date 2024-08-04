@@ -103,11 +103,12 @@ for featurepipeline in PIPELINE['features']['feature_pipeline_list']:
         for eeg_file in eegs:
             all_EEGS.append(eeg_file)
     # begin parallelization
-    for level in levels:
-        if PARALLELIZE:
+    if PARALLELIZE:
+        for level in levels:
             pairs=[(eeg_file,feature) for eeg_file in all_EEGS for feature in level]
             Parallel(n_jobs=external_njobs)(delayed(foo)(eeg_file,DOWNSAMPLE,keep_channels,featurepipelineCFG,FEATURE_CFG,feature,pipeline_name,DEBUG) for eeg_file in all_EEGS for feature in level)
-        else:
-            for eeg_file in all_EEGS:
+    else:
+        for eeg_file in all_EEGS:
+            for level in levels:
                 for feature in level:
                     foo(eeg_file,DOWNSAMPLE,keep_channels,featurepipelineCFG,FEATURE_CFG,feature,pipeline_name,DEBUG)
