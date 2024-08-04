@@ -78,7 +78,7 @@ features:
         - PowerSpectrumROI
         - RelativeBandPower1ROI
   feature_pipeline_list: #which feature pipelines to run
-    - features30@prep-defaultprep
+    - features30@ROI@prep-defaultprep
     #- features25@prep-defaultprep
   feature_cfg: # You can configure different features for the same function but different args
     # The suffix will be the higher hierarchy name you put here
