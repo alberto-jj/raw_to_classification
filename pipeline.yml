@@ -23,7 +23,7 @@ prep_inspection:
 
 features:
   feature_pipeline_cfg:
-    features30@prep-defaultprep: #you set the name of the feature pipeline with the key
+    features30@ROI@prep-defaultprep: #you set the name of the feature pipeline with the key
       prep_pipeline : 'defaultprep' # This is the name of the preprocessing pipeline previously defined (must exist in derivatives)
       downsample : 500
       prefilter :
@@ -32,7 +32,7 @@ features:
       keep_channels : False
       feature_list: # To say which features actually compute rather than configure
         #- FooofFromAverage
-       # - PowerSpectrum
+        # - PowerSpectrum
         #- RelativeBandPower1
         #- RelativeBandPower2
         - FooofFromAverageROI # revisar no knee,  solo offset y slope
@@ -40,19 +40,19 @@ features:
         #- FooofFromAverageNoKnee
         #- PowerSpectrumROI
         - RelativeBandPower1ROI
-        - detrendedFluctuation
-        - lzivComplexity
+        - dfaROI
+        - lzivROI
         #- sampleEntropy
-        - spectralEntropy
+        - specEntROI
         #- spectralEntropytr
         #- appEntropy
-        - hjorthMobility
-        - hjorthComplexity
+        - hMobROI
+        - hCompROI
         #- numZerocross
-        - permEntropy
-        - svdEntropy
-        - higuchiFd
-        - katzFd
+        - permEntROI
+        - svdEntROI
+        - higuchiROI
+        - katzROI
         #- petrosianFd
         #- entropyMultiscale
         ##- PowerSpectrumAverage
@@ -165,25 +165,46 @@ features:
                 aperiodic_mode : fixed
               fit:
                 freq_range : [2,35]
-    PowerSpectrumROI:
+    PowerSpectrumROIexample:
       overwrite : False
       chain :
         - feature : PowerSpectrum
         - function: roi_aggregator
           args :
             # function name must be roi_mapping, could define a dictionary inside and return the value from the key
-            mapping : | # you have to put None in those channels that you dont want to include, Fp1,Fp2,Fz,Cz will be ignored in this example mapping
-              def roi_mapping(x): 
-                if x[0] == 'F' and x[1].isdigit():
-                    return 'frontal'
-                elif x[0] == 'C' and x[1].isdigit():
-                    return 'central'
-                elif x[0]== 'P' and x[1].isdigit():
-                    return 'parietal'
-                elif x[0]== 'O' and x[1].isdigit():
-                    return 'occipital'
+            # if you want to reuse a roi mapping, you can define it in features.py and just call it here
+            mapping : | 
+              def roi_mapping(x):
+                anterior = ["Fp1", "Fp2", "F3", "F4", "F7", "F8", "Fz"]
+                central = ["T7", "T8", "C3", "C4", "Cz"]
+                posterior = ["P3", "P4", "P7", "P8", "O1", "O2"]
+                if x in anterior:
+                  return 'anterior'
+                elif x in central:
+                  return 'central'
+                elif x in posterior:
+                  return 'posterior'
                 else:
-                    return 'none'
+                  return 'none'
+              # you have to put None in those channels that you dont want to include, Fp1,Fp2,Fz,Cz will be ignored in this example mapping
+              #   if x[0] == 'F' and x[1].isdigit():
+              #       return 'frontal'
+              #   elif x[0] == 'C' and x[1].isdigit():
+              #       return 'central'
+              #   elif x[0]== 'P' and x[1].isdigit():
+              #       return 'parietal'
+              #   elif x[0]== 'O' and x[1].isdigit():
+              #       return 'occipital'
+              #   else:
+              #       return 'none'
+            numpyfun : "eval%np.mean"
+            ignore : ['none']
+    PowerSpectrumROI:
+      overwrite : False
+      chain :
+        - feature : PowerSpectrum
+        - function: roi_aggregator
+          args : # using the defaul mapping which was defined in features.py
             numpyfun : "eval%np.mean"
             ignore : ['none']
     FooofFromAverageROI:
@@ -195,7 +216,7 @@ features:
             agg_fun : "eval%lambda x: agg_numpy(x,np.mean,axisname='epochs',max_numitem=24)" # You can set up max epochs by max_numitem obtained from prep_inspection
             internal_kwargs:
               FOOOF:
-                aperiodic_mode : knee
+                aperiodic_mode : fixed
               fit:
                 freq_range : [2,35]
     RelativeBandPower1ROI:
@@ -224,6 +245,14 @@ features:
           args:
             numpyfun: eval%np.mean
             max_numitem: 24
+    dfaROI:
+      overwrite: False
+      chain:
+        - feature: detrendedFluctuation
+        - function: roi_aggregator
+          args : # using the defaul mapping which was defined in features.py
+            numpyfun : "eval%np.mean"
+            ignore : ['none']
     lzivComplexity:
       overwrite: False
       chain:
@@ -237,6 +266,14 @@ features:
           args:
             numpyfun: eval%np.mean
             max_numitem: 24
+    lzivROI:
+      overwrite: False
+      chain:
+        - feature: lzivComplexity
+        - function: roi_aggregator
+          args : # using the defaul mapping which was defined in features.py
+            numpyfun : "eval%np.mean"
+            ignore : ['none']
 
     sampleEntropy:
       overwrite: False
@@ -251,6 +288,14 @@ features:
           args:
             numpyfun: eval%np.mean
             max_numitem: 24
+    sampEntROI:
+      overwrite: False
+      chain:
+        - feature: sampleEntropy
+        - function: roi_aggregator
+          args : # using the defaul mapping which was defined in features.py
+            numpyfun : "eval%np.mean"
+            ignore : ['none']
 
     spectralEntropy:
       overwrite: False
@@ -267,6 +312,15 @@ features:
           args:
             numpyfun: eval%np.mean
             max_numitem: 24
+
+    specEntROI:
+      overwrite: False
+      chain:
+        - feature: spectralEntropy
+        - function: roi_aggregator
+          args : # using the defaul mapping which was defined in features.py
+            numpyfun : "eval%np.mean"
+            ignore : ['none']
 
     spectralEntropytr:
       overwrite: False
@@ -297,6 +351,14 @@ features:
           args:
             numpyfun: eval%np.mean
             max_numitem: 24
+    appEntROI:
+      overwrite: False
+      chain:
+        - feature: appEntropy
+        - function: roi_aggregator
+          args : # using the defaul mapping which was defined in features.py
+            numpyfun : "eval%np.mean"
+            ignore : ['none']
 
     hjorthParams:
       overwrite: False
@@ -319,6 +381,15 @@ features:
             numpyfun: eval%np.mean
             max_numitem: 24
 
+    hMobROI:
+      overwrite: False
+      chain:
+        - feature: hjorthMobility
+        - function: roi_aggregator
+          args : # using the defaul mapping which was defined in features.py
+            numpyfun : "eval%np.mean"
+            ignore : ['none']
+
     hjorthComplexity:
       overwrite: False
       chain:
@@ -331,6 +402,14 @@ features:
           args:
             numpyfun: eval%np.mean
             max_numitem: 24
+    hCompROI:
+      overwrite: False
+      chain:
+        - feature: hjorthComplexity
+        - function: roi_aggregator
+          args : # using the defaul mapping which was defined in features.py
+            numpyfun : "eval%np.mean"
+            ignore : ['none']
 
     numZerocross:
       overwrite: False
@@ -344,6 +423,15 @@ features:
           args:
             numpyfun: eval%np.mean
             max_numitem: 24
+
+    zeroROI:
+      overwrite: False
+      chain:
+        - feature: numZerocross
+        - function: roi_aggregator
+          args : # using the defaul mapping which was defined in features.py
+            numpyfun : "eval%np.mean"
+            ignore : ['none']
 
     permEntropy:
       overwrite: False
@@ -360,6 +448,15 @@ features:
             numpyfun: eval%np.mean
             max_numitem: 24
 
+    permEntROI:
+      overwrite: False
+      chain:
+        - feature: permEntropy
+        - function: roi_aggregator
+          args : # using the defaul mapping which was defined in features.py
+            numpyfun : "eval%np.mean"
+            ignore : ['none']
+
     svdEntropy:
       overwrite: False
       chain:
@@ -375,6 +472,15 @@ features:
             numpyfun: eval%np.mean
             max_numitem: 24
 
+    svdEntROI:
+      overwrite: False
+      chain:
+        - feature: svdEntropy
+        - function: roi_aggregator
+          args : # using the defaul mapping which was defined in features.py
+            numpyfun : "eval%np.mean"
+            ignore : ['none']
+
     higuchiFd:
       overwrite: False
       chain:
@@ -388,6 +494,15 @@ features:
             numpyfun: eval%np.mean
             max_numitem: 24
 
+    higuchiROI:
+      overwrite: False
+      chain:
+        - feature: higuchiFd
+        - function: roi_aggregator
+          args : # using the defaul mapping which was defined in features.py
+            numpyfun : "eval%np.mean"
+            ignore : ['none']
+
     katzFd:
       overwrite: False
       chain:
@@ -400,6 +515,15 @@ features:
             numpyfun: eval%np.mean
             max_numitem: 24
 
+    katzROI:
+      overwrite: False
+      chain:
+        - feature: katzFd
+        - function: roi_aggregator
+          args : # using the defaul mapping which was defined in features.py
+            numpyfun : "eval%np.mean"
+            ignore : ['none']
+
     petrosianFd:
       overwrite: False
       chain:
@@ -411,6 +535,15 @@ features:
           args:
             numpyfun: eval%np.mean
             max_numitem: 24
+
+    petroROI:
+      overwrite: False
+      chain:
+        - feature: petrosianFd
+        - function: roi_aggregator
+          args : # using the defaul mapping which was defined in features.py
+            numpyfun : "eval%np.mean"
+            ignore : ['none']
 
     entropyMultiscale: #TODO: i think the aggregation wont work here because multiscale return a complex datatype, check this
       overwrite: False
@@ -432,6 +565,15 @@ features:
           args:
             numpyfun: eval%np.mean
             max_numitem: 24
+
+    multiEntROI:
+      overwrite: False
+      chain:
+        - feature: entropyMultiscale
+        - function: roi_aggregator
+          args : # using the defaul mapping which was defined in features.py
+            numpyfun : "eval%np.mean"
+            ignore : ['none']
 
 
 aggregate:

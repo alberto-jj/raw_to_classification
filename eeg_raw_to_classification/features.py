@@ -241,7 +241,35 @@ def fooof_from_average(data,agg_fun=None,internal_kwargs={'FOOOF':{},'fit':{}}):
     output['values'] = values
     return output
 
-def roi_aggregator(data,mapping,numpyfun=None,axisname='spaces',ignore=['none']):
+def roi_mapping_alberto(x):
+    anterior = ["Fp1", "Fp2", "F3", "F4", "F7", "F8", "Fz"]
+    central = ["T7", "T8", "C3", "C4", "Cz"]
+    posterior = ["P3", "P4", "P7", "P8", "O1", "O2"]
+    if x in anterior:
+        return 'anterior'
+    elif x in central:
+        return 'central'
+    elif x in posterior:
+        return 'posterior'
+    else:
+        return 'none'
+
+def roi_mapping_yorguin(x):
+    if x[0] == 'F' and x[1].isdigit():
+        return 'frontal'
+    elif x[0] == 'C' and x[1].isdigit():
+        return 'central'
+    elif x[0]== 'P' and x[1].isdigit():
+        return 'parietal'
+    elif x[0]== 'O' and x[1].isdigit():
+        return 'occipital'
+    else:
+        return 'none'
+
+default_mapping=roi_mapping_alberto
+
+
+def roi_aggregator(data,mapping=default_mapping,numpyfun=None,axisname='spaces',ignore=['none']):
     # maybe a similar strategy could also work when the epochs are inhomoegeneous (different tasks?)
     # numpy fun should be a function that takes data,axis and keepdims
     # we can view this as a new feature or as an aggregate
