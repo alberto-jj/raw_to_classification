@@ -13,6 +13,7 @@ datasets = load_yaml('datasets.yml')
 PIPELINE = load_yaml('pipeline.yml')
 DEBUG = True
 import itertools
+PARALLELIZE=True
 def get_dependencies(feature):
     dependencies=[]
     depends_on = [f['feature'] for f in FEATURE_CFG[feature]['chain'] if 'feature' in f]
@@ -30,7 +31,14 @@ def foo(eeg_file,DOWNSAMPLE,keep_channels,featurepipelineCFG,FEATURE_CFG,feature
 
     dirname= os.path.dirname(eeg_file)
     finame= os.path.basename(eeg_file)
-
+    derifile = eeg_file.replace(prep_pipeline,pipeline_name)
+    
+    # inspect first if the file is already processed
+    inspect_vector=feat.process_feature(None,derifile,FEATURE_CFG,feature,pipeline_name,inspect_only=True)
+    inspect_=np.all(inspect_vector)
+    if inspect_:
+        print(f'{feature} already processed')
+        return
     try:
         epochs = mne.read_epochs(eeg_file, preload = True)
         standardize(epochs) #standardize ch_names
@@ -42,7 +50,6 @@ def foo(eeg_file,DOWNSAMPLE,keep_channels,featurepipelineCFG,FEATURE_CFG,feature
 
         try:
             print(f'Processing {feature}')
-            derifile = eeg_file.replace(prep_pipeline,pipeline_name)
             output = feat.process_feature(epochs,derifile,FEATURE_CFG,feature,pipeline_name)
         except:
             if DEBUG:
@@ -97,5 +104,10 @@ for featurepipeline in PIPELINE['features']['feature_pipeline_list']:
             all_EEGS.append(eeg_file)
     # begin parallelization
     for level in levels:
-        pairs=[(eeg_file,feature) for eeg_file in all_EEGS for feature in level]
-        Parallel(n_jobs=external_njobs)(delayed(foo)(eeg_file,DOWNSAMPLE,keep_channels,featurepipelineCFG,FEATURE_CFG,feature,pipeline_name,DEBUG) for eeg_file in all_EEGS for feature in level)
+        if PARALLELIZE:
+            pairs=[(eeg_file,feature) for eeg_file in all_EEGS for feature in level]
+            Parallel(n_jobs=external_njobs)(delayed(foo)(eeg_file,DOWNSAMPLE,keep_channels,featurepipelineCFG,FEATURE_CFG,feature,pipeline_name,DEBUG) for eeg_file in all_EEGS for feature in level)
+        else:
+            for eeg_file in all_EEGS:
+                for feature in level:
+                    foo(eeg_file,DOWNSAMPLE,keep_channels,featurepipelineCFG,FEATURE_CFG,feature,pipeline_name,DEBUG)

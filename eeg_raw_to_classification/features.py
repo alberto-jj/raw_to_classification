@@ -12,11 +12,14 @@ from antropy import detrended_fluctuation,lziv_complexity,sample_entropy,spectra
 from neurokit2 import entropy_multiscale
 import copy
 
-def process_feature(epochs,relevantpath,CFG,feature,pipeline_name):
+def process_feature(epochs,relevantpath,CFG,feature,pipeline_name,inspect_only=False):
     featdict = CFG[feature]
     overwrite = featdict['overwrite']
-    output = epochs.copy()
-
+    if not inspect_only:
+        output = epochs.copy()
+    else:
+        output = None
+    inspect_only_output = []
     for i_f,stage in enumerate(featdict['chain']):
         input_data = output
         if 'feature' in stage.keys():
@@ -25,13 +28,20 @@ def process_feature(epochs,relevantpath,CFG,feature,pipeline_name):
             outputfile = relevantpath.replace('_epo.fif',f'_{suffix}.npy')
             inner_featdict = CFG[suffix]
             if not os.path.isfile(outputfile) or inner_featdict['overwrite']:
+                if inspect_only:
+                    inspect_only_output.append(False)
+                    continue
                 print(f'Feature {suffix} not found')
-                output = process_feature(input_data,relevantpath,CFG,suffix,pipeline_name)
+                output = process_feature(input_data,relevantpath,CFG,suffix,pipeline_name,inspect_only)
                 os.makedirs(os.path.dirname(outputfile),exist_ok=True)
                 np.save(outputfile,output)
             else:
+                if inspect_only:
+                    inspect_only_output.append(True)
+                    continue
                 print(f'Already Exists:{outputfile}')
                 output = np.load(outputfile,allow_pickle=True).item()
+                inspect_only_output.append(True)
 
         if 'function' in stage.keys():
             inner_featdict = stage
@@ -40,20 +50,31 @@ def process_feature(epochs,relevantpath,CFG,feature,pipeline_name):
                 suffix = feature
                 outputfile = relevantpath.replace('_epo.fif',f'_{suffix}.npy')
                 if not os.path.isfile(outputfile) or overwrite:
+                    if inspect_only:
+                        inspect_only_output.append(False)
+                        continue
                     fun = eval(f"{inner_featdict['function']}")
                     if isinstance(fun,str):
                         fun=eval(fun)
                     output = fun(input_data,**inner_featdict['args'])
                     os.makedirs(os.path.dirname(outputfile),exist_ok=True)
                     np.save(outputfile,output)
+                    
                 else:
+                    if inspect_only:
+                        inspect_only_output.append(True)
+                        continue
                     print(f'Already Exists:{outputfile}')
                     output = np.load(outputfile,allow_pickle=True).item()
             else:
+                if inspect_only:
+                    continue
                 innerfun=eval(f"inner_featdict['function']")
                 innerfun=eval(innerfun)
                 output = innerfun(input_data,**inner_featdict['args'])
         input_data = output
+    if inspect_only:
+        output=inspect_only_output
     return output
 
 def extract_item(x,fun,newtype):
@@ -278,7 +299,10 @@ def roi_aggregator(data,mapping=default_mapping,numpyfun=None,axisname='spaces',
     # first map spaces to rois
     spaces =  data['metadata']['axes'][axisname]
     scope = {}
-    exec(mapping, scope)
+    if isinstance(mapping,str):
+        exec(mapping, scope)
+    else:
+        scope['roi_mapping'] = mapping
     roi_mapping = scope['roi_mapping']  # Access the function from the scope
     rois = [roi_mapping(x) for x in spaces]
     rois = list(set(rois) - set(ignore))
