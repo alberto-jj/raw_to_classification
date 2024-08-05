@@ -95,6 +95,9 @@ for featurepipeline in PIPELINE['features']['feature_pipeline_list']:
     all_EEGS=[]
 
     for dslabel, DATASET in datasets.items():
+        if DATASET.get('skip',False):
+            continue
+
         pattern = os.path.join(DATASET.get('bids_root', None),'derivatives',prep_pipeline,'**/*_epo.fif').replace('\\','/')
         eegs = glob.glob(pattern,recursive=True)
         os.makedirs(os.path.join(DATASET.get('bids_root', None),'derivatives',pipeline_name),exist_ok=True)

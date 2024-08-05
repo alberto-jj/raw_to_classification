@@ -22,6 +22,9 @@ for preplabel in PIPELINE['prep_inspection']['prep_list']:
         EEGS = []
         DATASETS=[]
         for dslabel, DATASET in datasets.items():
+            if DATASET.get('skip',False):
+                continue
+
             CFG = PIPELINE['features']
             pattern = os.path.join(DATASET.get('bids_root', None),'derivatives',preplabel,'**/*_epo.fif').replace('\\','/')
             eegs = glob.glob(pattern,recursive=True)

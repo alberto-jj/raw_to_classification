@@ -10,7 +10,7 @@ preprocess:
         skip_prep : False
         skip_reject : True
         normalization : True
-      overwrite : True
+      overwrite : False
   prep_list :
     - defaultprep
 prep_inspection:
@@ -575,7 +575,6 @@ features:
             numpyfun : "eval%np.mean"
             ignore : ['none']
 
-
 aggregate:
   path : './data/aggregate'
   filename : 'aggregate.csv'
@@ -599,15 +598,24 @@ aggregate:
     detrendedFluctuation: # no text
       return_function : "eval%lambda x: x"
       file_suffix : detrendedFluctuation
+    dfaROI : # no text
+      return_function : "eval%lambda x: x"
+      file_suffix : dfaROI #detrendedFluctuation
     lzivComplexity: # text
       return_function : "eval%lambda x: x"
       file_suffix : lzivComplexity
+    lzivROI: # text
+      return_function : "eval%lambda x: x"
+      file_suffix : lzivROI #lzivComplexity
     sampleEntropy: # text
       return_function : "eval%lambda x: x"
       file_suffix : sampleEntropy
     spectralEntropy: # text
       return_function : "eval%lambda x: x"
       file_suffix : spectralEntropy
+    specEntROI: # text
+      return_function : "eval%lambda x: x"
+      file_suffix : specEntROI #spectralEntropy
     spectralEntropytr: # text
       return_function : "eval%lambda x: x"
       file_suffix : spectralEntropytr
@@ -617,24 +625,42 @@ aggregate:
     hjorthMobility: # text
       return_function : "eval%lambda x: x"
       file_suffix : hjorthMobility
+    hMobROI: # text
+      return_function : "eval%lambda x: x"
+      file_suffix : hMobROI #hjorthMobility
     hjorthComplexity: # text
       return_function : "eval%lambda x: x"
       file_suffix : hjorthComplexity
+    hCompROI: # text
+      return_function : "eval%lambda x: x"
+      file_suffix : hCompROI  #hjorthComplexity
     numZerocross: # text
       return_function : "eval%lambda x: x"
       file_suffix : numZerocross
     permEntropy: # text
       return_function : "eval%lambda x: x"
       file_suffix : permEntropy
+    permEntROI : # text
+      return_function : "eval%lambda x: x"
+      file_suffix : permEntROI # permEntropy
     svdEntropy  : # text
       return_function : "eval%lambda x: x"
       file_suffix : svdEntropy
+    svdEntROI  : # text
+      return_function : "eval%lambda x: x"
+      file_suffix : svdEntROI #svdEntropy
     higuchiFd: # text
       return_function : "eval%lambda x: x"
       file_suffix : higuchiFd
+    higuchiROI : # text
+      return_function : "eval%lambda x: x"
+      file_suffix : higuchiROI #higuchiFd
     katzFd: # text
       return_function : "eval%lambda x: x"
       file_suffix : katzFd
+    katzROI: # text
+      return_function : "eval%lambda x: x"
+      file_suffix : katzROI #katzFd
     petrosianFd : # text
       return_function : "eval%lambda x: x"
       file_suffix : petrosianFd
@@ -647,14 +673,24 @@ aggregate:
     PowerSpectrumAverageROI:
       return_function: "eval%lambda x: x"
       file_suffix : PowerSpectrumAverageROI
-
+  feature_aggregate_list:
+    - FeaturesROI@30@prep-defaultprep
+  #  - FeaturesChannels@30@prep-defaultprep
   aggregate_cfgs:
     FeaturesROI@30@prep-defaultprep:
-      feature_folder : 'features30@prep-defaultprep'
+      feature_folder : 'features30@ROI@prep-defaultprep'
       feature_list: # CHOOSE FEATURES WITH SAME DIMENSIONS, OTHERWISE THE DATAFRAME CANT BE MADE
         - fooofSlopeROI
-        - RelativeBandPower1ROI # could be the original name or a post-processed name
-        # - PowerSpectrumAverageROI
+        - RelativeBandPower1ROI
+        - dfaROI
+        - lzivROI
+        - specEntROI
+        - hMobROI
+        - hCompROI
+        - permEntROI
+        - svdEntROI
+        - higuchiROI
+        - katzROI
     FeaturesChannels@30@prep-defaultprep:
       feature_folder : 'features30@prep-defaultprep'
       feature_list: # CHOOSE FEATURES WITH SAME DIMENSIONS, OTHERWISE THE DATAFRAME CANT BE MADE
@@ -681,7 +717,7 @@ aggregate:
 scalingAndFolding:
   aggregate_folders:
     - 'FeaturesROI@30@prep-defaultprep'
-    - 'FeaturesChannels@30@prep-defaultprep'
+  #  - 'FeaturesChannels@30@prep-defaultprep'
   MAX_FEATURES: null
   path : './data/scalingAndFolding'
   random_state : 0

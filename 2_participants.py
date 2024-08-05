@@ -6,6 +6,9 @@ datasets = load_yaml('datasets.yml')
 
 for dslabel,DATASET in datasets.items():
 
+    if DATASET.get('skip',False):
+        continue
+
     datafile = DATASET['participants_file']
     outfile = DATASET['cleaned_participants']
 
@@ -18,11 +21,16 @@ for dslabel,DATASET in datasets.items():
     reader = eval(DATASET['reader']['function'])
     reader_args = DATASET['reader']['args']
     df = reader(datafile,**reader_args)
-
+    scope = {
+        'df':df,
+        'DATASET':DATASET,
+        'datafile':datafile,
+        'outfile':outfile
+    }
     # dataset specific
     if 'df_transform' in DATASET:
-        exec(DATASET['df_transform'])
-
+        exec(DATASET['df_transform'],None,scope)
+        df = scope['df']
 
     df = df.rename(columns=DATASET['columns'])
     columns = list(DATASET['columns'].values())

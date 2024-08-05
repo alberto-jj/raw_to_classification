@@ -17,7 +17,8 @@ csvfilename = cfg['aggregate']['filename']
 id_splitter = cfg['aggregate']['id_splitter']
 os.makedirs(OUTPUTBASE,exist_ok=True)
 
-for agg_cfg_label,agg_cfg in cfg['aggregate']['aggregate_cfgs'].items():
+for agg_cfg_label in cfg['aggregate']['feature_aggregate_list']:
+    agg_cfg = cfg['aggregate']['aggregate_cfgs'][agg_cfg_label]
     OUTPUT = os.path.join(OUTPUTBASE,agg_cfg_label)
     os.makedirs(OUTPUT,exist_ok=True)
     ALL_INHOMOGENEUS = []
@@ -25,6 +26,9 @@ for agg_cfg_label,agg_cfg in cfg['aggregate']['aggregate_cfgs'].items():
 
 
     for dslabel, DATASET in datasets.items():
+        if DATASET.get('skip',False):
+            continue
+
         perfeature =[]
         participants_file = DATASET['cleaned_participants']
         participants = pd.read_csv(participants_file)

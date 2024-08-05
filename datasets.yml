@@ -1,6 +1,7 @@
 FINLAND:
   url: https://osf.io/pehj9
   dataset_label : finland
+  skip : False
   
   # Participants 
   participants_file : "Y:/datasets/HenryRailo/InfoAboutParticipants.xlsx"
@@ -70,6 +71,7 @@ FINLAND:
 CALIFORNIA:
   url : https://openneuro.org/datasets/ds002778/versions/
   dataset_label : california
+  skip : False
 
   # Participants 
   participants_file : "Y:/datasets/ds002778-download/participants.tsv"
@@ -113,6 +115,7 @@ CALIFORNIA:
 GREECE:
   url : https://openneuro.org/datasets/ds004504/versions/
   dataset_label : greece
+  skip : False
 
   # Participants 
   participants_file : "Y:/datasets/ds004504-download/participants.tsv"
@@ -156,6 +159,7 @@ GREECE:
 OSLO:
   url : https://openneuro.org/datasets/ds003775/versions/
   dataset_label : oslo
+  skip : False
 
   # Participants 
   participants_file : "Y:/datasets/ds003775-download/participants.tsv"
@@ -198,6 +202,7 @@ OSLO:
 IOWA:
   url: https://www.dropbox.com/s/neaxtum8zb9xmnc/Data%20and%20Code.zip?dl=0
   dataset_label : iowa
+  skip : False
 
   # Participants 
   participants_file : "Y:/datasets/Iowa/Dataset/IowaDataset/DataIowa.xlsx"
@@ -262,6 +267,24 @@ IOWA:
 POLAND:
   url : https://openneuro.org/datasets/ds004796/versions/
   dataset_label : poland
+  skip : False
+
+  precode_deprecated : | # este era cuando queriamos quedarnos con solo ojos cerrados, pero lo deprecamos, por ahora usaremos todos y esto se ignorara al no ser precode exactamente la key
+    import mne
+    import pandas as pd
+    import os
+    events=eeg_file.replace('_eeg.vhdr','_events.tsv')
+    if not os.path.isfile(events):
+        raise FileNotFoundError(f'Events file not found: {events}')
+    events=pd.read_csv(events,sep='\t')
+    assert events[events['event_type']=="S 11"].shape[0]==1
+
+    #start=events[events['event_type']=="S  4"]['onset'].item()
+    before_the_end=events[events['event_type']=="S 11"].index.item()-1
+    start=events.loc[before_the_end,'onset']
+    stop=events[events['event_type']=="S 11"]['onset'].item()
+    raw_file=mne.io.read_raw(eeg_file,preload=True).crop(tmin=start,tmax=stop)
+    # corregir: si no termina en s4,s11 , tomar desde s11 -1, y si no termina en s11, desde el ultimo hasta el final del eeg
 
   # Participants 
   participants_file : "Y:/datasets/ds004796-download/participants.tsv"
@@ -281,7 +304,7 @@ POLAND:
     sex : sex
   columns_mapping:
     sex :
-      0 : M # Check this mapping, i didnt find which was which
+      0 : M # according to the corresponding participants.json file
       1 : F
     subject : "lambda x: x.replace('sub-','')"
 

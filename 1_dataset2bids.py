@@ -6,6 +6,9 @@ from eeg_raw_to_classification.utils import load_yaml
 datasets = load_yaml('datasets.yml')
 
 for dslabel,DATASET in datasets.items():
+    if DATASET.get('skip',False):
+        continue
+
     if 'sovabids' in DATASET:
         source_path = DATASET['sovabids']['paths']['source_path']
         bids_path = DATASET['sovabids']['paths']['bids_path']

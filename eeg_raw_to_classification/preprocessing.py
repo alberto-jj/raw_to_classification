@@ -57,7 +57,10 @@ def prepare(filename, line_noise, keep_chans=None, epoch_length = 2,
     #setup_logging(log_file)
 
     # Import EEG raw recording + channel standarization
-    raw = mne.io.read_raw(filename,preload=True)
+    if isinstance(filename, str):
+        raw = mne.io.read_raw(filename,preload=True)
+    else:
+        raw = filename # assume we are receiving a raw object
     # Remove channels which are not needed
     if keep_chans is not None:
         raw.reorder_channels(keep_chans)

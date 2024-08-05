@@ -9,6 +9,8 @@ os.makedirs(inspect_path,exist_ok=True)
 import traceback
 max_files = None #30
 for dslabel,DATASET in datasets.items():
+    if DATASET.get('skip',False):
+        continue
     exemplar_file = DATASET['example_file']
     eegs=glob.glob(exemplar_file,recursive=True)
     MONTAGES=[]
