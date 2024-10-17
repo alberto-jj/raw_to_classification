@@ -139,8 +139,6 @@ for agg_cfg_label in cfg['aggregate']['feature_aggregate_list']:
     # Concatenate
     df = pd.concat(ALL,axis=0,ignore_index=True)
     # drop rows with nans
-    df.to_csv(os.path.join(OUTPUT,csvfilename+'@withNaNs.csv'),index=False)
-    df = df.dropna()
-    df.to_csv(os.path.join(OUTPUT,csvfilename),index=False)
+    df.to_csv(os.path.join(OUTPUT,csvfilename+'@raw.csv'),index=False)
 
     print('ok')

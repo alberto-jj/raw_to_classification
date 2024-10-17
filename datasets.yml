@@ -219,8 +219,8 @@ IOWA:
     Gender : sex
   columns_mapping:
     sex:
-      0 : M # Check this mapping, i didnt find which was which
-      1 : F
+      0 : F # Check supplementary material of the corresponding paper
+      1 : M
     group:
       PD : PD
       Control : HC

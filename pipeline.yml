@@ -577,7 +577,7 @@ features:
 
 aggregate:
   path : './data/aggregate'
-  filename : 'aggregate.csv'
+  filename : 'aggregate'
   id_splitter : '/'
   feature_return:
     RelativeBandPower1: # Could be the original name or a post-processed name
@@ -682,7 +682,7 @@ aggregate:
       feature_list: # CHOOSE FEATURES WITH SAME DIMENSIONS, OTHERWISE THE DATAFRAME CANT BE MADE
         - fooofSlopeROI
         - RelativeBandPower1ROI
-        - dfaROI
+        - dfaROI # revisar escala de tiempo
         - lzivROI
         - specEntROI
         - hMobROI
