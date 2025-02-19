@@ -2,7 +2,9 @@ import pandas as pd
 from eeg_raw_to_classification.utils import load_yaml
 import pandas as pd
 import shutil
-datasets = load_yaml('datasets.yml')
+
+cfg = load_yaml(f'pipeline.yml')
+datasets = load_yaml(cfg['datasets_file'])
 
 for dslabel,DATASET in datasets.items():
 
