@@ -1,12 +1,17 @@
 from eeg_raw_to_classification.utils import load_yaml
-datasets = load_yaml('datasets.yml')
-cfg = load_yaml('pipeline.yml')
+
+
+cfg = load_yaml(f'pipeline.yml')
+datasets = load_yaml(cfg['datasets_file'])
+
+PROJECT = cfg['project']
 MAX_FILES = None #3 #TODO: erase this when ready
 external_njobs = 10 # len(psutil.Process().cpu_affinity())
 DEBUG=False
 PARALLELIZE=True
 
 def foo(eeg_file,this_prep,DATASET):
+    # imports here to avoid problems with joblib
     import bids
     from eeg_raw_to_classification.utils import get_derivative_path,save_figs_in_html,save_dict_to_json
     import traceback
