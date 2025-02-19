@@ -3,7 +3,9 @@ from sovabids.rules import apply_rules # Apply rules for conversion
 from sovabids.convert import convert_them # Do the conversion
 
 from eeg_raw_to_classification.utils import load_yaml
-datasets = load_yaml('datasets.yml')
+
+cfg = load_yaml(f'pipeline.yml')
+datasets = load_yaml(cfg['datasets_file'])
 
 for dslabel,DATASET in datasets.items():
     if DATASET.get('skip',False):
