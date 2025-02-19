@@ -10,12 +10,15 @@ from sklearn.preprocessing import MinMaxScaler
 
 
 
-datasets = load_yaml('datasets.yml')
-cfg = load_yaml('pipeline.yml')
-OUTPUTBASE = cfg['aggregate']['path']
+
+cfg = load_yaml(f'pipeline.yml')
+datasets = load_yaml(cfg['datasets_file'])
+PROJECT = cfg['project']
+OUTPUTBASE = cfg['aggregate']['path'].replace('%PROJECT%,PROJECT')
 csvfilename = cfg['aggregate']['filename']
 id_splitter = cfg['aggregate']['id_splitter']
 os.makedirs(OUTPUTBASE,exist_ok=True)
+
 
 for agg_cfg_label in cfg['aggregate']['feature_aggregate_list']:
     agg_cfg = cfg['aggregate']['aggregate_cfgs'][agg_cfg_label]
