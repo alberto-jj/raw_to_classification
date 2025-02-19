@@ -8,9 +8,13 @@ import glob
 from toposort import toposort
 from eeg_raw_to_classification.utils import load_yaml
 from joblib import delayed, Parallel
+
+
 external_njobs = 10 # len(psutil.Process().cpu_affinity())
-datasets = load_yaml('datasets.yml')
-PIPELINE = load_yaml('pipeline.yml')
+PIPELINE = load_yaml(f'pipeline.yml')
+datasets = load_yaml(PIPELINE['datasets_file'])
+
+PROJECT = PIPELINE['project']
 DEBUG = True
 import itertools
 PARALLELIZE=True
