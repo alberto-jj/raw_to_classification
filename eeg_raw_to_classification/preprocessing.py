@@ -100,6 +100,9 @@ def prepare(filename, line_noise, keep_chans=None, epoch_length = 2,
         del prep
     else:
         raw = raw.copy()
+
+        # Apply average reference?
+        #raw.set_eeg_reference('average',projection=False)
         raw.set_montage(montage)
         prep_info={'status':'skipped'}
 
