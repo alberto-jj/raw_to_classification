@@ -2,9 +2,13 @@ import mne
 import os
 import glob
 from eeg_raw_to_classification.utils import load_yaml,save_dict_to_json,save_figs_in_html
-datasets = load_yaml('datasets.yml')
-cfg = load_yaml('pipeline.yml')
-inspect_path = cfg['inspect']['path']
+
+cfg = load_yaml(f'pipeline.yml')
+PROJECT = cfg['project']
+datasets = load_yaml(cfg['datasets_file'])
+
+
+inspect_path = cfg['inspect']['path'].replace('%PROJECT%',PROJECT)
 os.makedirs(inspect_path,exist_ok=True)
 import traceback
 max_files = None #30
