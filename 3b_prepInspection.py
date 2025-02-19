@@ -10,12 +10,14 @@ from eeg_raw_to_classification import features as feat
 from eeg_raw_to_classification.utils import load_yaml,save_dict_to_json
 import traceback
 import pandas as pd
-datasets = load_yaml('datasets.yml')
-PIPELINE = load_yaml('pipeline.yml')
 
+PIPELINE = load_yaml(f'pipeline.yml')
+datasets = load_yaml(PIPELINE['datasets_file'])
+
+PROJECT = PIPELINE['project']
 
 for preplabel in PIPELINE['prep_inspection']['prep_list']:
-    outputfolder=PIPELINE['prep_inspection']['path']
+    outputfolder=PIPELINE['prep_inspection']['path'].replace('%PROJECT%,PROJECT')
     ## Get the number of epochs
     if 'epochs' in PIPELINE['prep_inspection']['checks']:
         SHAPES = []
