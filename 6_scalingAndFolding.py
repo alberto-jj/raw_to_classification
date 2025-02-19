@@ -22,16 +22,18 @@ import itertools
 from reComBat import reComBat
 from sklearn.decomposition import PCA
 
-datasets = load_yaml('datasets.yml')
+
 PIPELINE = load_yaml('pipeline.yml')
-OUTPUT_DIR_BASE = PIPELINE['scalingAndFolding']['path']
+datasets = load_yaml(PIPELINE['datasets_file'])
+PROJECT = PIPELINE['project']
+OUTPUT_DIR_BASE = PIPELINE['scalingAndFolding']['path'].replace('%PROJECT%,PROJECT')
 
 for aggregate_folder in PIPELINE['scalingAndFolding']['aggregate_folders']:
     CFG = PIPELINE['scalingAndFolding']
     OUTPUT_DIR=os.path.join(OUTPUT_DIR_BASE,aggregate_folder)
     os.makedirs(OUTPUT_DIR,exist_ok=True)
 
-    df_path = os.path.join(PIPELINE['aggregate']['path'],aggregate_folder,PIPELINE['aggregate']['filename'])
+    df_path = os.path.join(PIPELINE['aggregate']['path'],aggregate_folder,PIPELINE['aggregate']['filename']+'@final.csv')
     df = pd.read_csv(df_path)
 
     # SETUP

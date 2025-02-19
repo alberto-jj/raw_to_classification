@@ -12,9 +12,13 @@ from eeg_raw_to_classification.utils import parse_bids,load_yaml,get_output_dict
 import glob
 from autogluon.tabular import TabularDataset, TabularPredictor
 import traceback
-datasets = load_yaml('datasets.yml')
-PIPELINE = load_yaml('pipeline.yml')
-OUTPUT_DIR = PIPELINE['ml']['path']
+
+PIPELINE = load_yaml(f'pipeline.yml')
+datasets = load_yaml(PIPELINE['datasets_file'])
+
+PROJECT = PIPELINE['project']
+
+OUTPUT_DIR = PIPELINE['ml']['path'].replace('%PROJECT%,PROJECT')
 os.makedirs(OUTPUT_DIR,exist_ok=True)
 
 fold_path = os.path.join(PIPELINE['scalingAndFolding']['path'])

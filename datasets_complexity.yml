@@ -1,0 +1,309 @@
+EPILEPSY:
+  url: Null
+  dataset_label : epilepsy
+  skip : False
+  
+  # Participants 
+  participants_file : 'Y:/datasets/epilepsy/epilepsy.csv'
+  reader : 
+    function : "pd.read_csv"
+    args : 
+      delimiter: ","
+
+  cleaned_participants : "Y:/datasets/epilepsy/participants.csv" # created whether transforms or not were applied
+
+  # Files to be included in the study
+  raw_layout:
+    extension: ".fif"
+    suffix : 'iEEG'
+    return_type : 'filename'
+
+  # Processing
+  example_file: "Y:/datasets/HenryRailo/data/*.set"
+  # ch_names are channels to keep
+  ch_names: [ "PO7", "FT8", "POz", "P8", "C5", "F1", "P7", "FC4", "Fp2", "F5", "P5", "T8", "FC6", "CP6", "C4", "T7", "Oz", "P1", "TP9", "P6", "AF8", "TP10", "C6", "AF4", "C3", "F3", "P3", "FC1", "FC2", "PO3", "F6", "AF7", "FT9", "CP1", "Fpz", "O1", "F8", "AF3", "CP3", "C2", "PO4", "Fp1", "FC3", "P4", "TP7", "FT7", "TP8", "CPz", "FT10", "P2", "CP4", "C1", "CP2", "O2", "CP5", "FC5", "Fz", "Cz", "F4", "PO8", "Pz", "F7", "F2" ]
+  PowerLineFrequency : 50 # from inspection
+
+# BIDS
+  bids_root : "Y:/datasets/HenryRailo/bids/"
+
+  sovabids:
+    paths:
+      source_path : "Y:/datasets/HenryRailo/data"
+      bids_path : "Y:/datasets/HenryRailo/bids"
+    rules:
+      dataset_description:                            # Configuring the dataset_description.json file
+        Name : "Parkinson-RESEEG"                     # Name of the dataset, set up as a fixed string
+        Authors:                                      # Here I put the personnel involved in the acquisition of the dataset
+          - Henry Railo                               # See https://osf.io/pehj9/
+      sidecar:                                        # Configuring the sidecar eeg file
+        PowerLineFrequency : 50                       # Noted from the visual inspection of the eeg spectrum
+        EEGReference : Unknown                        
+      channels:                                       # Configuring the channels tsv
+        type :                                        # This property allow us to overwrite channel types inferred by MNE 'HEOG', 'VEOG'
+          VEOG : VEOG                                 # Here the syntax is <channel name> : <channel type according to bids notation>
+          HEOG : HEOG
+      non-bids:                                       # Additional configuration not belonging specifically to any of the previous objects
+        eeg_extension : .set                         # Sets which extension to read as an eeg file
+        path_analysis:                                # Some bids properties can be inferred from the path of the source files
+          pattern : data/%a%_%b%.set
+          operation :
+            entities.subject : "[a]"
+            entities.task : "[b]"
+        file_filter:
+          - exclude: '_PREP_preprocessed'
+
+
+CALIFORNIA:
+  url : https://openneuro.org/datasets/ds002778/versions/
+  dataset_label : california
+  skip : False
+
+  # Participants 
+  participants_file : "Y:/datasets/ds002778-download/participants.tsv"
+  reader : 
+    function : "pd.read_csv"
+    args : 
+      delimiter: "\\t"
+
+  cleaned_participants : "Y:/datasets/ds002778-download/participants.csv"
+
+  df_transform : "group=df['participant_id'].apply(lambda x: x.replace('sub-',''));group=group.apply(lambda x: ''.join(i for i in x if i.isalpha()));df['group'] = group;"
+  columns:
+    participant_id : subject
+    group : group
+    age : age
+    gender : sex
+  columns_mapping:
+    group:
+      hc : HC
+      pd : PD
+    subject : "lambda x: x.replace('sub-','')" # for some reason this seems to be needed in many datasets
+    sex:
+      m : M
+      f : F
+
+  # Files to be included in the study
+  raw_layout:
+    extension: ".bdf"
+    suffix : 'eeg'
+    return_type : 'filename'
+    task : 'rest'
+    session : ['hc', 'on']
+
+  # Processing
+  example_file: "Y:/datasets/ds002778-download/sub-*/ses-*/eeg/sub-*_ses-*_task-*_eeg.bdf"
+  ch_names: ["P8", "P7", "T8", "Fp2", "FC6", "CP6", "T7", "Oz", "C4", "AF4", "C3", "FC1", "F3", "P3", "PO3", "FC2", "CP1", "O1", "AF3", "F8", "PO4", "Fp1", "P4", "CP2", "CP5", "O2", "FC5", "Fz", "Cz", "F4", "Pz", "F7" ]
+  PowerLineFrequency : 60
+  # BIDS
+  bids_root : "Y:/datasets/ds002778-download"
+
+GREECE:
+  url : https://openneuro.org/datasets/ds004504/versions/
+  dataset_label : greece
+  skip : False
+
+  # Participants 
+  participants_file : "Y:/datasets/ds004504-download/participants.tsv"
+  reader : 
+    function : "pd.read_csv"
+    args : 
+      delimiter: "\\t"
+
+  cleaned_participants : "Y:/datasets/ds004504-download/participants.csv"
+
+  df_transform : None
+
+  columns:
+    participant_id : subject
+    Group : group
+    Age : age
+    Gender : sex
+  columns_mapping:
+    group:
+      C : HC
+      A : AD
+      F : FD
+    subject : "lambda x: x.replace('sub-','')"
+
+  # Files to be included in the study
+  raw_layout:
+    extension: ".set"
+    suffix : 'eeg'
+    return_type : 'filename'
+    task : eyesclosed
+    #session : None
+
+  # Processing
+  example_file: "Y:/datasets/ds004504-download/sub-*/eeg/sub-*_task-*_eeg.set"
+  ch_names: [ "Fp2", "C4", "T3", "C3", "T6", "F3", "P3", "O1", "F8", "Fp1", "P4", "T5", "T4", "O2", "Fz", "Cz", "F4", "Pz", "F7" ]
+  PowerLineFrequency : 50
+  # BIDS
+  bids_root : "Y:/datasets/ds004504-download/"
+
+
+OSLO:
+  url : https://openneuro.org/datasets/ds003775/versions/
+  dataset_label : oslo
+  skip : False
+
+  # Participants 
+  participants_file : "Y:/datasets/ds003775-download/participants.tsv"
+  reader : 
+    function : "pd.read_csv"
+    args : 
+      delimiter: "\\t"
+
+  cleaned_participants : "Y:/datasets/ds003775-download/participants.csv"
+
+  df_transform : "group=df['participant_id'].apply(lambda x: 'HC');df['group'] = group;" # all are healthy
+
+  columns:
+    participant_id : subject
+    group : group
+    age : age
+    sex : sex
+  columns_mapping:
+    sex:
+      m : M
+      f : F
+    subject : "lambda x: x.replace('sub-','')"
+
+  # Files to be included in the study
+  raw_layout:
+    extension: ".edf"
+    suffix : 'eeg'
+    return_type : 'filename'
+    task : 'resteyesc'
+    session : t1 # include t2?
+
+  # Processing
+  example_file: "Y:/datasets/ds003775-download/sub-*/ses-*/eeg/sub-*_ses-*_task-*_eeg.edf"
+  ch_names: ["PO7", "FT8", "POz", "P8", "C5", "F1", "P7", "T8", "F5", "P5", "Fp2", "FC4", "FC6", "CP6", "T7", "Oz", "C4", "P1", "P6", "AF8", "C6", "AF4", "C3", "AFz", "F3", "FC1", "P3", "PO3", "F6", "AF7", "FC2", "P9", "CP1", "CP3", "AF3", "TP7", "PO4", "PO8", "O1", "Fpz", "F8", "FC3", "Fp1", "C2", "TP8", "FT7", "P4", "P10", "CPz", "CP4", "P2", "C1", "CP2", "CP5", "O2", "FC5", "Fz", "Cz", "F4", "FCz", "Pz", "F7", "F2" ]
+  PowerLineFrequency : 50
+  # BIDS
+  bids_root : "Y:/datasets/ds003775-download/"
+
+
+IOWA:
+  url: https://www.dropbox.com/s/neaxtum8zb9xmnc/Data%20and%20Code.zip?dl=0
+  dataset_label : iowa
+  skip : False
+
+  # Participants 
+  participants_file : "Y:/datasets/Iowa/Dataset/IowaDataset/DataIowa.xlsx"
+  reader : 
+    function : "pd.read_excel"
+    args : {}
+  df_transform : "group=df['Rest'].apply(lambda x: ''.join(char for char in x if not char.isdigit()));df['group'] = group;" # exec function to be applied to the dataframe
+
+  cleaned_participants : "Y:/datasets/Iowa/Dataset/IowaDataset/participants.csv" # created whether transforms or not were applied
+  columns:
+    Rest : subject
+    group : group
+    Age : age
+    Gender : sex
+  columns_mapping:
+    sex:
+      0 : F # Check supplementary material of the corresponding paper
+      1 : M
+    group:
+      PD : PD
+      Control : HC
+  # Files to be included in the study
+  raw_layout:
+    extension: ".vhdr"
+    suffix : 'eeg'
+    return_type : 'filename'
+    task : 'rest'
+
+  # Processing
+  example_file: "Y:/datasets/Iowa/Dataset/IowaDataset/Raw data/*.vhdr" #Y:/datasets/Iowa/Dataset/IowaDataset/bids/sub-Control1041/ses-01/eeg/sub-Control1041_ses-01_task-rest_eeg.vhdr
+  # ch_names are channels to keep # NO "FT9"
+  ch_names: [ "PO7", "POz", "P8", "C5", "F1", "P7", "FC4", "Fp2", "F5", "P5", "T8", "FC6", "CP6", "T7", "Oz", "C4", "P1", "TP9", "P6", "AF8", "TP10", "C6", "AF4", "C3", "AFz", "F3", "FC1", "P3", "FC2", "F6", "AF7", "CP1", "FT8", "O1", "F8", "AF3", "TP7", "CP3", "PO8", "Fp1", "FC3", "P4", "C2", "TP8", "FT7", "CPz", "FT10", "P2", "CP4", "C1", "CP2", "CP5", "O2", "FC5", "Fz", "Cz", "F4", "FCz", "F7", "F2" ]
+  PowerLineFrequency : 60 # from inspection
+
+# BIDS
+  bids_root : "Y:/datasets/Iowa/Dataset/IowaDataset/bids"
+
+  sovabids:
+
+    paths:
+      source_path : "Y:/datasets/Iowa/Dataset/IowaDataset/Raw data"
+      bids_path : "Y:/datasets/Iowa/Dataset/IowaDataset/bids"
+    rules:
+      entities :
+        task : "rest"
+        session : "01"
+
+      dataset_description:                            # Configuring the dataset_description.json file
+        Name : "Iowa"                                 # Name of the dataset, set up as a fixed string
+        Authors:                                      # Here I put the personnel involved in the acquisition of the dataset
+          - Unknown                                   #
+      sidecar:                                        # Configuring the sidecar eeg file
+        PowerLineFrequency : 60                       # Noted from the visual inspection of the eeg spectrum
+        EEGReference : Unknown                        
+      non-bids:                                       # Additional configuration not belonging specifically to any of the previous objects
+        eeg_extension : .vhdr                         # Sets which extension to read as an eeg file
+        path_analysis:                                # Some bids properties can be inferred from the path of the source files
+          pattern : data/%a%.vhdr
+          operation :
+            entities.subject : "[a]"
+
+POLAND:
+  url : https://openneuro.org/datasets/ds004796/versions/
+  dataset_label : poland
+  skip : False
+
+  precode_deprecated : | # este era cuando queriamos quedarnos con solo ojos cerrados, pero lo deprecamos, por ahora usaremos todos y esto se ignorara al no ser precode exactamente la key
+    import mne
+    import pandas as pd
+    import os
+    events=eeg_file.replace('_eeg.vhdr','_events.tsv')
+    if not os.path.isfile(events):
+        raise FileNotFoundError(f'Events file not found: {events}')
+    events=pd.read_csv(events,sep='\t')
+    assert events[events['event_type']=="S 11"].shape[0]==1
+
+    #start=events[events['event_type']=="S  4"]['onset'].item()
+    before_the_end=events[events['event_type']=="S 11"].index.item()-1
+    start=events.loc[before_the_end,'onset']
+    stop=events[events['event_type']=="S 11"]['onset'].item()
+    raw_file=mne.io.read_raw(eeg_file,preload=True).crop(tmin=start,tmax=stop)
+    # corregir: si no termina en s4,s11 , tomar desde s11 -1, y si no termina en s11, desde el ultimo hasta el final del eeg
+
+  # Participants 
+  participants_file : "Y:/datasets/ds004796-download/participants.tsv"
+  reader : 
+    function : "pd.read_csv"
+    args : 
+      delimiter: "\\t"
+
+  cleaned_participants : "Y:/datasets/ds004796-download/participants.csv"
+
+  df_transform : "group=df['participant_id'].apply(lambda x: 'HC');df['group'] = group;" # all are healthy
+
+  columns:
+    participant_id : subject
+    group : group
+    age : age
+    sex : sex
+  columns_mapping:
+    sex :
+      0 : M # according to the corresponding participants.json file
+      1 : F
+    subject : "lambda x: x.replace('sub-','')"
+
+  # Files to be included in the study
+  raw_layout:
+    extension: ".vhdr"
+    suffix : 'eeg'
+    return_type : 'filename'
+    task : 'rest'
+
+  # Processing
+  example_file: "Y:/datasets/ds004796-download/sub-*/eeg/sub-*_task-*_eeg.vhdr"
+  ch_names: ["PO7", "F1", "FC6", "T7", "P1", "AFz", "PO3", "F6", "O1", "CP3", "Fp1", "TP8", "P2", "CP4", "F9", "F4", "Pz", "F2", "POz", "P8", "T8", "FC4", "CP6", "C4", "Oz", "P6", "C6", "FC1", "P3", "FC2", "P9", "FT9", "FT8", "F8", "TP7", "PO4", "CPz", "O2", "Cz", "F7", "C5", "Fp2", "P5", "TP9", "AF8", "AF7", "CP1", "AF3", "PO8", "FC3", "FT7", "C1", "Fz", "P7", "F5", "AF4", "C3", "F3", "C2", "P4", "CP2", "CP5", "PO9", "FC5"]
+  PowerLineFrequency : 50
+  # BIDS
+  bids_root : "Y:/datasets/ds004796-download/"

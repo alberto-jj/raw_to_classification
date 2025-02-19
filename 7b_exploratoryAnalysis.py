@@ -18,9 +18,11 @@ import traceback
 import cmasher as cmr
 import matplotlib.patches as mpatches
 
-datasets = load_yaml('datasets.yml')
-PIPELINE = load_yaml('pipeline.yml')
-OUTPUT_DIR = PIPELINE['eda']['path']
+
+PIPELINE = load_yaml(f'pipeline.yml')
+datasets = load_yaml(PIPELINE['datasets_file'])
+PROJECT = PIPELINE['project']
+OUTPUT_DIR = PIPELINE['eda']['path'].replace('%PROJECT%,PROJECT')
 os.makedirs(OUTPUT_DIR,exist_ok=True)
 
 fold_path = os.path.join(PIPELINE['scalingAndFolding']['path'])

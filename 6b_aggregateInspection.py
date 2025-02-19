@@ -10,16 +10,19 @@ from sklearn.preprocessing import MinMaxScaler
 import traceback
 import pickle
 
-datasets = load_yaml('datasets.yml')
-cfg = load_yaml('pipeline.yml')
-OUTPUTROOT = 'data/viz'#cfg['aggregate']['path']
+
+
+cfg = load_yaml(f'pipeline.yml')
+datasets = load_yaml(cfg['datasets_file'])
+PROJECT = cfg['project']
+OUTPUTROOT = f'data/{PROJECT}/viz'#cfg['aggregate']['path']
 # csvfilename = cfg['aggregate']['filename']
 # id_splitter = cfg['aggregate']['id_splitter']
 
 #aggregate_file = r'data\aggregate\FeaturesChannels@30@prep-defaultprep\aggregate.csv'
 
 #load pkl
-pklpattern ='data\scalingAndFolding\**\scaling_effect.pkl'
+pklpattern =f'data\{PROJECT}\scalingAndFolding\**\scaling_effect.pkl'
 pklfiles = glob.glob(pklpattern,recursive=True)
 
 for pklfile in pklfiles:

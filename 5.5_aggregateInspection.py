@@ -22,9 +22,12 @@ import itertools
 from reComBat import reComBat
 from sklearn.decomposition import PCA
 
-datasets = load_yaml('datasets.yml')
-PIPELINE = load_yaml('pipeline.yml')
-OUTPUT_DIR_BASE = PIPELINE['scalingAndFolding']['path']
+
+
+PIPELINE = load_yaml(f'pipeline.yml')
+datasets = load_yaml(PIPELINE['datasets_file'])
+PROJECT = PIPELINE['project']
+OUTPUT_DIR_BASE = PIPELINE['scalingAndFolding']['path'].replace('%PROJECT%,PROJECT')
 
 for aggregate_folder in PIPELINE['scalingAndFolding']['aggregate_folders']:
     CFG = PIPELINE['scalingAndFolding']

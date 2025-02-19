@@ -1,5 +1,5 @@
-project: 'saint'
-datasets_file: 'datasets_saint.yml'
+project: 'epilepsy'
+datasets_file: 'datasets_complexity.yml'
 inspect:
   path : './data/%PROJECT%/inspect'
 preprocess:
@@ -7,9 +7,9 @@ preprocess:
     defaultprep: # This is the name of the preprocessing pipeline
       prepare:
         epoch_length : 5
-        downsample : 200
+        downsample : 500
         ica_method : 'fastica'
-        skip_prep : True
+        skip_prep : False
         skip_reject : True
         normalization : True
       overwrite : False
@@ -25,17 +25,63 @@ prep_inspection:
 
 features:
   feature_pipeline_cfg:
-    features@prep-defaultprep: #you set the name of the feature pipeline with the key
+    features30@ROI@prep-defaultprep: #you set the name of the feature pipeline with the key
       prep_pipeline : 'defaultprep' # This is the name of the preprocessing pipeline previously defined (must exist in derivatives)
-      downsample : 200
+      downsample : 500
       prefilter :
         l_freq : 1
-        h_freq : 40
+        h_freq : 30
       keep_channels : False
       feature_list: # To say which features actually compute rather than configure
+        #- FooofFromAverage
+        # - PowerSpectrum
+        #- RelativeBandPower1
+        #- RelativeBandPower2
+        - FooofFromAverageROI # revisar no knee,  solo offset y slope
+        # fooof revisar params de center (nuevo feature) freq, bandwith, relative power, en alpha extendido
+        #- FooofFromAverageNoKnee
+        #- PowerSpectrumROI
+        - RelativeBandPower1ROI
+        - dfaROI
+        - lzivROI
+        #- sampleEntropy
+        - specEntROI
+        #- spectralEntropytr
+        #- appEntropy
+        - hMobROI
+        - hCompROI
+        #- numZerocross
+        - permEntROI
+        - svdEntROI
+        - higuchiROI
+        - katzROI
+        #- petrosianFd
+        #- entropyMultiscale
+        ##- PowerSpectrumAverage
+        #- PowerSpectrumAverageROI
+        # 15+12+27
 
+    # another feature set pipeline as an example
+    features25@prep-defaultprep:
+      prep_pipeline : 'defaultprep' # This is the name of the preprocessing pipeline previously defined (must exist in derivatives)
+      downsample : 500
+      prefilter :
+        l_freq : 1
+        h_freq : 25
+      keep_channels : False
+      feature_list: # To say which features actually compute rather than configure
+        - FooofFromAverage
+        - PowerSpectrum
+        - PowerSpectrumAverage
+        - PowerSpectrumAverageROI
+        - RelativeBandPower1
+        - RelativeBandPower2
+        - FooofFromAverageROI
+        - PowerSpectrumROI
+        - RelativeBandPower1ROI
   feature_pipeline_list: #which feature pipelines to run
-    - features@prep-defaultprep
+    - features30@ROI@prep-defaultprep
+    #- features25@prep-defaultprep
   feature_cfg: # You can configure different features for the same function but different args
     # The suffix will be the higher hierarchy name you put here
     PowerSpectrum:
@@ -57,7 +103,16 @@ features:
         - function: agg_numpy
           args:
             numpyfun: eval%np.mean
-            max_numitem: None
+            max_numitem: 24
+            axisname: 'epochs'
+    PowerSpectrumAverageROI:
+      overwrite : False
+      chain:
+        - feature : PowerSpectrumROI
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: 24
             axisname: 'epochs'
     RelativeBandPower1:
       overwrite : False
@@ -73,7 +128,7 @@ features:
               #pre_alpha : [5.5,8]
               #slow_theta : [4,5.5]
             multitaper : {}
-            agg_fun : "eval%lambda x: agg_numpy(x,np.mean,axisname='epochs',max_numitem=None)" # You can set up max epochs by max_numitem obtained from prep_inspection
+            agg_fun : "eval%lambda x: agg_numpy(x,np.mean,axisname='epochs',max_numitem=24)" # You can set up max epochs by max_numitem obtained from prep_inspection
     RelativeBandPower2:
       overwrite : False
       chain :
@@ -87,19 +142,100 @@ features:
               beta2  : [18.5, 21]
               beta3  : [21, 30]
             multitaper : {}
-            agg_fun : "eval%lambda x: agg_numpy(x,np.mean,axisname='epochs',max_numitem=None)" # You can set up max epochs by max_numitem obtained from prep_inspection
+            agg_fun : "eval%lambda x: agg_numpy(x,np.mean,axisname='epochs',max_numitem=24)" # You can set up max epochs by max_numitem obtained from prep_inspection
     FooofFromAverage:
       overwrite : False
       chain:
         - feature : PowerSpectrum
         - function : fooof_from_average
           args :
-            agg_fun : "eval%lambda x: agg_numpy(x,np.mean,axisname='epochs',max_numitem=None)" # You can set up max epochs by max_numitem obtained from prep_inspection
+            agg_fun : "eval%lambda x: agg_numpy(x,np.mean,axisname='epochs',max_numitem=24)" # You can set up max epochs by max_numitem obtained from prep_inspection
             internal_kwargs:
               FOOOF:
                 aperiodic_mode : knee
               fit:
                 freq_range : [2,35]
+    FooofFromAverageNoKnee:
+      overwrite : False
+      chain:
+        - feature : PowerSpectrum
+        - function : fooof_from_average
+          args :
+            agg_fun : "eval%lambda x: agg_numpy(x,np.mean,axisname='epochs',max_numitem=24)" # You can set up max epochs by max_numitem obtained from prep_inspection
+            internal_kwargs:
+              FOOOF:
+                aperiodic_mode : fixed
+              fit:
+                freq_range : [2,35]
+    PowerSpectrumROIexample:
+      overwrite : False
+      chain :
+        - feature : PowerSpectrum
+        - function: roi_aggregator
+          args :
+            # function name must be roi_mapping, could define a dictionary inside and return the value from the key
+            # if you want to reuse a roi mapping, you can define it in features.py and just call it here
+            mapping : | 
+              def roi_mapping(x):
+                anterior = ["Fp1", "Fp2", "F3", "F4", "F7", "F8", "Fz"]
+                central = ["T7", "T8", "C3", "C4", "Cz"]
+                posterior = ["P3", "P4", "P7", "P8", "O1", "O2"]
+                if x in anterior:
+                  return 'anterior'
+                elif x in central:
+                  return 'central'
+                elif x in posterior:
+                  return 'posterior'
+                else:
+                  return 'none'
+              # you have to put None in those channels that you dont want to include, Fp1,Fp2,Fz,Cz will be ignored in this example mapping
+              #   if x[0] == 'F' and x[1].isdigit():
+              #       return 'frontal'
+              #   elif x[0] == 'C' and x[1].isdigit():
+              #       return 'central'
+              #   elif x[0]== 'P' and x[1].isdigit():
+              #       return 'parietal'
+              #   elif x[0]== 'O' and x[1].isdigit():
+              #       return 'occipital'
+              #   else:
+              #       return 'none'
+            numpyfun : "eval%np.mean"
+            ignore : ['none']
+    PowerSpectrumROI:
+      overwrite : False
+      chain :
+        - feature : PowerSpectrum
+        - function: roi_aggregator
+          args : # using the defaul mapping which was defined in features.py
+            numpyfun : "eval%np.mean"
+            ignore : ['none']
+    FooofFromAverageROI:
+      overwrite : False
+      chain:
+        - feature : PowerSpectrumROI
+        - function : fooof_from_average
+          args :
+            agg_fun : "eval%lambda x: agg_numpy(x,np.mean,axisname='epochs',max_numitem=24)" # You can set up max epochs by max_numitem obtained from prep_inspection
+            internal_kwargs:
+              FOOOF:
+                aperiodic_mode : fixed
+              fit:
+                freq_range : [2,35]
+    RelativeBandPower1ROI:
+      overwrite : False
+      chain :
+        - feature : PowerSpectrumROI # this will save PowerSpectrum if not already saved
+        - function: relative_bandpower
+          args :
+            bands:
+              delta : [1,4]
+              theta : [4,8]
+              alpha : [8,13]
+              beta  : [13,30]
+              pre_alpha : [5.5,8]
+              slow_theta : [4,5.5]
+            multitaper : {}
+            agg_fun : "eval%lambda x: agg_numpy(x,np.mean,axisname='epochs',max_numitem=24)" # You can set up max epochs by max_numitem obtained from prep_inspection
     detrendedFluctuation:
       overwrite: False
       chain:
@@ -110,7 +246,15 @@ features:
         - function: agg_numpy
           args:
             numpyfun: eval%np.mean
-            max_numitem: None
+            max_numitem: 24
+    dfaROI:
+      overwrite: False
+      chain:
+        - feature: detrendedFluctuation
+        - function: roi_aggregator
+          args : # using the defaul mapping which was defined in features.py
+            numpyfun : "eval%np.mean"
+            ignore : ['none']
     lzivComplexity:
       overwrite: False
       chain:
@@ -123,7 +267,16 @@ features:
         - function: agg_numpy
           args:
             numpyfun: eval%np.mean
-            max_numitem: None
+            max_numitem: 24
+    lzivROI:
+      overwrite: False
+      chain:
+        - feature: lzivComplexity
+        - function: roi_aggregator
+          args : # using the defaul mapping which was defined in features.py
+            numpyfun : "eval%np.mean"
+            ignore : ['none']
+
     sampleEntropy:
       overwrite: False
       chain:
@@ -136,7 +289,16 @@ features:
         - function: agg_numpy
           args:
             numpyfun: eval%np.mean
-            max_numitem: None
+            max_numitem: 24
+    sampEntROI:
+      overwrite: False
+      chain:
+        - feature: sampleEntropy
+        - function: roi_aggregator
+          args : # using the defaul mapping which was defined in features.py
+            numpyfun : "eval%np.mean"
+            ignore : ['none']
+
     spectralEntropy:
       overwrite: False
       chain:
@@ -151,7 +313,33 @@ features:
         - function: agg_numpy
           args:
             numpyfun: eval%np.mean
-            max_numitem: None
+            max_numitem: 24
+
+    specEntROI:
+      overwrite: False
+      chain:
+        - feature: spectralEntropy
+        - function: roi_aggregator
+          args : # using the defaul mapping which was defined in features.py
+            numpyfun : "eval%np.mean"
+            ignore : ['none']
+
+    spectralEntropytr:
+      overwrite: False
+      chain:
+        - function: compute_spectralEntropy
+          args:
+            internal_kwargs:
+              spectral_entropy :
+                sf : eval%eeg.info['sfreq']
+                method : 'welch'
+                nperseg : eval%int(np.round(eeg.info['sfreq']/5))
+                normalize : True
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: 24
+
     appEntropy:
       overwrite: False
       chain:
@@ -164,7 +352,16 @@ features:
         - function: agg_numpy
           args:
             numpyfun: eval%np.mean
-            max_numitem: None
+            max_numitem: 24
+    appEntROI:
+      overwrite: False
+      chain:
+        - feature: appEntropy
+        - function: roi_aggregator
+          args : # using the defaul mapping which was defined in features.py
+            numpyfun : "eval%np.mean"
+            ignore : ['none']
+
     hjorthParams:
       overwrite: False
       chain:
@@ -184,7 +381,16 @@ features:
         - function: agg_numpy
           args:
             numpyfun: eval%np.mean
-            max_numitem: None
+            max_numitem: 24
+
+    hMobROI:
+      overwrite: False
+      chain:
+        - feature: hjorthMobility
+        - function: roi_aggregator
+          args : # using the defaul mapping which was defined in features.py
+            numpyfun : "eval%np.mean"
+            ignore : ['none']
 
     hjorthComplexity:
       overwrite: False
@@ -197,7 +403,16 @@ features:
         - function: agg_numpy
           args:
             numpyfun: eval%np.mean
-            max_numitem: None
+            max_numitem: 24
+    hCompROI:
+      overwrite: False
+      chain:
+        - feature: hjorthComplexity
+        - function: roi_aggregator
+          args : # using the defaul mapping which was defined in features.py
+            numpyfun : "eval%np.mean"
+            ignore : ['none']
+
     numZerocross:
       overwrite: False
       chain:
@@ -209,7 +424,16 @@ features:
         - function: agg_numpy
           args:
             numpyfun: eval%np.mean
-            max_numitem: None
+            max_numitem: 24
+
+    zeroROI:
+      overwrite: False
+      chain:
+        - feature: numZerocross
+        - function: roi_aggregator
+          args : # using the defaul mapping which was defined in features.py
+            numpyfun : "eval%np.mean"
+            ignore : ['none']
 
     permEntropy:
       overwrite: False
@@ -224,7 +448,16 @@ features:
         - function: agg_numpy
           args:
             numpyfun: eval%np.mean
-            max_numitem: None
+            max_numitem: 24
+
+    permEntROI:
+      overwrite: False
+      chain:
+        - feature: permEntropy
+        - function: roi_aggregator
+          args : # using the defaul mapping which was defined in features.py
+            numpyfun : "eval%np.mean"
+            ignore : ['none']
 
     svdEntropy:
       overwrite: False
@@ -239,7 +472,17 @@ features:
         - function: agg_numpy
           args:
             numpyfun: eval%np.mean
-            max_numitem: None
+            max_numitem: 24
+
+    svdEntROI:
+      overwrite: False
+      chain:
+        - feature: svdEntropy
+        - function: roi_aggregator
+          args : # using the defaul mapping which was defined in features.py
+            numpyfun : "eval%np.mean"
+            ignore : ['none']
+
     higuchiFd:
       overwrite: False
       chain:
@@ -251,7 +494,16 @@ features:
         - function: agg_numpy
           args:
             numpyfun: eval%np.mean
-            max_numitem: None
+            max_numitem: 24
+
+    higuchiROI:
+      overwrite: False
+      chain:
+        - feature: higuchiFd
+        - function: roi_aggregator
+          args : # using the defaul mapping which was defined in features.py
+            numpyfun : "eval%np.mean"
+            ignore : ['none']
 
     katzFd:
       overwrite: False
@@ -263,7 +515,16 @@ features:
         - function: agg_numpy
           args:
             numpyfun: eval%np.mean
-            max_numitem: None
+            max_numitem: 24
+
+    katzROI:
+      overwrite: False
+      chain:
+        - feature: katzFd
+        - function: roi_aggregator
+          args : # using the defaul mapping which was defined in features.py
+            numpyfun : "eval%np.mean"
+            ignore : ['none']
 
     petrosianFd:
       overwrite: False
@@ -275,7 +536,16 @@ features:
         - function: agg_numpy
           args:
             numpyfun: eval%np.mean
-            max_numitem: None
+            max_numitem: 24
+
+    petroROI:
+      overwrite: False
+      chain:
+        - feature: petrosianFd
+        - function: roi_aggregator
+          args : # using the defaul mapping which was defined in features.py
+            numpyfun : "eval%np.mean"
+            ignore : ['none']
 
     entropyMultiscale: #TODO: i think the aggregation wont work here because multiscale return a complex datatype, check this
       overwrite: False
@@ -296,7 +566,16 @@ features:
         - function: agg_numpy
           args:
             numpyfun: eval%np.mean
-            max_numitem: None
+            max_numitem: 24
+
+    multiEntROI:
+      overwrite: False
+      chain:
+        - feature: entropyMultiscale
+        - function: roi_aggregator
+          args : # using the defaul mapping which was defined in features.py
+            numpyfun : "eval%np.mean"
+            ignore : ['none']
 
 aggregate:
   path : './data/%PROJECT%/aggregate'
@@ -306,45 +585,84 @@ aggregate:
     RelativeBandPower1: # Could be the original name or a post-processed name
       return_function : "eval%lambda x: x"
       file_suffix : RelativeBandPower1
+    RelativeBandPower1ROI: # Could be the original name or a post-processed name
+      return_function : "eval%lambda x: x"
+      file_suffix : RelativeBandPower1ROI
+    fooofSlopeNoKnee:
+      return_function : "eval%lambda x: x.aperiodic_params_[0]"
+      file_suffix : FooofFromAverageNoKnee
     fooofSlope:
       return_function : "eval%lambda x: x.aperiodic_params_[0]"
       file_suffix : FooofFromAverage
+    fooofSlopeROI:
+      return_function : "eval%lambda x: x.aperiodic_params_[0]"
+      file_suffix : FooofFromAverageROI
     detrendedFluctuation: # no text
       return_function : "eval%lambda x: x"
       file_suffix : detrendedFluctuation
+    dfaROI : # no text
+      return_function : "eval%lambda x: x"
+      file_suffix : dfaROI #detrendedFluctuation
     lzivComplexity: # text
       return_function : "eval%lambda x: x"
       file_suffix : lzivComplexity
+    lzivROI: # text
+      return_function : "eval%lambda x: x"
+      file_suffix : lzivROI #lzivComplexity
     sampleEntropy: # text
       return_function : "eval%lambda x: x"
       file_suffix : sampleEntropy
     spectralEntropy: # text
       return_function : "eval%lambda x: x"
       file_suffix : spectralEntropy
+    specEntROI: # text
+      return_function : "eval%lambda x: x"
+      file_suffix : specEntROI #spectralEntropy
+    spectralEntropytr: # text
+      return_function : "eval%lambda x: x"
+      file_suffix : spectralEntropytr
     appEntropy: # text
       return_function : "eval%lambda x: x"
       file_suffix : appEntropy
     hjorthMobility: # text
       return_function : "eval%lambda x: x"
       file_suffix : hjorthMobility
+    hMobROI: # text
+      return_function : "eval%lambda x: x"
+      file_suffix : hMobROI #hjorthMobility
     hjorthComplexity: # text
       return_function : "eval%lambda x: x"
       file_suffix : hjorthComplexity
+    hCompROI: # text
+      return_function : "eval%lambda x: x"
+      file_suffix : hCompROI  #hjorthComplexity
     numZerocross: # text
       return_function : "eval%lambda x: x"
       file_suffix : numZerocross
     permEntropy: # text
       return_function : "eval%lambda x: x"
       file_suffix : permEntropy
+    permEntROI : # text
+      return_function : "eval%lambda x: x"
+      file_suffix : permEntROI # permEntropy
     svdEntropy  : # text
       return_function : "eval%lambda x: x"
       file_suffix : svdEntropy
+    svdEntROI  : # text
+      return_function : "eval%lambda x: x"
+      file_suffix : svdEntROI #svdEntropy
     higuchiFd: # text
       return_function : "eval%lambda x: x"
       file_suffix : higuchiFd
+    higuchiROI : # text
+      return_function : "eval%lambda x: x"
+      file_suffix : higuchiROI #higuchiFd
     katzFd: # text
       return_function : "eval%lambda x: x"
       file_suffix : katzFd
+    katzROI: # text
+      return_function : "eval%lambda x: x"
+      file_suffix : katzROI #katzFd
     petrosianFd : # text
       return_function : "eval%lambda x: x"
       file_suffix : petrosianFd
@@ -354,18 +672,38 @@ aggregate:
     PowerSpectrumAverage:
       return_function: "eval%lambda x: x"
       file_suffix : PowerSpectrumAverage
+    PowerSpectrumAverageROI:
+      return_function: "eval%lambda x: x"
+      file_suffix : PowerSpectrumAverageROI
   feature_aggregate_list:
-    - FeaturesChannels@30@prep-defaultprep
+    - FeaturesROI@30@prep-defaultprep
+  #  - FeaturesChannels@30@prep-defaultprep
   aggregate_cfgs:
+    FeaturesROI@30@prep-defaultprep:
+      feature_folder : 'features30@ROI@prep-defaultprep'
+      feature_list: # CHOOSE FEATURES WITH SAME DIMENSIONS, OTHERWISE THE DATAFRAME CANT BE MADE
+        - fooofSlopeROI
+        - RelativeBandPower1ROI
+        - dfaROI # revisar escala de tiempo
+        - lzivROI
+        - specEntROI
+        - hMobROI
+        - hCompROI
+        - permEntROI
+        - svdEntROI
+        - higuchiROI
+        - katzROI
     FeaturesChannels@30@prep-defaultprep:
-      feature_folder : 'FeaturesChannels@prep-defaultprep'
+      feature_folder : 'features30@prep-defaultprep'
       feature_list: # CHOOSE FEATURES WITH SAME DIMENSIONS, OTHERWISE THE DATAFRAME CANT BE MADE
         - RelativeBandPower1 # could be the original name or a post-processed name
         - fooofSlope
+        - fooofSlopeNoKnee
         - detrendedFluctuation
         - lzivComplexity
         #- sampleEntropy
         - spectralEntropy
+        #- spectralEntropytr
         #- appEntropy
         - hjorthMobility
         - hjorthComplexity
@@ -380,7 +718,8 @@ aggregate:
 
 scalingAndFolding:
   aggregate_folders:
-    - 'FeaturesChannels@prep-defaultprep'
+    - 'FeaturesROI@30@prep-defaultprep'
+  #  - 'FeaturesChannels@30@prep-defaultprep'
   MAX_FEATURES: null
   path : './data/%PROJECT%/scalingAndFolding'
   random_state : 0
@@ -394,10 +733,31 @@ scalingAndFolding:
     - subject
     - task
   stratifiedvars :
-    #- dataset
-    - group #make it easier to balance for test purposes
+    - dataset
+    #- group make it easier to balance for test purposes
     #- sex
   scalings : # dont use _ - in the name (bids-like)
+    scalingCombat : # name of this particular scaling config
+        method : 'reCombat'
+        init:
+          parametric : True
+          model : 'elastic_net'
+          config : 
+            alpha : 0.00001
+          n_jobs : 7
+          verbose : True
+        covars :
+          - dataset
+          - sex
+          - age
+          #- group # seems we are missing data in testing conditions
+        batch : dataset # which should be the one we drop from covars for the design matrix X in combat
+        rename : # sync to covars, otherwise design matrix inconsistencies will throw an error
+          age : age_numerical
+        categorical : # sync to covars, otherwise design matrix inconsistencies will throw an error
+          - dataset
+          #- group
+          - sex
     scalingStandard:
       method : 'StandardScaler'
     # we should implement a none scaling...
