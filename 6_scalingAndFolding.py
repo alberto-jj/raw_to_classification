@@ -15,11 +15,13 @@ import matplotlib.pyplot as plt
 import os
 import yaml
 import json
-from featurewiz import FeatureWiz
+
 from sklearn.model_selection import train_test_split
 from eeg_raw_to_classification.utils import parse_bids,load_yaml,get_output_dict,save_dict_to_json,save_figs_in_html
 import itertools
+from featurewiz import FeatureWiz
 from reComBat import reComBat
+
 from sklearn.decomposition import PCA
 
 
