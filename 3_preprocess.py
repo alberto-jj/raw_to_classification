@@ -13,15 +13,9 @@ PARALLELIZE=True
 def foo(eeg_file,this_prep,DATASET):
     # imports here to avoid problems with joblib
     import bids
-    from eeg_raw_to_classification.utils import get_derivative_path,save_figs_in_html,save_dict_to_json
-    import traceback
     import os
-    from eeg_raw_to_classification.preprocessing import prepare
-    import copy
-    import pandas as pd
-    import mne
-    import numpy as np
-    import matplotlib.pyplot as plt
+    from eeg_raw_to_classification.utils import get_derivative_path
+
     layout = bids.BIDSLayout(DATASET.get('bids_root', None))
     njobs = 1 #internal jobs #len(psutil.Process().cpu_affinity())
     print('Internal NJOBS:',njobs)
@@ -30,9 +24,19 @@ def foo(eeg_file,this_prep,DATASET):
     fifname = os.path.basename(reject_path)
     fifpath = os.path.dirname(reject_path)
 
-    line_noise = DATASET['PowerLineFrequency']
-    os.makedirs(fifpath,exist_ok=True)
     if not os.path.isfile(reject_path) or this_prep['overwrite']:
+
+        from eeg_raw_to_classification.utils import save_figs_in_html,save_dict_to_json
+        import traceback
+        from eeg_raw_to_classification.preprocessing import prepare
+        import copy
+        import pandas as pd
+        import mne
+        import numpy as np
+        import matplotlib.pyplot as plt
+
+        line_noise = DATASET['PowerLineFrequency']
+        os.makedirs(fifpath,exist_ok=True)
         try:
             if DATASET.get('precode',None):
                 print('Running precode')
