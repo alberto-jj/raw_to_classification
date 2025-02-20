@@ -89,7 +89,8 @@ for featurepipeline in PIPELINE['features']['feature_pipeline_list']:
             for ixf,feature_2 in enumerate(chains_of_features[feature][:-1]):
                 new_chains_of_features[feature_2]=[chains_of_features[feature][ixf+1]]
             new_chains_of_features[feature]=[chains_of_features[feature][0]]
-    
+        else:
+            new_chains_of_features[feature]=[]
     # based on chains of feature how to create levels of parallelization that dont race
     levels = list(toposort(new_chains_of_features))
 
