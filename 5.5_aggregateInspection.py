@@ -5,22 +5,14 @@ from itertools import product
 #import seaborn as sns
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import StratifiedGroupKFold
-from sklearn.model_selection import StratifiedKFold
 import copy
 import matplotlib.pyplot as plt
 #import umap
 #import umap.plot
 import os
-import yaml
-import json
-from featurewiz import FeatureWiz
-from sklearn.model_selection import train_test_split
-from eeg_raw_to_classification.utils import parse_bids,load_yaml,get_output_dict,save_dict_to_json,save_figs_in_html
+
+from eeg_raw_to_classification.utils import load_yaml
 import itertools
-from reComBat import reComBat
-from sklearn.decomposition import PCA
 
 
 
