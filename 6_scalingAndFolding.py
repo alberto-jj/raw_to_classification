@@ -28,16 +28,22 @@ from sklearn.decomposition import PCA
 PIPELINE = load_yaml('pipeline.yml')
 datasets = load_yaml(PIPELINE['datasets_file'])
 PROJECT = PIPELINE['project']
-OUTPUT_DIR_BASE = PIPELINE['scalingAndFolding']['path'].replace('%PROJECT%,PROJECT')
+OUTPUT_DIR_BASE = PIPELINE['scalingAndFolding']['path'].replace('%PROJECT%',PROJECT)
 
-for aggregate_folder in PIPELINE['scalingAndFolding']['aggregate_folders']:
+for aggregate_folder_ in PIPELINE['scalingAndFolding']['aggregate_folders']:
+    aggregate_folder=aggregate_folder_.replace('%PROJECT%',PROJECT)
     CFG = PIPELINE['scalingAndFolding']
-    OUTPUT_DIR=os.path.join(OUTPUT_DIR_BASE,aggregate_folder)
+    OUTPUT_DIR=os.path.join(OUTPUT_DIR_BASE,aggregate_folder).replace('%PROJECT%',PROJECT)
     os.makedirs(OUTPUT_DIR,exist_ok=True)
-
-    df_path = os.path.join(PIPELINE['aggregate']['path'],aggregate_folder,PIPELINE['aggregate']['filename']+'@final.csv')
+    aggregate_file = PIPELINE['aggregate']['filename']+'@final.csv'
+    aggregate_file = aggregate_file.replace('%PROJECT%',PROJECT)
+    aggregate_path = PIPELINE['aggregate']['path'].replace('%PROJECT%',PROJECT)
+    df_path = os.path.join(aggregate_path,aggregate_folder,aggregate_file)
     df = pd.read_csv(df_path)
-
+    all_feats=[x.replace('feature-','') for x in df.columns if 'feature-' in x]
+    all_spaces = [x.split('spaces-')[-1] for x in all_feats]
+    all_unique_feats = set([x.split('spaces-')[0] for x in all_feats])
+    all_unique_spaces = set(all_spaces)
     # SETUP
     RANDOM_STATE = CFG['random_state']
     targets=CFG['targets']
