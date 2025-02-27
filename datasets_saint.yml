@@ -24,6 +24,7 @@ saint:
   # Common
   # [ "F4", "F8", "P3", "SpO2", "X2", "T4", "$A1", "F7", "T5", "C3", "A1", "EtCO2", "CO2Wave", "T3", "Fz", "DC03", "DC04", "O1", "Pulse", "DC05", "DC06", "F3", "O2", "Fp1", "P4", "Fp2", "Pz", "C4", "Cz", "T6", "X1", "$A2", "A2"]
   # Drop: ["SpO2", "X2","EtCO2", "CO2Wave","$A1","DC03", "DC04","Pulse", "DC05", "DC06","X1", "$A2"]
+  # Final: [ "F4", "F8", "P3","T4", "F7", "T5", "C3", "A1", "T3", "Fz", "O1","F3", "O2", "Fp1", "P4", "Fp2", "Pz", "C4", "Cz", "T6", "A2"]
   PowerLineFrequency : 60
   # BIDS
   bids_root : "Y:/datasets/saint-justine/bids/all"

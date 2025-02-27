@@ -13,8 +13,19 @@ preprocess:
         skip_reject : True
         normalization : True
       overwrite : False
+    prep10min: # This is the name of the preprocessing pipeline
+      prepare:
+        epoch_length : 600
+        downsample : 200
+        ica_method : 'fastica'
+        skip_prep : True
+        skip_reject : True
+        normalization : True
+      overwrite : False
+
   prep_list :
     - defaultprep
+    - prep10min
 prep_inspection:
   path : './data/%PROJECT%/prep_inspection'
   overwrite : False
@@ -37,7 +48,7 @@ features:
         #- PowerSpectrumAverage
         - RelativeBandPower1
         - RelativeBandPower2
-        #- FooofFromAverage
+        - FooofFromAverage
         - detrendedFluctuation
         - lzivComplexity
         # sampleEntropy
@@ -375,10 +386,10 @@ aggregate:
       return_function: "eval%lambda x: x"
       file_suffix : PowerSpectrumAverage
   feature_aggregate_list:
-    - FeaturesChannels@30@prep-defaultprep
+    - FeaturesChannels@prep-defaultprep
   aggregate_cfgs:
-    FeaturesChannels@30@prep-defaultprep:
-      feature_folder : 'FeaturesChannels@prep-defaultprep'
+    FeaturesChannels@prep-defaultprep:
+      feature_folder : 'features@prep-defaultprep' # what if we have multiple feature folders?
       feature_list: # CHOOSE FEATURES WITH SAME DIMENSIONS, OTHERWISE THE DATAFRAME CANT BE MADE
         - RelativeBandPower1 # could be the original name or a post-processed name
         - fooofSlope
@@ -405,12 +416,13 @@ scalingAndFolding:
   path : './data/%PROJECT%/scalingAndFolding'
   random_state : 0
   targets :
-    - 'age'
+    - 'group'
   dropsToOnlyFeatures: # the targets will be appended to this in the script
+    - age
+    - dataset
+    - group
     - id
     - sex
-    - group
-    - dataset
     - subject
     - task
   stratifiedvars :
@@ -450,35 +462,45 @@ scalingAndFolding:
 
 ml:
   path: './data/%PROJECT%/ml'
+  featurewiz:
+    init:
+      corr_limit : 0.75
+      feature_engg : ''
+      category_encoders : ''
+      dask_xgboost_flag : False
+      nrows : null # Dont use None here
+      verbose : 0
   models:
     automljar :
+      skip: True
       method : AutoMLjar
       init :
         algorithms :
           - 'Baseline'
           - 'Linear'
           - 'Decision Tree'
-          # - 'Random Forest'
-          # - 'Extra Trees'
+          - 'Random Forest'
+          - 'Extra Trees'
           - 'LightGBM'
           - 'Xgboost'
           - 'CatBoost'
-          # - 'Neural Network'
-          # - 'Nearest Neighbors'
-        explain_level : 1
-        ml_task : 'auto'
+          - 'Neural Network'
+          - 'Nearest Neighbors'
+        explain_level : 2
+        ml_task : 'binary_classification'
         mode : Explain
-        eval_metric : 'rmse'
+        eval_metric : 'accuracy'
         validation_strategy : 
           validation_type : custom
         model_time_limit : 3600
-        n_jobs : 1
+        n_jobs : 10
 
     autogluon:
       method: AutoGluon
+      skip: False
       init:
-        problem_type: 'regression'
-        eval_metric: 'root_mean_squared_error'
+        problem_type: null
+        eval_metric: null
         verbosity: 2
         log_to_file: True
         sample_weight: null
@@ -486,7 +508,7 @@ ml:
       fit :
         tuning_data : null
         time_limit : null
-        presets : null
+        presets : 'best_quality'
         hyperparameters : null
         feature_metadata : 'infer'
         infer_limit : null 
