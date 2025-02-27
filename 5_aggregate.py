@@ -14,7 +14,7 @@ from sklearn.preprocessing import MinMaxScaler
 cfg = load_yaml(f'pipeline.yml')
 datasets = load_yaml(cfg['datasets_file'])
 PROJECT = cfg['project']
-OUTPUTBASE = cfg['aggregate']['path'].replace('%PROJECT%,PROJECT')
+OUTPUTBASE = cfg['aggregate']['path'].replace('%PROJECT%',PROJECT)
 csvfilename = cfg['aggregate']['filename']
 id_splitter = cfg['aggregate']['id_splitter']
 os.makedirs(OUTPUTBASE,exist_ok=True)
@@ -40,10 +40,14 @@ for agg_cfg_label in cfg['aggregate']['feature_aggregate_list']:
                 sub = int(query) # im not conviced this is a good idea
             except:
                 sub = query
-            idx = participants[participants['subject']==sub]
+            try:
+                idx = participants[participants['subject']==sub]
+            except:
+                idx = participants[participants['number']==sub] # this is very hardcoded, this should be a configuration
             assert idx.shape[0]==1 #unique
             return idx[field].item()
         for feature in agg_cfg['feature_list']:
+            print(f'Processing {feature} in {dslabel}')
             featfolder=agg_cfg['feature_folder']
             foodict = cfg['aggregate']['feature_return'][feature]
             filesuffix = foodict['file_suffix']
@@ -61,7 +65,7 @@ for agg_cfg_label in cfg['aggregate']['feature_aggregate_list']:
                 desired_label = feature + '.' # dot is important for combination format
                 dict_list += get_output_dict(eeg_file,'WIDE',DATASET['dataset_label'],desired_label,agg_fun=foo,keyvalformat=True)
                 #dict_list_long += get_output_dict(eeg_file,'LONG',DATASET['dataset_label'],desired_label[:-1],agg_fun=foo,keyvalformat=True) # no dot
-                #TODO per aggregate save feature ontology
+                #TODO per aggregate save feature ontology --> i guess this mean saving descriptions of the features??? dont remember what i meant...
 
             if len(dict_list)==0:
                 print(f'No files found for {feature} in {dslabel}')
