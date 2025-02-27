@@ -12,21 +12,24 @@ from eeg_raw_to_classification.utils import parse_bids,load_yaml,get_output_dict
 import glob
 from autogluon.tabular import TabularDataset, TabularPredictor
 import traceback
+from featurewiz import FeatureWiz
 
 PIPELINE = load_yaml(f'pipeline.yml')
 datasets = load_yaml(PIPELINE['datasets_file'])
 
 PROJECT = PIPELINE['project']
 
-OUTPUT_DIR = PIPELINE['ml']['path'].replace('%PROJECT%,PROJECT')
+OUTPUT_DIR = PIPELINE['ml']['path'].replace('%PROJECT%',PROJECT)
 os.makedirs(OUTPUT_DIR,exist_ok=True)
 
-fold_path = os.path.join(PIPELINE['scalingAndFolding']['path'])
+fold_path = os.path.join(PIPELINE['scalingAndFolding']['path']).replace('%PROJECT%',PROJECT)
 fold_pattern = os.path.join(fold_path,'**','folds-*.pkl')
 foldinstances = glob.glob(fold_pattern,recursive=True)
 #foldinstances = [x for x in foldinstances if 'folding' in x]
-scalingAndFolding_path = PIPELINE['scalingAndFolding']['path']
-ml_path=PIPELINE['ml']['path']
+scalingAndFolding_path = PIPELINE['scalingAndFolding']['path'].replace('%PROJECT%',PROJECT)
+ml_path=PIPELINE['ml']['path'].replace('%PROJECT%',PROJECT)
+fwiz = None
+
 for _foldpath in foldinstances:
 
     foldcomb = os.path.basename(_foldpath).split('-')[1].split('.')[0]
@@ -35,6 +38,9 @@ for _foldpath in foldinstances:
     os.makedirs(foldsavepath,exist_ok=True)
 
     for mlmodel,mlparams in PIPELINE['ml']['models'].items():
+        if 'skip' in mlparams and mlparams['skip']:
+            print(f'Skipping {mlmodel}')
+            continue
         savepath = os.path.join(foldsavepath,mlmodel)
         os.makedirs(savepath,exist_ok=True)
 
@@ -89,10 +95,21 @@ for _foldpath in foldinstances:
                     assert foldnum not in df[(df['foldIter']==foldnum) & (df['phase']=='train')]['foldSet'].unique()
 
             mlmethod = mlparams['method']
+            if 'featurewiz' in PIPELINE['ml'] and PIPELINE['ml']['featurewiz']:
+                if fwiz is None:
+                    fwiz = FeatureWiz(**PIPELINE['ml']['featurewiz']['init'])
+                    fwiz.fit(dfX.copy(), dfY.copy())
+                dfX = dfX[fwiz.features].copy()
+                #save_dict_to_json(os.path.join(savepath,'featurewiz_features.json'),{'features':fwiz.features})
+
             if mlmethod == 'AutoMLjar':
                 # https://supervised.mljar.com/api/
                 AutoML_ = AutoML(**mlparams['init'] ,results_path=savepath)
-                AutoML_.fit(dfX,dfY,cv=fold_tuples)
+                if dfY[dfY.columns[0]].dtype == 'object':
+                    dfY_=dfY.applymap(lambda x: sum(ord(y) for y in x)).copy()
+                else:
+                    dfY_=dfY.copy()
+                AutoML_.fit(dfX.copy(),dfY_.copy(),cv=fold_tuples)
 
             if mlmethod == 'AutoGluon':
                 #https://auto.gluon.ai/stable/api/autogluon.tabular.TabularPredictor.html
@@ -111,11 +128,15 @@ for _foldpath in foldinstances:
                     # If tuning_data = None, fit() will automatically hold out some random validation examples from train_data.
                     dfX_train = data['X_train']
                     dfY_train = data['Y_train']
-                    dfX_train[label]=dfY_train[label] # Add target as it expects full dataframe
+                    if 'featurewiz' in PIPELINE['ml'] and PIPELINE['ml']['featurewiz']:
+                        dfX_train = dfX_train[dfX.columns].copy()
 
+                    dfX_train.loc[:,label]=dfY_train[label].copy() # Add target as it expects full dataframe
                     dfX_test = data['X_test']
+                    if 'featurewiz' in PIPELINE['ml'] and PIPELINE['ml']['featurewiz']:
+                        dfX_test = dfX_test[dfX.columns].copy()
                     dfY_test = data['Y_test']
-                    dfX_test[label]=dfY_test[label]
+                    dfX_test.loc[:,label]=dfY_test[label].copy()
 
                     predictor.fit(dfX_train, **mlparams['fit'])
 
@@ -149,4 +170,5 @@ for _foldpath in foldinstances:
         except Exception as e:
             print(f'Error in {mlmodel}-{foldcomb} - {e}')
             msg=traceback.format_exc()
+            print(msg)
             save_dict_to_json(os.path.join(savepath,f'error_ml-{mlmodel}_data-{foldcomb}.json'),{'error':msg})
