@@ -26,6 +26,7 @@ def main(pipeline_file):
             DATASETS = []
             for dslabel, DATASET in datasets.items():
                 if DATASET.get('skip', False):
+                    print(f'Skipping {dslabel} because it is marked as skip')
                     continue
 
                 CFG = PIPELINE['features']
