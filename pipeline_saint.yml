@@ -24,8 +24,9 @@ preprocess:
       overwrite : False
 
   prep_list :
-    - defaultprep
     - prep10min
+    - defaultprep
+
 prep_inspection:
   path : './data/%PROJECT%/prep_inspection'
   overwrite : False
