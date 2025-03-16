@@ -70,8 +70,8 @@ def main():
     parser.add_argument('--external_jobs', type=int, default=1, help='Number of external jobs.')
     parser.add_argument('--internal_jobs', type=int, default=1, help='Number of internal jobs.')
     parser.add_argument('--retry_errors', action='store_true', help='Retry files that had errors.')
-    parser.add_argument('--parallelize', action='store_true', help='Parallelize the processing.')
     parser.add_argument('--raise_on_error', action='store_true', help='Enable raise_on_error mode.')
+
 
     args = parser.parse_args()
 
@@ -82,7 +82,7 @@ def main():
     MAX_FILES = args.max_files
     external_njobs = args.external_jobs
     DEBUG = args.raise_on_error
-    PARALLELIZE = args.parallelize
+    PARALLELIZE = external_njobs > 1
     internal_njobs = args.internal_jobs
 
     for preplabel in cfg['preprocess']['prep_list']:
