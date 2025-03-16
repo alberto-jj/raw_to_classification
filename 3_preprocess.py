@@ -5,16 +5,16 @@ from joblib import delayed, Parallel
 import psutil
 import bids
 from eeg_raw_to_classification.utils import load_yaml
+from eeg_raw_to_classification.utils import get_derivative_path
+import time
 
-def foo(eeg_file, this_prep, DATASET, derivatives_root, DEBUG, internal_njobs=1, retry_errors=False):
+def foo(eeg_file, this_prep, DATASET, reject_path, DEBUG, internal_njobs=1, retry_errors=False):
     # imports here to avoid problems with joblib
     import os
-    from eeg_raw_to_classification.utils import get_derivative_path
 
-    layout = bids.BIDSLayout(DATASET.get('bids_root', None))
+
     njobs = internal_njobs #internal jobs #len(psutil.Process().cpu_affinity())
     print('Internal NJOBS:', njobs)
-    reject_path = get_derivative_path(layout, eeg_file, 'reject', 'epo', '.fif', DATASET['bids_root'], derivatives_root).replace('\\', '/')
     print(eeg_file)
     fifname = os.path.basename(reject_path)
     fifpath = os.path.dirname(reject_path)
@@ -83,6 +83,7 @@ def main():
     external_njobs = args.external_jobs
     DEBUG = args.raise_on_error
     PARALLELIZE = args.parallelize
+    internal_njobs = args.internal_jobs
 
     for preplabel in cfg['preprocess']['prep_list']:
         for dslabel, DATASET in datasets.items():
@@ -93,8 +94,13 @@ def main():
 
             print(f'PREPROCESSING {dslabel} with {preplabel} pipeline')
             file_filter = DATASET.get('raw_layout', None)
+
+            start_time = time.time()
             layout = bids.BIDSLayout(DATASET.get('bids_root', None))
+            # how to make this faster, it takes too long...
             eegs = layout.get(**file_filter)
+            end_time = time.time()
+            print(f'Time taken to get EEG files from layout: {end_time - start_time} seconds for dataset {dslabel}')
 
             if MAX_FILES:
                 if MAX_FILES > len(eegs):
@@ -105,12 +111,14 @@ def main():
             eegs = [x.replace('\\', '/') for x in eegs]
             print(len(eegs), eegs)
             derivatives_root = os.path.join(layout.root, f'derivatives/{preplabel}/')
+            
+            get_derivative = lambda x: get_derivative_path(layout, x, 'reject', 'epo', '.fif', DATASET['bids_root'], derivatives_root).replace('\\', '/')
 
             if PARALLELIZE:
-                Parallel(n_jobs=external_njobs)(delayed(foo)(eeg_file, this_prep, DATASET, derivatives_root, DEBUG) for eeg_file in eegs)
+                Parallel(n_jobs=external_njobs)(delayed(foo)(eeg_file, this_prep, DATASET, get_derivative(eeg_file), DEBUG,internal_njobs, args.retry_errors ) for eeg_file in eegs)
             else:
                 for eeg_file in eegs:
-                    foo(eeg_file, this_prep, DATASET, derivatives_root, DEBUG)
+                    foo(eeg_file, this_prep, DATASET, get_derivative(eeg_file), DEBUG, internal_njobs, args.retry_errors)
 
 if __name__ == '__main__':
     main()
