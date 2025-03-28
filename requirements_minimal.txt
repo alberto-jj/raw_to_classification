@@ -4,9 +4,5 @@ scipy>=1.0
 scikit-learn
 matplotlib
 pybids
-mne
-mne-bids
 pyyaml
 toposort
-autoreject
-mne-icalabel

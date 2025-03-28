@@ -1,3 +1,7 @@
+mne
+mne-bids
+autoreject
+mne-icalabel
 pyprep
 neuroCombat
 mlxtend
