@@ -72,7 +72,7 @@ def main():
     parser.add_argument('--retry_errors', action='store_true', help='Retry files that had errors.')
     parser.add_argument('--raise_on_error', action='store_true', help='Enable raise_on_error mode.')
     parser.add_argument('--index', type=int, default=None, help='Index of the file to process. Total index taking into account the dataset outer loop. Only works with external_jobs=1.')
-    parser.add_argument('--total', action='store_true', help='Just get the total number of files. Only works with external_jobs=1.')
+    parser.add_argument('--only_total', action='store_true', help='Just get the total number of files. Only works with external_jobs=1.')
 
 
 
@@ -87,7 +87,7 @@ def main():
     DEBUG = args.raise_on_error
     PARALLELIZE = external_njobs > 1
     internal_njobs = args.internal_jobs
-    only_total = args.total
+    only_total = args.only_total
     single_index = args.index
 
 
@@ -97,7 +97,10 @@ def main():
 
     for preplabel in cfg['preprocess']['prep_list']:
         i = 0
-        for dslabel, DATASET in datasets.items():
+        # you may try to do this loop outisde (with inner eeg loop) as in 4_features.py,
+        # but notice that foo depends on some loop-state variables,
+        # so its a bit more complicated, and perhaps not that worth it
+        for dslabel, DATASET in datasets.items(): 
             if DATASET.get('skip', False):
                 continue
 
