@@ -1,5 +1,6 @@
 pandas
 numpy
+scipy>=1.0
 pybids
 mne
 mne-bids
