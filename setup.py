@@ -1,6 +1,4 @@
 import setuptools
-import versioneer
-
 REQUIREMENTS = [i.strip() for i in open("requirements.txt").readlines()]
 
 
