@@ -1,6 +1,6 @@
 project: 'saint'
 datasets_file: 'datasets_saint.yml'
-mount: local
+mount: computecanada
 inspect:
   path : 
     computecanada: '/home/yorguin/scratch/%PROJECT%/inspect/'
