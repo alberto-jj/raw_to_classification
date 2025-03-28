@@ -71,6 +71,9 @@ def main():
     parser.add_argument('--internal_jobs', type=int, default=1, help='Number of internal jobs.')
     parser.add_argument('--retry_errors', action='store_true', help='Retry files that had errors.')
     parser.add_argument('--raise_on_error', action='store_true', help='Enable raise_on_error mode.')
+    parser.add_argument('--index', type=int, default=None, help='Index of the file to process. Total index taking into account the dataset outer loop. Only works with external_jobs=1.')
+    parser.add_argument('--total', action='store_true', help='Just get the total number of files. Only works with external_jobs=1.')
+
 
 
     args = parser.parse_args()
@@ -84,8 +87,16 @@ def main():
     DEBUG = args.raise_on_error
     PARALLELIZE = external_njobs > 1
     internal_njobs = args.internal_jobs
+    only_total = args.total
+    single_index = args.index
+
+
+
+    if (only_total or single_index) and external_njobs > 1:
+        raise ValueError('Cannot get total number of files or process single file with external_jobs > 1')
 
     for preplabel in cfg['preprocess']['prep_list']:
+        i = 0
         for dslabel, DATASET in datasets.items():
             if DATASET.get('skip', False):
                 continue
@@ -118,7 +129,16 @@ def main():
                 Parallel(n_jobs=external_njobs)(delayed(foo)(eeg_file, this_prep, DATASET, get_derivative(eeg_file), DEBUG,internal_njobs, args.retry_errors ) for eeg_file in eegs)
             else:
                 for eeg_file in eegs:
+                    if only_total:
+                        i+=1
+                        continue
+                    if single_index is not None and i != single_index:
+                        i+=1
+                        continue
                     foo(eeg_file, this_prep, DATASET, get_derivative(eeg_file), DEBUG, internal_njobs, args.retry_errors)
-
+                    i+=1
+        if only_total:
+            print(i)
+            return i
 if __name__ == '__main__':
     main()
