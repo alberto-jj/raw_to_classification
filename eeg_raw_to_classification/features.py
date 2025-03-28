@@ -1,4 +1,4 @@
-from scipy.integrate import simps
+from scipy.integrate import simpson as simps
 from mne.time_frequency import psd_array_multitaper
 from mne.datasets.eegbci import standardize
 import numpy as np
