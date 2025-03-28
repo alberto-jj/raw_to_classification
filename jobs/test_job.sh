@@ -1,8 +1,8 @@
 #! /bin/bash
 #SBATCH --account=def-kjerbi
-#SBATCH --cpus-per-task=2
+#SBATCH --cpus-per-task=1
 #SBATCH --mem=4G
-#SBATCH --time=0-00:10:00
+#SBATCH --time=0-00:45:00
 #SBATCH --job-name=example
 #SBATCH --output=%j-example.out
 #SBATCH --error=%j-example.err
