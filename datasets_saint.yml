@@ -3,14 +3,14 @@ saint:
   skip : False
 
   # Participants 
-  participants_file : "/home/yorguin/projects/def-kjerbi/data/EEG_psychostimulants_2025-02/BIDS/participants.tsv"
+  participants_file : "/home/yorguin/scratch/saint/BIDS/participants.tsv"
   # "Y:/datasets/saint-justine/bids/all/participants.tsv"
   reader : 
     function : "pd.read_csv"
     args : 
       delimiter: "\\t"
 
-  cleaned_participants : "/home/yorguin/projects/def-kjerbi/data/EEG_psychostimulants_2025-02/BIDS/participants.csv"
+  cleaned_participants : "/home/yorguin/scratch/saint/BIDS/participants.csv"
   #"Y:/datasets/saint-justine/bids/all/participants.csv"
 
   # Files to be included in the study
@@ -21,7 +21,7 @@ saint:
     task : 'RESTING'
 
   # Processing
-  example_file: "/home/yorguin/projects/def-kjerbi/data/EEG_psychostimulants_2025-02/BIDS/sub-*/ses-*/eeg/sub-*_ses-*_task-RESTING_run-*_eeg.vhdr"
+  example_file: "/home/yorguin/scratch/saint/BIDS/sub-*/ses-*/eeg/sub-*_ses-*_task-RESTING_run-*_eeg.vhdr"
   #"Y:/datasets/saint-justine/bids/all/sub-*/ses-*/eeg/sub-*_ses-*_task-RESTING_run-*_eeg.vhdr"
   ch_names: [ "F4", "F8", "P3","T4", "F7", "T5", "C3", "T3", "Fz", "O1","F3", "O2", "Fp1", "P4", "Fp2", "Pz", "C4", "Cz", "T6"]
   # Common
@@ -30,6 +30,6 @@ saint:
   # Final: [ "F4", "F8", "P3","T4", "F7", "T5", "C3", "A1", "T3", "Fz", "O1","F3", "O2", "Fp1", "P4", "Fp2", "Pz", "C4", "Cz", "T6", "A2"]
   PowerLineFrequency : 60
   # BIDS
-  bids_root : "/home/yorguin/projects/def-kjerbi/data/EEG_psychostimulants_2025-02/BIDS/" 
+  bids_root : "/home/yorguin/scratch/saint/BIDS/" 
   # "Y:/datasets/saint-justine/bids/all/"
   # 
