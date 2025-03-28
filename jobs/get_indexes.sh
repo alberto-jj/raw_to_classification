@@ -4,8 +4,8 @@
 #SBATCH --mem=4G
 #SBATCH --time=0-00:10:00
 #SBATCH --job-name=example
-#SBATCH --output=%j-example.out
-#SBATCH --error=%j-example.err
+#SBATCH --output=%j-indexes.out
+#SBATCH --error=%j-indexes.err
 #SBATCH --mail-user=yjmantilla@gmail.com
 #SBATCH --mail-type=ALL
 
@@ -20,6 +20,6 @@ cd /home/yorguin/projects/def-kjerbi/yorguin/raw_to_classification
 ##pip install --no-index -r requirements.txt
 pip install -r requirements_minimal.txt
 pip install .
-python -u /home/yorguin/projects/def-kjerbi/yorguin/raw_to_classification/3_preprocess.py pipeline_saint.yml --external_jobs 1 --only_total
+python -u 4_preprocess.py pipeline_saint.yml --only_total
 
 

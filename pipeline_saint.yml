@@ -24,8 +24,8 @@ preprocess:
       overwrite : False
 
   prep_list :
-    - prep10min
     - defaultprep
+    - prep10min
 
 prep_inspection:
   path : '/home/yorguin/scratch/%PROJECT%/prep_inspection/' # './data/%PROJECT%/prep_inspection/'
@@ -50,7 +50,7 @@ features:
         - RelativeBandPower1
         - RelativeBandPower2
         - FooofFromAverage
-        - detrendedFluctuation
+        #- detrendedFluctuation
         - lzivComplexity
         # sampleEntropy
         - spectralEntropy
@@ -65,9 +65,38 @@ features:
         - katzFd
         - petrosianFd
         # entropyMultiscale
+    features@prep-prep10min: #you set the name of the feature pipeline with the key
+      prep_pipeline : prep10min # This is the name of the preprocessing pipeline previously defined (must exist in derivatives)
+      downsample : 200
+      prefilter :
+        l_freq : 1
+        h_freq : 40
+      keep_channels : False
+      feature_list: # To say which features actually compute rather than configure
+        #- PowerSpectrum
+        #- PowerSpectrumAverage
+        #- RelativeBandPower1
+        #- RelativeBandPower2
+        #- FooofFromAverage
+        - detrendedFluctuation
+        #- lzivComplexity
+        # sampleEntropy
+        #- spectralEntropy
+        #- appEntropy
+        #- hjorthParams
+        #- hjorthMobility
+        #- hjorthComplexity
+        #- numZerocross
+        #- permEntropy
+        #- svdEntropy
+        #- higuchiFd
+        #- katzFd
+        #- petrosianFd
+        # entropyMultiscale
 
   feature_pipeline_list: #which feature pipelines to run
     - features@prep-defaultprep
+    - features@prep-prep10min
   feature_cfg: # You can configure different features for the same function but different args
     # The suffix will be the higher hierarchy name you put here
     PowerSpectrum:
