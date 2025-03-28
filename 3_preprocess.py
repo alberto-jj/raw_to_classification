@@ -94,9 +94,9 @@ def main():
 
     if (only_total or single_index) and external_njobs > 1:
         raise ValueError('Cannot get total number of files or process single file with external_jobs > 1')
-
+    ALL_EEGS = []
     for preplabel in cfg['preprocess']['prep_list']:
-        i = 0
+        overall_index = 0
         # you may try to do this loop outisde (with inner eeg loop) as in 4_features.py,
         # but notice that foo depends on some loop-state variables,
         # so its a bit more complicated, and perhaps not that worth it
@@ -132,16 +132,21 @@ def main():
                 Parallel(n_jobs=external_njobs)(delayed(foo)(eeg_file, this_prep, DATASET, get_derivative(eeg_file), DEBUG,internal_njobs, args.retry_errors ) for eeg_file in eegs)
             else:
                 for eeg_file in eegs:
+                    ALL_EEGS.append(eeg_file)
+
                     if only_total:
-                        i+=1
+                        overall_index+=1
                         continue
-                    if single_index is not None and i != single_index:
-                        i+=1
+                    if single_index is not None and overall_index != single_index:
+                        overall_index+=1
                         continue
                     foo(eeg_file, this_prep, DATASET, get_derivative(eeg_file), DEBUG, internal_njobs, args.retry_errors)
-                    i+=1
+                    overall_index+=1
         if only_total:
-            print(i)
-            return i
+            print(f'Total number of files: {len(ALL_EEGS)}')
+            for count,eeg in enumerate(ALL_EEGS):
+                print(count,eeg)
+            print(f'Total number of files: {len(ALL_EEGS)}')
+            return len(ALL_EEGS)
 if __name__ == '__main__':
     main()
