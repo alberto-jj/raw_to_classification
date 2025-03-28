@@ -5,9 +5,9 @@
 #SBATCH --time=0-02:00:00
 #SBATCH --array=0-2
 ##0-250
-#SBATCH --job-name=preprocess
-#SBATCH --output=%A_%a-preprocess.out
-#SBATCH --error=%A_%a-preprocess.err
+#SBATCH --job-name=prepfeat
+#SBATCH --output=%A_%a-prepfeat.out
+#SBATCH --error=%A_%a-prepfeat.err
 ## uncomment if you want to receive emails
 ##SBATCH --mail-user=yjmantilla@gmail.com
 ##SBATCH --mail-type=ALL
