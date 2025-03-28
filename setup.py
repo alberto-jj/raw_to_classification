@@ -14,6 +14,4 @@ SETUP_REQUIRES = ["setuptools >= 38.3.0"]
 setuptools.setup(
     setup_requires=SETUP_REQUIRES,
     install_requires = [],
-    version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
 )

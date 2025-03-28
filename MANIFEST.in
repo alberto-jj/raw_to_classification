@@ -1,2 +1,0 @@
-include versioneer.py
-include eeg_raw_to_classification/_version.py
