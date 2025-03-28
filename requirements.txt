@@ -22,5 +22,5 @@ shap
 psutil
 openpyxl
 kaleido
-specparam
+fooof
 cmasher
