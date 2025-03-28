@@ -9,6 +9,7 @@
 #SBATCH --mail-user=yjmantilla@gmail.com
 #SBATCH --mail-type=ALL
 
+module load StdEnv/2020
 module load python/3.10.2
 virtualenv --no-download $SLURM_TMPDIR/env
 source $SLURM_TMPDIR/env/bin/activate
