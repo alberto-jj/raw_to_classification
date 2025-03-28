@@ -124,6 +124,7 @@ def main(pipeline_file, external_jobs, debug, parallelize, retry_errors, single_
             return len(all_EEGS)
         
         if single_index is not None:
+            print(len(all_EEGS), single_index)
             all_EEGS = [all_EEGS[single_index]]
         if parallelize:
             for level in levels:
