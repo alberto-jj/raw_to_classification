@@ -20,5 +20,6 @@ source $SLURM_TMPDIR/env/bin/activate
 cd /home/yorguin/projects/def-kjerbi/yorguin/raw_to_classification
 ##pip install --no-index -r requirements.txt
 pip install --no-index -r requirements_minimal.txt
+pip install -r requirements_extra.txt
 pip install .
 python -u test_job.py
