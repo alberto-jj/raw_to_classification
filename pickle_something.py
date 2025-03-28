@@ -36,6 +36,7 @@ import numpy as np
 import mat73
 import mne
 import pandas as pd
+import pathlib
 
 path = r"Y:\datasets\saint-justine\bids\all\derivatives\features@prep-prep10min\sub-137\ses-01\eeg\sub-137_ses-01_task-RESTING_run-01_desc-reject_detrendedFluctuation.npy"
 
@@ -44,13 +45,14 @@ output = np.load(path,allow_pickle=True)
 output.item()['values'].shape
 
 path=r'Y:\datasets\epilepsy\rawdata'
-path=path.replace('\\','/')
+path=pathlib.Path(path).as_posix()
 
-pattern = os.path.join(path,'**','*_iEEG.*').replace('\\','/')
+pattern = os.path.join(path,'**','*_iEEG.*')
+pattern = pathlib.Path(pattern).as_posix()
 
 eeg_files = glob.glob(pattern,recursive=True)
-eeg_files = [x.replace('\\','/') for x in eeg_files]
-foo=lambda x: os.path.join(os.path.dirname(x),'*labelresect*').replace('\\','/')
+eeg_files = [pathlib.Path(x).as_posix() for x in eeg_files]
+foo=lambda x: pathlib.Path(os.path.join(os.path.dirname(x),'*labelresect*')).as_posix()
 labelresect_files = []
 for file in eeg_files:
     match_files = glob.glob(foo(file),recursive=True)

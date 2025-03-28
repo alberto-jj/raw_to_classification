@@ -10,6 +10,7 @@ from eeg_raw_to_classification.utils import load_yaml, get_path, get_derivative_
 from joblib import delayed, Parallel
 import itertools
 from graphlib import TopologicalSorter
+import pathlib
 
 def get_dependencies(feature, FEATURE_CFG):
     dependencies = []
@@ -113,13 +114,18 @@ def main(pipeline_file, external_jobs, debug, parallelize, retry_errors, single_
             layout = bids.BIDSLayout(bids_root)
             all_raws = layout.get(**file_filter)
             derivatives_root = os.path.join(layout.root, f'derivatives/{prep_pipeline}/')
-            get_derivative = lambda x: get_derivative_path(layout, x, 'reject', 'epo', '.fif', bids_root, derivatives_root.replace('\\', '/')).replace('\\', '/')
-            eegs = [get_derivative(x) for x in all_raws]
-            #pattern = os.path.join(bids_root, 'derivatives', prep_pipeline, '**/*_epo.fif').replace('\\', '/')
-            #eegs = glob.glob(pattern, recursive=True)
+            derivatives_root = pathlib.Path(derivatives_root).as_posix()
+            bids_root = pathlib.Path(bids_root).as_posix()
+            
+            if single_index is not None or only_total:
+                get_derivative = lambda x: get_derivative_path(layout, x, 'reject', 'epo', '.fif', bids_root, derivatives_root)
+                eegs = [get_derivative(x) for x in all_raws]
+            else:
+                pattern = os.path.join(bids_root, 'derivatives', prep_pipeline, '**/*_epo.fif')
+                pattern = pathlib.Path(pattern).as_posix()
+                eegs = glob.glob(pattern, recursive=True)
             os.makedirs(os.path.join(bids_root, 'derivatives', pipeline_name), exist_ok=True)
 
-        # we can now parallelize the levels
             for eeg_file in eegs:
                 all_EEGS.append(eeg_file)
 

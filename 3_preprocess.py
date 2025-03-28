@@ -7,6 +7,7 @@ import bids
 from eeg_raw_to_classification.utils import load_yaml
 from eeg_raw_to_classification.utils import get_derivative_path,get_path
 import time
+import pathlib
 
 def foo(eeg_file, this_prep, DATASET, reject_path, DEBUG, internal_njobs=1, retry_errors=False):
     # imports here to avoid problems with joblib
@@ -126,11 +127,11 @@ def main():
                 else:
                     limit = MAX_FILES
                 eegs = eegs[:limit]
-            eegs = [x.replace('\\', '/') for x in eegs]
+            eegs = [pathlib.Path(x).as_posix() for x in eegs]
             print(len(eegs), eegs)
             derivatives_root = os.path.join(layout.root, f'derivatives/{preplabel}/')
             
-            get_derivative = lambda x: get_derivative_path(layout, x, 'reject', 'epo', '.fif', bids_root, derivatives_root).replace('\\', '/')
+            get_derivative = lambda x: pathlib.Path(get_derivative_path(layout, x, 'reject', 'epo', '.fif', bids_root, derivatives_root)).as_posix()
 
             if PARALLELIZE:
                 Parallel(n_jobs=external_njobs)(delayed(foo)(eeg_file, this_prep, DATASET, get_derivative(eeg_file), DEBUG,internal_njobs, args.retry_errors ) for eeg_file in eegs)

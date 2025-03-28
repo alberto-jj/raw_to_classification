@@ -8,6 +8,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 import argparse
+import pathlib
 
 def main(config_file):
     cfg = load_yaml(config_file)
@@ -56,7 +57,8 @@ def main(config_file):
                 filesuffix = foodict['file_suffix']
                 bids_root = DATASET.get('bids_root', None)
                 bids_root = get_path(bids_root, MOUNT)
-                pattern = os.path.join(bids_root, 'derivatives', featfolder, f'**/*_{filesuffix}.npy').replace('\\', '/')
+                pattern = os.path.join(bids_root, 'derivatives', featfolder, f'**/*_{filesuffix}.npy')
+                pattern = pathlib.Path(pattern).as_posix()
                 eegs = glob.glob(pattern, recursive=True)
                 dict_list = []
                 foodict = cfg['aggregate']['feature_return'][feature]

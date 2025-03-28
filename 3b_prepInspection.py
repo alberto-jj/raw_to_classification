@@ -10,6 +10,7 @@ from eeg_raw_to_classification import features as feat
 from eeg_raw_to_classification.utils import load_yaml, get_path
 import traceback
 import pandas as pd
+import pathlib
 
 def main(pipeline_file):
     PIPELINE = load_yaml(pipeline_file)
@@ -36,7 +37,8 @@ def main(pipeline_file):
                 CFG = PIPELINE['features']
                 bids_root = DATASET.get('bids_root', None)
                 bids_root = get_path(bids_root, MOUNT)
-                pattern = os.path.join(bids_root, 'derivatives', preplabel, '**/*_epo.fif').replace('\\', '/')
+                pattern = os.path.join(bids_root, 'derivatives', preplabel, '**/*_epo.fif')
+                pattern = pathlib.Path(pattern).as_posix()
                 eegs = glob.glob(pattern, recursive=True)
                 for eeg_file in eegs:
                     print(eeg_file)
