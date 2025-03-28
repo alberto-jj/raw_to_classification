@@ -3,7 +3,7 @@
 #SBATCH --cpus-per-task=32
 #SBATCH --mem=48G
 #SBATCH --time=0-02:00:00
-#SBATCH --array=0-2
+#SBATCH --array=0-250
 ##0-250
 #SBATCH --job-name=prepfeat
 #SBATCH --output=%A_%a-prepfeat.out
