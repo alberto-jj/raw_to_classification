@@ -1,7 +1,7 @@
 project: 'saint'
 datasets_file: 'datasets_saint.yml'
 inspect:
-  path : './data/%PROJECT%/inspect'
+  path : '/home/yorguin/scratch/%PROJECT%/inspect/' # './data/%PROJECT%/inspect/'
 preprocess:
   prep_cfg:
     defaultprep: # This is the name of the preprocessing pipeline
@@ -28,7 +28,7 @@ preprocess:
     - defaultprep
 
 prep_inspection:
-  path : './data/%PROJECT%/prep_inspection'
+  path : '/home/yorguin/scratch/%PROJECT%/prep_inspection/' # './data/%PROJECT%/prep_inspection/'
   overwrite : False
   checks:
     - 'epochs'
@@ -331,7 +331,7 @@ features:
             max_numitem: null
 
 aggregate:
-  path : './data/%PROJECT%/aggregate'
+  path : '/home/yorguin/scratch/%PROJECT%/aggregate/' #'./data/%PROJECT%/aggregate'
   filename : 'aggregate'
   id_splitter : '/'
   feature_return:
@@ -414,7 +414,7 @@ scalingAndFolding:
   aggregate_folders:
     - 'FeaturesChannels@prep-defaultprep'
   MAX_FEATURES: null
-  path : './data/%PROJECT%/scalingAndFolding'
+  path : '/home/yorguin/scratch/%PROJECT%/scalingAndFolding/' #'./data/%PROJECT%/scalingAndFolding'
   random_state : 0
   targets :
     - 'group'
@@ -462,7 +462,7 @@ scalingAndFolding:
       verbose : 0
 
 ml:
-  path: './data/%PROJECT%/ml'
+  path: '/home/yorguin/scratch/%PROJECT%/ml/' #'./data/%PROJECT%/ml'
   featurewiz:
     init:
       corr_limit : 0.75
@@ -524,7 +524,7 @@ ml:
         num_bag_folds : 0
 
 eda:
-  path: './data/%PROJECT%/eda'
+  path: '/home/yorguin/scratch/%PROJECT%/eda/' #'./data/%PROJECT%/eda'
   
   # ols
   category_vars:
