@@ -10,11 +10,12 @@
 #SBATCH --mail-type=ALL
 
 module load StdEnv/2020
-module load python/3.10.2
+module load StdEnv/2023
+module load python/3.11.5
 virtualenv --no-download $SLURM_TMPDIR/env
 source $SLURM_TMPDIR/env/bin/activate
 
-pip install --no-index --upgrade pip
+##pip install --no-index --upgrade pip
 cd /home/yorguin/projects/def-kjerbi/yorguin/raw_to_classification
 ##pip install --no-index -r requirements.txt
 pip install -r requirements_minimal.txt
