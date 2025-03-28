@@ -30,4 +30,6 @@ saint:
   # Final: [ "F4", "F8", "P3","T4", "F7", "T5", "C3", "A1", "T3", "Fz", "O1","F3", "O2", "Fp1", "P4", "Fp2", "Pz", "C4", "Cz", "T6", "A2"]
   PowerLineFrequency : 60
   # BIDS
-  bids_root : "/home/yorguin/projects/def-kjerbi/data/EEG_psychostimulants_2025-02/BIDS/"
+  bids_root : "/home/yorguin/projects/def-kjerbi/data/EEG_psychostimulants_2025-02/BIDS/" 
+  # "Y:/datasets/saint-justine/bids/all/"
+  # 
