@@ -2,8 +2,8 @@
 #SBATCH --account=def-kjerbi
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=16G
-#SBATCH --time=0-02:00:00
-#SBATCH --array=0-1
+#SBATCH --time=0-01:00:00
+#SBATCH --array=0-250
 ##0-250
 #SBATCH --job-name=features
 #SBATCH --output=%A_%a-features.out
