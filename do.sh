@@ -10,3 +10,6 @@ python -u 5.5_aggregateInspection.py pipeline_r2c.yml > 5.5_aggregateInspection_
 mamba activate automl
 python -u 6_scalingAndFolding.py > 6_scalingAndFoldingPOLANDHenry.log
 python -u 6b_aggregateInspection.py > 6b_aggregateInspectionPOLANDHenry.log
+
+python -u 3_preprocess.py pipeline_saint.yml --external_jobs 1 --only_total
+python -u 4_features.py pipeline_saint.yml --only_total
