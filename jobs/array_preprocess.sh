@@ -1,7 +1,7 @@
 #! /bin/bash
 #SBATCH --account=def-kjerbi
-#SBATCH --cpus-per-task=32
-#SBATCH --mem=48G
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=16G
 #SBATCH --time=0-02:00:00
 #SBATCH --array=0-1
 ##0-250
