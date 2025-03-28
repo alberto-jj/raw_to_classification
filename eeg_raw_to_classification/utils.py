@@ -6,7 +6,7 @@ import numpy as np
 from copy import deepcopy
 import os
 import itertools
-
+import pathlib
 def get_path(path, MOUNT=None):
     if MOUNT and type(path)==dict:
         output = path[MOUNT]
@@ -17,6 +17,9 @@ def get_path(path, MOUNT=None):
 # Get the derivatives path in BIDS format
 def get_derivative_path(layout,eeg_file,output_entity,suffix,output_extension,bids_root,derivatives_root):
     entities = layout.parse_file_entities(eeg_file)
+    eeg_file = pathlib.Path(eeg_file).as_posix()
+    bids_root = pathlib.Path(bids_root).as_posix()
+    derivatives_root = pathlib.Path(derivatives_root).as_posix()
     derivative_path = eeg_file.replace(bids_root,derivatives_root)
     derivative_path = derivative_path.replace(entities['extension'],'')
     derivative_path = derivative_path.split('_')

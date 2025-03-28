@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import glob
 from toposort import toposort
-from eeg_raw_to_classification.utils import load_yaml, get_path
+from eeg_raw_to_classification.utils import load_yaml, get_path, get_derivative_path
 from joblib import delayed, Parallel
 import itertools
 from graphlib import TopologicalSorter
@@ -101,15 +101,22 @@ def main(pipeline_file, external_jobs, debug, parallelize, retry_errors, single_
         DOWNSAMPLE = featurepipelineCFG['downsample']
         keep_channels = featurepipelineCFG['keep_channels']
 
-        all_EEGS = []
 
+        all_EEGS = []
+        all_raws = []
         for dslabel, DATASET in datasets.items():
             if DATASET.get('skip', False):
                 continue
             bids_root = DATASET.get('bids_root', None)
             bids_root = get_path(bids_root, MOUNT)
-            pattern = os.path.join(bids_root, 'derivatives', prep_pipeline, '**/*_epo.fif').replace('\\', '/')
-            eegs = glob.glob(pattern, recursive=True)
+            file_filter = DATASET.get('raw_layout', None)
+            layout = bids.BIDSLayout(bids_root)
+            all_raws = layout.get(**file_filter)
+            derivatives_root = os.path.join(layout.root, f'derivatives/{prep_pipeline}/')
+            get_derivative = lambda x: get_derivative_path(layout, x, 'reject', 'epo', '.fif', bids_root, derivatives_root.replace('\\', '/')).replace('\\', '/')
+            eegs = [get_derivative(x) for x in all_raws]
+            #pattern = os.path.join(bids_root, 'derivatives', prep_pipeline, '**/*_epo.fif').replace('\\', '/')
+            #eegs = glob.glob(pattern, recursive=True)
             os.makedirs(os.path.join(bids_root, 'derivatives', pipeline_name), exist_ok=True)
 
         # we can now parallelize the levels
