@@ -4,6 +4,7 @@ pybids
 mne
 mne-bids
 pyyaml
+toposort
 autoreject
 mne-icalabel
 pyprep

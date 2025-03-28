@@ -4,6 +4,7 @@ pybids
 mne
 mne-bids
 pyyaml
+toposort
 git+https://github.com/yjmantilla/sovabids.git#egg=sovabids
 autoreject
 mne-icalabel
