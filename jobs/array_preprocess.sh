@@ -3,8 +3,8 @@
 #SBATCH --cpus-per-task=32
 #SBATCH --mem=48G
 #SBATCH --time=0-02:00:00
-#SBATCH --array=0-250
-##0-1
+#SBATCH --array=0-1
+##0-250
 #SBATCH --job-name=preprocess
 #SBATCH --output=%A_%a-preprocess.out
 #SBATCH --error=%A_%a-preprocess.err
