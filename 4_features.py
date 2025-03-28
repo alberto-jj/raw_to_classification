@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import glob
 from toposort import toposort
-from eeg_raw_to_classification.utils import load_yaml
+from eeg_raw_to_classification.utils import load_yaml, get_path
 from joblib import delayed, Parallel
 import itertools
 from graphlib import TopologicalSorter
@@ -22,7 +22,7 @@ def foo(eeg_file, DOWNSAMPLE, keep_channels, featurepipelineCFG, FEATURE_CFG, fe
     import mne
     import os
     from eeg_raw_to_classification import features as feat
-    from eeg_raw_to_classification.utils import load_yaml, save_dict_to_json
+    from eeg_raw_to_classification.utils import load_yaml, save_dict_to_json,get_path
     import traceback
 
     dirname = os.path.dirname(eeg_file)
@@ -65,8 +65,9 @@ def foo(eeg_file, DOWNSAMPLE, keep_channels, featurepipelineCFG, FEATURE_CFG, fe
 
 def main(pipeline_file, external_jobs, debug, parallelize, retry_errors, single_index=None, only_total=False):
     PIPELINE = load_yaml(pipeline_file)
-
-    datasets = load_yaml(PIPELINE['datasets_file'])
+    MOUNT = PIPELINE.get('mount', None)
+    datasets = load_yaml(get_path(PIPELINE['datasets_file'], MOUNT))
+    #datasets = load_yaml(PIPELINE['datasets_file'])
     PROJECT = PIPELINE['project']
 
     for featurepipeline in PIPELINE['features']['feature_pipeline_list']:
@@ -105,10 +106,11 @@ def main(pipeline_file, external_jobs, debug, parallelize, retry_errors, single_
         for dslabel, DATASET in datasets.items():
             if DATASET.get('skip', False):
                 continue
-
-            pattern = os.path.join(DATASET.get('bids_root', None), 'derivatives', prep_pipeline, '**/*_epo.fif').replace('\\', '/')
+            bids_root = DATASET.get('bids_root', None)
+            bids_root = get_path(bids_root, MOUNT)
+            pattern = os.path.join(bids_root, 'derivatives', prep_pipeline, '**/*_epo.fif').replace('\\', '/')
             eegs = glob.glob(pattern, recursive=True)
-            os.makedirs(os.path.join(DATASET.get('bids_root', None), 'derivatives', pipeline_name), exist_ok=True)
+            os.makedirs(os.path.join(bids_root, 'derivatives', pipeline_name), exist_ok=True)
 
         # we can now parallelize the levels
             for eeg_file in eegs:
@@ -127,7 +129,7 @@ def main(pipeline_file, external_jobs, debug, parallelize, retry_errors, single_
             for level in levels:
                 Parallel(n_jobs=external_jobs)(delayed(foo)(eeg_file, DOWNSAMPLE, keep_channels, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, debug, ) for eeg_file in all_EEGS for feature in level)
         else:
-            for eeg_file in enumerate(all_EEGS):
+            for count,eeg_file in enumerate(all_EEGS):
                 for level in levels:
                     for feature in level:
                         foo(eeg_file, DOWNSAMPLE, keep_channels, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, debug)

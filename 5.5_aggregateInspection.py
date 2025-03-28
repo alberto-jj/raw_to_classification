@@ -7,22 +7,27 @@ import numpy as np
 import copy
 import matplotlib.pyplot as plt
 import os
-from eeg_raw_to_classification.utils import load_yaml
+from eeg_raw_to_classification.utils import load_yaml, get_path
 import itertools
 
 def main(pipeline_file):
     PIPELINE = load_yaml(pipeline_file)
+    MOUNT = PIPELINE.get('mount', None)
 
-    datasets = load_yaml(PIPELINE['datasets_file'])
+    datasets = load_yaml(get_path(PIPELINE['datasets_file'], MOUNT))
+    #load_yaml(PIPELINE['datasets_file'])
     PROJECT = PIPELINE['project']
-    OUTPUT_DIR_BASE = PIPELINE['scalingAndFolding']['path'].replace('%PROJECT%', PROJECT)
+    OUTPUT_DIR_BASE = PIPELINE['scalingAndFolding']['path']
+    OUTPUT_DIR_BASE = get_path(OUTPUT_DIR_BASE, MOUNT).replace('%PROJECT%', PROJECT)
 
     for aggregate_folder in PIPELINE['scalingAndFolding']['aggregate_folders']:
         CFG = PIPELINE['scalingAndFolding']
         OUTPUT_DIR = os.path.join(OUTPUT_DIR_BASE, aggregate_folder)
         os.makedirs(OUTPUT_DIR, exist_ok=True)
         input_desc = '@raw'
-        df_path = os.path.join(PIPELINE['aggregate']['path'].replace('%PROJECT%', PROJECT), aggregate_folder, PIPELINE['aggregate']['filename'] + input_desc + '.csv')
+        agg_path = PIPELINE['aggregate']['path']
+        agg_path = get_path(agg_path, MOUNT).replace('%PROJECT%', PROJECT)
+        df_path = os.path.join(agg_path, aggregate_folder, PIPELINE['aggregate']['filename'] + input_desc + '.csv')
         df = pd.read_csv(df_path)
 
         #########################

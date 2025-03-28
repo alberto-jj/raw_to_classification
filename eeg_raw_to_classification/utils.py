@@ -7,6 +7,13 @@ from copy import deepcopy
 import os
 import itertools
 
+def get_path(path, MOUNT=None):
+    if MOUNT and type(path)==dict:
+        output = path[MOUNT]
+    else:
+        output = path
+    return output
+
 # Get the derivatives path in BIDS format
 def get_derivative_path(layout,eeg_file,output_entity,suffix,output_extension,bids_root,derivatives_root):
     entities = layout.parse_file_entities(eeg_file)

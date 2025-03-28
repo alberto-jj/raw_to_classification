@@ -8,26 +8,32 @@ import copy
 import matplotlib.pyplot as plt
 import os
 from supervised.automl import AutoML
-from eeg_raw_to_classification.utils import parse_bids,load_yaml,get_output_dict,save_dict_to_json,save_figs_in_html
+from eeg_raw_to_classification.utils import parse_bids,load_yaml,get_output_dict,save_dict_to_json,save_figs_in_html, get_path
 import glob
 from autogluon.tabular import TabularDataset, TabularPredictor
 import traceback
 from featurewiz import FeatureWiz
 
 PIPELINE = load_yaml(f'pipeline.yml')
-datasets = load_yaml(PIPELINE['datasets_file'])
+MOUNT = PIPELINE.get('mount', None)
+datasets = load_yaml(get_path(PIPELINE['datasets_file'], MOUNT))
+#load_yaml(PIPELINE['datasets_file'])
 
 PROJECT = PIPELINE['project']
 
-OUTPUT_DIR = PIPELINE['ml']['path'].replace('%PROJECT%',PROJECT)
+OUTPUT_DIR = PIPELINE['ml']['path']
+OUTPUT_DIR = get_path(OUTPUT_DIR, MOUNT).replace('%PROJECT%',PROJECT)
 os.makedirs(OUTPUT_DIR,exist_ok=True)
 
-fold_path = os.path.join(PIPELINE['scalingAndFolding']['path']).replace('%PROJECT%',PROJECT)
+fold_path = os.path.join(PIPELINE['scalingAndFolding']['path'])
+fold_path = get_path(fold_path, MOUNT).replace('%PROJECT%',PROJECT)
 fold_pattern = os.path.join(fold_path,'**','folds-*.pkl')
 foldinstances = glob.glob(fold_pattern,recursive=True)
 #foldinstances = [x for x in foldinstances if 'folding' in x]
-scalingAndFolding_path = PIPELINE['scalingAndFolding']['path'].replace('%PROJECT%',PROJECT)
-ml_path=PIPELINE['ml']['path'].replace('%PROJECT%',PROJECT)
+scalingAndFolding_path = PIPELINE['scalingAndFolding']['path']
+scalingAndFolding_path = get_path(scalingAndFolding_path, MOUNT).replace('%PROJECT%',PROJECT)
+ml_path=PIPELINE['ml']['path']
+ml_path = get_path(ml_path, MOUNT).replace('%PROJECT%',PROJECT)
 fwiz = None
 
 for _foldpath in foldinstances:

@@ -1,11 +1,12 @@
 import argparse
 import pandas as pd
-from eeg_raw_to_classification.utils import load_yaml
+from eeg_raw_to_classification.utils import load_yaml,get_path
 import shutil
 
 def main(pipeline_file):
     cfg = load_yaml(pipeline_file)
-    datasets = load_yaml(cfg['datasets_file'])
+    MOUNT = cfg.get('mount', None)
+    datasets = load_yaml(get_path(cfg['datasets_file'],MOUNT))
 
     for dslabel, DATASET in datasets.items():
 
@@ -13,7 +14,9 @@ def main(pipeline_file):
             continue
 
         datafile = DATASET['participants_file']
+        datafile = get_path(datafile, MOUNT)
         outfile = DATASET['cleaned_participants']
+        outfile = get_path(outfile, MOUNT)
 
         # create copy if datafile is the same as outfile
         if datafile == outfile:

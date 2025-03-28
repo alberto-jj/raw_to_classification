@@ -7,18 +7,22 @@ import numpy as np
 import glob
 import mne
 from eeg_raw_to_classification import features as feat
-from eeg_raw_to_classification.utils import load_yaml
+from eeg_raw_to_classification.utils import load_yaml, get_path
 import traceback
 import pandas as pd
 
 def main(pipeline_file):
     PIPELINE = load_yaml(pipeline_file)
-    datasets = load_yaml(PIPELINE['datasets_file'])
+    MOUNT = PIPELINE.get('mount', None)
+    datasets = load_yaml(get_path(PIPELINE['datasets_file'], MOUNT))
+    #load_yaml(PIPELINE['datasets_file'])
 
     PROJECT = PIPELINE['project']
 
     for preplabel in PIPELINE['prep_inspection']['prep_list']:
-        outputfolder = PIPELINE['prep_inspection']['path'].replace('%PROJECT%', PROJECT)
+        outputfolder = PIPELINE['prep_inspection']['path']
+        outputfolder = get_path(outputfolder, MOUNT).replace('%PROJECT%', PROJECT)
+
         ## Get the number of epochs
         if 'epochs' in PIPELINE['prep_inspection']['checks']:
             SHAPES = []
@@ -30,7 +34,9 @@ def main(pipeline_file):
                     continue
 
                 CFG = PIPELINE['features']
-                pattern = os.path.join(DATASET.get('bids_root', None), 'derivatives', preplabel, '**/*_epo.fif').replace('\\', '/')
+                bids_root = DATASET.get('bids_root', None)
+                bids_root = get_path(bids_root, MOUNT)
+                pattern = os.path.join(bids_root, 'derivatives', preplabel, '**/*_epo.fif').replace('\\', '/')
                 eegs = glob.glob(pattern, recursive=True)
                 for eeg_file in eegs:
                     print(eeg_file)

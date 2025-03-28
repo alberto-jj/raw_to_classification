@@ -2,24 +2,26 @@ import mne
 import os
 import glob
 import argparse
-from eeg_raw_to_classification.utils import load_yaml, save_dict_to_json, save_figs_in_html
+from eeg_raw_to_classification.utils import load_yaml, save_dict_to_json, save_figs_in_html,get_path
 import numpy as np
 import pandas as pd
 import traceback
 
 def main(pipeline_file):
     cfg = load_yaml(pipeline_file)
+    MOUNT = cfg.get('mount', None)
     PROJECT = cfg['project']
-    datasets = load_yaml(cfg['datasets_file'])
-
-    inspect_path = cfg['inspect']['path'].replace('%PROJECT%', PROJECT)
+    datasets = load_yaml(get_path(cfg['datasets_file'],MOUNT))
+    #load_yaml(cfg['datasets_file'])
+    inspect_path = get_path(cfg['inspect']['path'],MOUNT).replace('%PROJECT%', PROJECT)
     os.makedirs(inspect_path, exist_ok=True)
 
     max_files = None  # 30
     for dslabel, DATASET in datasets.items():
         if DATASET.get('skip', False):
             continue
-        exemplar_file = DATASET['example_file']
+        exemplar_file = get_path(DATASET['example_file'], MOUNT)
+        #DATASET['example_file']
         eegs = glob.glob(exemplar_file, recursive=True)
         MONTAGES = []
         TIMES = []

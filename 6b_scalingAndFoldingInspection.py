@@ -2,7 +2,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import glob
-from eeg_raw_to_classification.utils import parse_bids,load_yaml,get_output_dict,save_dict_to_json
+from eeg_raw_to_classification.utils import parse_bids,load_yaml,get_output_dict,save_dict_to_json,get_path
 import itertools
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -13,16 +13,23 @@ import pickle
 
 
 cfg = load_yaml(f'pipeline.yml')
-datasets = load_yaml(cfg['datasets_file'])
+MOUNT = cfg.get('mount', None)
+datasets = get_path(cfg['datasets_file'], MOUNT)
+datasets = load_yaml(datasets)
+#load_yaml(cfg['datasets_file'])
 PROJECT = cfg['project']
-OUTPUTROOT = f'data/{PROJECT}/viz'#cfg['aggregate']['path']
+OUTPUTROOT = cfg['scalingAndFolding']['path']
+OUTPUTROOT = get_path(OUTPUTROOT, MOUNT).replace('%PROJECT%', PROJECT)
+pklroot = OUTPUTROOT
+OUTPUTROOT = os.path.join(OUTPUTROOT,'viz')
+#f'data/{PROJECT}/viz'#cfg['aggregate']['path']
 # csvfilename = cfg['aggregate']['filename']
 # id_splitter = cfg['aggregate']['id_splitter']
 
 #aggregate_file = r'data\aggregate\FeaturesChannels@30@prep-defaultprep\aggregate.csv'
 
 #load pkl
-pklpattern =f'data\{PROJECT}\scalingAndFolding\**\scaling_effect.pkl'
+pklpattern =f'{pklroot}\**\scaling_effect.pkl'
 pklfiles = glob.glob(pklpattern,recursive=True)
 
 for pklfile in pklfiles:

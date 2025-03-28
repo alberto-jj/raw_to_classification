@@ -37,6 +37,12 @@ import mat73
 import mne
 import pandas as pd
 
+path = r"Y:\datasets\saint-justine\bids\all\derivatives\features@prep-prep10min\sub-137\ses-01\eeg\sub-137_ses-01_task-RESTING_run-01_desc-reject_detrendedFluctuation.npy"
+
+output = np.load(path,allow_pickle=True)
+
+output.item()['values'].shape
+
 path=r'Y:\datasets\epilepsy\rawdata'
 path=path.replace('\\','/')
 

@@ -12,7 +12,7 @@ import numpy as np
 import copy
 import matplotlib.pyplot as plt
 import os
-from eeg_raw_to_classification.utils import parse_bids,load_yaml,get_output_dict,save_dict_to_json,save_figs_in_html
+from eeg_raw_to_classification.utils import parse_bids,load_yaml,get_output_dict,save_dict_to_json,save_figs_in_html,get_path
 import glob
 import traceback
 import cmasher as cmr
@@ -20,17 +20,24 @@ import matplotlib.patches as mpatches
 
 
 PIPELINE = load_yaml(f'pipeline.yml')
-datasets = load_yaml(PIPELINE['datasets_file'])
+MOUNT = PIPELINE.get('mount', None)
+datasets = load_yaml(get_path(PIPELINE['datasets_file'], MOUNT))
+#load_yaml(PIPELINE['datasets_file'])
+
 PROJECT = PIPELINE['project']
-OUTPUT_DIR = PIPELINE['eda']['path'].replace('%PROJECT%,PROJECT')
+OUTPUT_DIR = PIPELINE['eda']['path']
+OUTPUT_DIR = get_path(OUTPUT_DIR, MOUNT).replace('%PROJECT%',PROJECT)
 os.makedirs(OUTPUT_DIR,exist_ok=True)
 
-fold_path = os.path.join(PIPELINE['scalingAndFolding']['path'])
+scalingAndFolding_path = PIPELINE['scalingAndFolding']['path']
+scalingAndFolding_path = get_path(scalingAndFolding_path, MOUNT).replace('%PROJECT%',PROJECT)
+fold_path = scalingAndFolding_path
 fold_pattern = os.path.join(fold_path,'**','folds-*.pkl')
 foldinstances = glob.glob(fold_pattern,recursive=True)
 #foldinstances = [x for x in foldinstances if 'folding' in x]
-scalingAndFolding_path = PIPELINE['scalingAndFolding']['path']
+
 eda_path = PIPELINE['eda']['path']
+eda_path = get_path(eda_path, MOUNT).replace('%PROJECT%',PROJECT)
 for _foldpath in foldinstances:
     foldingtype=os.path.splitext(os.path.basename(_foldpath))[0]
     foldcomb = os.path.basename(_foldpath).split('-')[1].split('.')[0]

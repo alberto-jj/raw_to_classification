@@ -2,7 +2,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import glob
-from eeg_raw_to_classification.utils import parse_bids, load_yaml, get_output_dict, save_dict_to_json
+from eeg_raw_to_classification.utils import parse_bids, load_yaml, get_output_dict, save_dict_to_json, get_path
 import itertools
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -11,10 +11,12 @@ import argparse
 
 def main(config_file):
     cfg = load_yaml(config_file)
+    MOUNT = cfg.get('mount', None)
+    datasets = load_yaml(get_path(cfg['datasets_file'], MOUNT))
 
-    datasets = load_yaml(cfg['datasets_file'])
     PROJECT = cfg['project']
-    OUTPUTBASE = cfg['aggregate']['path'].replace('%PROJECT%', PROJECT)
+    OUTPUTBASE = cfg['aggregate']['path']
+    OUTPUTBASE = get_path(OUTPUTBASE, MOUNT).replace('%PROJECT%', PROJECT)
     csvfilename = cfg['aggregate']['filename']
     id_splitter = cfg['aggregate']['id_splitter']
     os.makedirs(OUTPUTBASE, exist_ok=True)
@@ -32,6 +34,7 @@ def main(config_file):
 
             perfeature = []
             participants_file = DATASET['cleaned_participants']
+            participants_file = get_path(participants_file, MOUNT)
             participants = pd.read_csv(participants_file)
 
             def parfun(query, field):
@@ -51,7 +54,9 @@ def main(config_file):
                 featfolder = agg_cfg['feature_folder']
                 foodict = cfg['aggregate']['feature_return'][feature]
                 filesuffix = foodict['file_suffix']
-                pattern = os.path.join(DATASET.get('bids_root', None), 'derivatives', featfolder, f'**/*_{filesuffix}.npy').replace('\\', '/')
+                bids_root = DATASET.get('bids_root', None)
+                bids_root = get_path(bids_root, MOUNT)
+                pattern = os.path.join(bids_root, 'derivatives', featfolder, f'**/*_{filesuffix}.npy').replace('\\', '/')
                 eegs = glob.glob(pattern, recursive=True)
                 dict_list = []
                 foodict = cfg['aggregate']['feature_return'][feature]

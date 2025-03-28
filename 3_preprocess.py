@@ -5,7 +5,7 @@ from joblib import delayed, Parallel
 import psutil
 import bids
 from eeg_raw_to_classification.utils import load_yaml
-from eeg_raw_to_classification.utils import get_derivative_path
+from eeg_raw_to_classification.utils import get_derivative_path,get_path
 import time
 
 def foo(eeg_file, this_prep, DATASET, reject_path, DEBUG, internal_njobs=1, retry_errors=False):
@@ -79,7 +79,9 @@ def main():
     args = parser.parse_args()
 
     cfg = load_yaml(args.pipeline_yml)
-    datasets = load_yaml(cfg['datasets_file'])
+    MOUNT = cfg.get('mount', None)
+    datasets = load_yaml(get_path(cfg['datasets_file'], MOUNT))
+    #datasets = load_yaml(cfg['datasets_file'])
 
     PROJECT = cfg['project']
     MAX_FILES = args.max_files
@@ -110,7 +112,9 @@ def main():
             file_filter = DATASET.get('raw_layout', None)
 
             start_time = time.time()
-            layout = bids.BIDSLayout(DATASET.get('bids_root', None))
+            bids_root = DATASET.get('bids_root', None)
+            bids_root = get_path(bids_root, MOUNT)
+            layout = bids.BIDSLayout(bids_root)
             # how to make this faster, it takes too long...
             eegs = layout.get(**file_filter)
             end_time = time.time()
@@ -126,7 +130,7 @@ def main():
             print(len(eegs), eegs)
             derivatives_root = os.path.join(layout.root, f'derivatives/{preplabel}/')
             
-            get_derivative = lambda x: get_derivative_path(layout, x, 'reject', 'epo', '.fif', DATASET['bids_root'], derivatives_root).replace('\\', '/')
+            get_derivative = lambda x: get_derivative_path(layout, x, 'reject', 'epo', '.fif', bids_root, derivatives_root).replace('\\', '/')
 
             if PARALLELIZE:
                 Parallel(n_jobs=external_njobs)(delayed(foo)(eeg_file, this_prep, DATASET, get_derivative(eeg_file), DEBUG,internal_njobs, args.retry_errors ) for eeg_file in eegs)

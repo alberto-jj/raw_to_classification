@@ -1,17 +1,18 @@
 saint:
   dataset_label : saint
   skip : False
-
   # Participants 
-  participants_file : "/home/yorguin/scratch/saint/BIDS/participants.tsv"
-  # "Y:/datasets/saint-justine/bids/all/participants.tsv"
+  participants_file : 
+    computecanada: "/home/yorguin/scratch/saint/BIDS/participants.tsv"
+    local: "Y:/datasets/saint-justine/bids/all/participants.tsv"
   reader : 
     function : "pd.read_csv"
     args : 
       delimiter: "\\t"
 
-  cleaned_participants : "/home/yorguin/scratch/saint/BIDS/participants.csv"
-  #"Y:/datasets/saint-justine/bids/all/participants.csv"
+  cleaned_participants : 
+    computecanada: "/home/yorguin/scratch/saint/BIDS/participants.csv"
+    local: "Y:/datasets/saint-justine/bids/all/participants.csv"
 
   # Files to be included in the study
   raw_layout:
@@ -21,8 +22,9 @@ saint:
     task : 'RESTING'
 
   # Processing
-  example_file: "/home/yorguin/scratch/saint/BIDS/sub-*/ses-*/eeg/sub-*_ses-*_task-RESTING_run-*_eeg.vhdr"
-  #"Y:/datasets/saint-justine/bids/all/sub-*/ses-*/eeg/sub-*_ses-*_task-RESTING_run-*_eeg.vhdr"
+  example_file: 
+    computecanada: "/home/yorguin/scratch/saint/BIDS/sub-*/ses-*/eeg/sub-*_ses-*_task-RESTING_run-*_eeg.vhdr"
+    local: "Y:/datasets/saint-justine/bids/all/sub-*/ses-*/eeg/sub-*_ses-*_task-RESTING_run-*_eeg.vhdr"
   ch_names: [ "F4", "F8", "P3","T4", "F7", "T5", "C3", "T3", "Fz", "O1","F3", "O2", "Fp1", "P4", "Fp2", "Pz", "C4", "Cz", "T6"]
   # Common
   # [ "F4", "F8", "P3", "SpO2", "X2", "T4", "$A1", "F7", "T5", "C3", "A1", "EtCO2", "CO2Wave", "T3", "Fz", "DC03", "DC04", "O1", "Pulse", "DC05", "DC06", "F3", "O2", "Fp1", "P4", "Fp2", "Pz", "C4", "Cz", "T6", "X1", "$A2", "A2"]
@@ -30,6 +32,7 @@ saint:
   # Final: [ "F4", "F8", "P3","T4", "F7", "T5", "C3", "A1", "T3", "Fz", "O1","F3", "O2", "Fp1", "P4", "Fp2", "Pz", "C4", "Cz", "T6", "A2"]
   PowerLineFrequency : 60
   # BIDS
-  bids_root : "/home/yorguin/scratch/saint/BIDS/" 
-  # "Y:/datasets/saint-justine/bids/all/"
+  bids_root : 
+    computecanada: "/home/yorguin/scratch/saint/BIDS/" 
+    local: "Y:/datasets/saint-justine/bids/all/"
   # 

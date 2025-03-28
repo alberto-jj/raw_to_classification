@@ -17,7 +17,7 @@ import yaml
 import json
 
 from sklearn.model_selection import train_test_split
-from eeg_raw_to_classification.utils import parse_bids,load_yaml,get_output_dict,save_dict_to_json,save_figs_in_html
+from eeg_raw_to_classification.utils import parse_bids,load_yaml,get_output_dict,save_dict_to_json,save_figs_in_html, get_path
 import itertools
 from featurewiz import FeatureWiz
 from reComBat import reComBat
@@ -26,9 +26,12 @@ from sklearn.decomposition import PCA
 
 
 PIPELINE = load_yaml('pipeline.yml')
-datasets = load_yaml(PIPELINE['datasets_file'])
+MOUNT = PIPELINE.get('mount', None)
+datasets = load_yaml(get_path(PIPELINE['datasets_file'], MOUNT))
+#load_yaml(PIPELINE['datasets_file'])
 PROJECT = PIPELINE['project']
-OUTPUT_DIR_BASE = PIPELINE['scalingAndFolding']['path'].replace('%PROJECT%',PROJECT)
+OUTPUT_DIR_BASE = PIPELINE['scalingAndFolding']['path']
+OUTPUT_DIR_BASE = get_path(OUTPUT_DIR_BASE, MOUNT).replace('%PROJECT%', PROJECT)
 
 for aggregate_folder_ in PIPELINE['scalingAndFolding']['aggregate_folders']:
     aggregate_folder=aggregate_folder_.replace('%PROJECT%',PROJECT)
@@ -37,7 +40,7 @@ for aggregate_folder_ in PIPELINE['scalingAndFolding']['aggregate_folders']:
     os.makedirs(OUTPUT_DIR,exist_ok=True)
     aggregate_file = PIPELINE['aggregate']['filename']+'@final.csv'
     aggregate_file = aggregate_file.replace('%PROJECT%',PROJECT)
-    aggregate_path = PIPELINE['aggregate']['path'].replace('%PROJECT%',PROJECT)
+    aggregate_path = get_path(PIPELINE['aggregate']['path'], MOUNT).replace('%PROJECT%',PROJECT)
     df_path = os.path.join(aggregate_path,aggregate_folder,aggregate_file)
     df = pd.read_csv(df_path)
     all_feats=[x.replace('feature-','') for x in df.columns if 'feature-' in x]

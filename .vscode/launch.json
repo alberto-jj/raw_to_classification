@@ -20,7 +20,7 @@
             "program": "${workspaceFolder}/4_features.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args": ["pipeline_saint.yml","--external_njobs", "1", "--raise_on_error"]
+            "args": ["pipeline_saint.yml","--external_jobs", "1", "--raise_on_error"]
         },
         {
             "name": "preprocess",
