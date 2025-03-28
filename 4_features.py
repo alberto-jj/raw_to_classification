@@ -63,7 +63,7 @@ def foo(eeg_file, DOWNSAMPLE, keep_channels, featurepipelineCFG, FEATURE_CFG, fe
         else:
             save_dict_to_json(os.path.join(dirname, f'file-{finame}_feature-{feature}_featureError.txt'), {'error': traceback.format_exc()})
 
-def main(pipeline_file, external_njobs, debug, parallelize, retry_errors):
+def main(pipeline_file, external_jobs, debug, parallelize, retry_errors, single_index=None, only_total=False):
     PIPELINE = load_yaml(pipeline_file)
 
     datasets = load_yaml(PIPELINE['datasets_file'])
@@ -114,11 +114,20 @@ def main(pipeline_file, external_njobs, debug, parallelize, retry_errors):
             for eeg_file in eegs:
                 all_EEGS.append(eeg_file)
 
+        if only_total:
+            print(f'Total number of files: {len(all_EEGS)}')
+            for i,eeg in enumerate(all_EEGS):
+                print(i,eeg)
+            print(f'Total number of files: {len(all_EEGS)}')
+            return len(all_EEGS)
+        
+        if single_index is not None:
+            all_EEGS = [all_EEGS[single_index]]
         if parallelize:
             for level in levels:
-                Parallel(n_jobs=external_njobs)(delayed(foo)(eeg_file, DOWNSAMPLE, keep_channels, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, debug, ) for eeg_file in all_EEGS for feature in level)
+                Parallel(n_jobs=external_jobs)(delayed(foo)(eeg_file, DOWNSAMPLE, keep_channels, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, debug, ) for eeg_file in all_EEGS for feature in level)
         else:
-            for eeg_file in all_EEGS:
+            for eeg_file in enumerate(all_EEGS):
                 for level in levels:
                     for feature in level:
                         foo(eeg_file, DOWNSAMPLE, keep_channels, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, debug)
@@ -129,7 +138,8 @@ if __name__ == "__main__":
     parser.add_argument('--external_jobs', type=int, default=1, help='Number of external jobs for parallel processing.')
     parser.add_argument('--raise_on_error', action='store_true', help='Raise on error if set.')
     parser.add_argument('--retry_errors', action='store_true', help='Retry files that had errors.')
-
+    parser.add_argument('--index', type=int, default=None, help='Index of the file to process. Total index taking into account the dataset outer loop.')
+    parser.add_argument('--only_total', action='store_true', help='Just get the total number of files.')
 
     args = parser.parse_args()
-    main(args.pipeline_file, args.external_jobs, args.raise_on_error, args.external_jobs > 1, args.retry_errors)
+    main(args.pipeline_file, args.external_jobs, args.raise_on_error, args.external_jobs > 1, args.retry_errors, args.index, args.only_total)
