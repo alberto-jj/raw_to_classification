@@ -6,8 +6,9 @@
 #SBATCH --job-name=example
 #SBATCH --output=%j-indexes.out
 #SBATCH --error=%j-indexes.err
-#SBATCH --mail-user=yjmantilla@gmail.com
-#SBATCH --mail-type=ALL
+## uncomment if you want to receive emails
+##SBATCH --mail-user=yjmantilla@gmail.com
+##SBATCH --mail-type=ALL
 
 module load StdEnv/2020
 module load StdEnv/2023

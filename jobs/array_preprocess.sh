@@ -3,13 +3,14 @@
 #SBATCH --cpus-per-task=32
 #SBATCH --mem=48G
 #SBATCH --time=0-02:00:00
-#SBATCH --array=0-1
+#SBATCH --array=0-250
 ##0-1
 #SBATCH --job-name=preprocess
 #SBATCH --output=%A_%a-preprocess.out
 #SBATCH --error=%A_%a-preprocess.err
-#SBATCH --mail-user=yjmantilla@gmail.com
-#SBATCH --mail-type=ALL
+## uncomment if you want to receive emails
+##SBATCH --mail-user=yjmantilla@gmail.com
+##SBATCH --mail-type=ALL
 
 module load StdEnv/2020
 module load StdEnv/2023
