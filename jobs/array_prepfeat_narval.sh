@@ -31,7 +31,7 @@ cd /home/yorguin/raw_to_classification
 ## pip install --no-index -r requirements_minimal.txt
 ## pip install -r requirements_extra.txt
 ## pip install -e .
-python -u 3_preprocess.py pipeline_saint.yml --index $SLURM_ARRAY_TASK_ID --external_jobs 1 --internal_jobs 1 --retry_errors
-##python -u 4_features.py pipeline_saint.yml --index $SLURM_ARRAY_TASK_ID --retry_errors
+##python -u 3_preprocess.py pipeline_saint.yml --index $SLURM_ARRAY_TASK_ID --external_jobs 1 --internal_jobs 1 --retry_errors
+python -u 4_features.py pipeline_saint.yml --index $SLURM_ARRAY_TASK_ID --retry_errors
 
 
