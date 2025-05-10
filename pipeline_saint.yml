@@ -11,19 +11,19 @@ preprocess:
       prepare:
         epoch_length : 5
         downsample : 200
-        ica_method : 'fastica'
         skip_prep : True
         skip_reject : True
         normalization : True
+        line_noise : 60
       overwrite : False
     prep10min: # This is the name of the preprocessing pipeline
       prepare:
         epoch_length : 600
         downsample : 200
-        ica_method : 'fastica'
         skip_prep : True
         skip_reject : True
         normalization : True
+        line_noise : 60
       overwrite : False
 
   prep_list :
@@ -45,15 +45,13 @@ features:
     features@prep-defaultprep: #you set the name of the feature pipeline with the key
       prep_pipeline : 'defaultprep' # This is the name of the preprocessing pipeline previously defined (must exist in derivatives)
       downsample : 200
-      prefilter :
-        l_freq : 1
-        h_freq : 40
+      prefilter : null
       keep_channels : False
       feature_list: # To say which features actually compute rather than configure
         #- PowerSpectrum
-        #- PowerSpectrumAverage
-        - RelativeBandPower1
-        - RelativeBandPower2
+        - PowerSpectrumAverage
+        - RelativeBandPowerFromAverageSpectrum
+        #- RelativeBandPower
         - FooofFromAverage
         #- detrendedFluctuation
         - lzivComplexity
@@ -73,31 +71,10 @@ features:
     features@prep-prep10min: #you set the name of the feature pipeline with the key
       prep_pipeline : prep10min # This is the name of the preprocessing pipeline previously defined (must exist in derivatives)
       downsample : 200
-      prefilter :
-        l_freq : 1
-        h_freq : 40
+      prefilter : null
       keep_channels : False
       feature_list: # To say which features actually compute rather than configure
-        #- PowerSpectrum
-        #- PowerSpectrumAverage
-        #- RelativeBandPower1
-        #- RelativeBandPower2
-        #- FooofFromAverage
         - detrendedFluctuation
-        #- lzivComplexity
-        # sampleEntropy
-        #- spectralEntropy
-        #- appEntropy
-        #- hjorthParams
-        #- hjorthMobility
-        #- hjorthComplexity
-        #- numZerocross
-        #- permEntropy
-        #- svdEntropy
-        #- higuchiFd
-        #- katzFd
-        #- petrosianFd
-        # entropyMultiscale
 
   feature_pipeline_list: #which feature pipelines to run
     - features@prep-prep10min
@@ -115,7 +92,6 @@ features:
             low_bias : True
             normalization : 'full'
             verbose : 0
-        
     PowerSpectrumAverage:
       overwrite : False
       chain:
@@ -123,12 +99,23 @@ features:
         - function: agg_numpy
           args:
             numpyfun: eval%np.mean
-            max_numitem: null
+            max_numitem: 240 # 20min at 5sec per epoch
             axisname: 'epochs'
-    RelativeBandPower1:
+    FooofFromAverage:
+      overwrite : False
+      chain:
+        - feature : PowerSpectrumAverage
+        - function : fooof_from_average
+          args :
+            internal_kwargs:
+              FOOOF:
+                aperiodic_mode : knee
+              fit:
+                freq_range : [2,35]
+    RelativeBandPowerFromAverageSpectrum:
       overwrite : False
       chain :
-        - feature : PowerSpectrum # this will save PowerSpectrum if not already saved
+        - feature : PowerSpectrumAverage # this will save PowerSpectrum if not already saved
         - function: relative_bandpower
           args :
             bands:
@@ -136,36 +123,35 @@ features:
               theta : [4,8]
               alpha : [8,13]
               beta  : [13,30]
-              #pre_alpha : [5.5,8]
-              #slow_theta : [4,5.5]
-            multitaper : {}
-            agg_fun : "eval%lambda x: agg_numpy(x,np.mean,axisname='epochs',max_numitem=None)" # You can set up max epochs by max_numitem obtained from prep_inspection
-    RelativeBandPower2:
+              gamma : [30,90]
+    RelativeBandPowerFromAverageFooof:
       overwrite : False
-      chain :
-        - feature : PowerSpectrum
+      chain:
+        - feature : FooofFromAverage
+        - function: extract_item
+          args:
+            fun: "eval%lambda x: x.get_data(component='peak', space='linear')"
+            newtype: FooofCorrectedSpectrum\
         - function: relative_bandpower
           args :
             bands:
-              alpha1 : [8.5, 10.5]
-              alpha2 : [10.5, 12.5]
-              beta1  : [12.5, 18.5]
-              beta2  : [18.5, 21]
-              beta3  : [21, 30]
-            multitaper : {}
-            agg_fun : "eval%lambda x: agg_numpy(x,np.mean,axisname='epochs',max_numitem=None)" # You can set up max epochs by max_numitem obtained from prep_inspection
-    FooofFromAverage:
+              delta : [1,4]
+              theta : [4,8]
+              alpha : [8,13]
+              beta  : [13,30]
+              gamma : [30,90]
+    BandRatiosFromAverageSpectrum:
       overwrite : False
       chain:
-        - feature : PowerSpectrum
-        - function : fooof_from_average
-          args :
-            agg_fun : "eval%lambda x: agg_numpy(x,np.mean,axisname='epochs',max_numitem=None)" # You can set up max epochs by max_numitem obtained from prep_inspection
-            internal_kwargs:
-              FOOOF:
-                aperiodic_mode : knee
-              fit:
-                freq_range : [2,35]
+        - feature : RelativeBandPowerFromAverageSpectrum
+        - function: band_ratios
+          args: null
+    BandRatiosFromAverageFooof:
+      overwrite : False
+      chain:
+        - feature : RelativeBandPowerFromAverageFooof
+        - function: band_ratios
+          args: null
     detrendedFluctuation:
       overwrite: False
       chain:
@@ -173,10 +159,7 @@ features:
           args:
             internal_kwargs:
               detrended_fluctuation : {}
-        - function: agg_numpy
-          args:
-            numpyfun: eval%np.mean
-            max_numitem: null
+
     lzivComplexity:
       overwrite: False
       chain:
@@ -186,10 +169,7 @@ features:
             internal_kwargs:
               lziv_complexity :
                 normalize: True
-        - function: agg_numpy
-          args:
-            numpyfun: eval%np.mean
-            max_numitem: null
+
     sampleEntropy:
       overwrite: False
       chain:
@@ -199,10 +179,7 @@ features:
               sample_entropy :
                 order : 2
                 metric : chebyshev
-        - function: agg_numpy
-          args:
-            numpyfun: eval%np.mean
-            max_numitem: null
+
     spectralEntropy:
       overwrite: False
       chain:
@@ -214,10 +191,6 @@ features:
                 method : 'welch'
                 nperseg : eval%int(np.round(eeg.info['sfreq']/1))
                 normalize : True
-        - function: agg_numpy
-          args:
-            numpyfun: eval%np.mean
-            max_numitem: null
     appEntropy:
       overwrite: False
       chain:
@@ -227,10 +200,6 @@ features:
               app_entropy :
                 order : 2
                 metric : chebyshev
-        - function: agg_numpy
-          args:
-            numpyfun: eval%np.mean
-            max_numitem: null
     hjorthParams:
       overwrite: False
       chain:
@@ -247,10 +216,6 @@ features:
           args:
             fun: "eval%lambda x: x[0]"
             newtype: hjorthMobility
-        - function: agg_numpy
-          args:
-            numpyfun: eval%np.mean
-            max_numitem: null
 
     hjorthComplexity:
       overwrite: False
@@ -260,10 +225,6 @@ features:
           args:
             fun: "eval%lambda x: x[1]"
             newtype: hjorthComplexity
-        - function: agg_numpy
-          args:
-            numpyfun: eval%np.mean
-            max_numitem: null
     numZerocross:
       overwrite: False
       chain:
@@ -272,10 +233,6 @@ features:
             internal_kwargs:
               num_zerocross:
                 normalize: True
-        - function: agg_numpy
-          args:
-            numpyfun: eval%np.mean
-            max_numitem: null
 
     permEntropy:
       overwrite: False
@@ -287,10 +244,6 @@ features:
                 order: 3
                 delay: 1
                 normalize: True
-        - function: agg_numpy
-          args:
-            numpyfun: eval%np.mean
-            max_numitem: null
 
     svdEntropy:
       overwrite: False
@@ -302,10 +255,7 @@ features:
                 order: 3
                 delay: 1
                 normalize: True
-        - function: agg_numpy
-          args:
-            numpyfun: eval%np.mean
-            max_numitem: null
+
     higuchiFd:
       overwrite: False
       chain:
@@ -314,10 +264,6 @@ features:
             internal_kwargs:
               higuchi_fd:
                 kmax: 10
-        - function: agg_numpy
-          args:
-            numpyfun: eval%np.mean
-            max_numitem: null
 
     katzFd:
       overwrite: False
@@ -326,10 +272,6 @@ features:
           args:
             internal_kwargs:
               katz_fd: {}
-        - function: agg_numpy
-          args:
-            numpyfun: eval%np.mean
-            max_numitem: null
 
     petrosianFd:
       overwrite: False
@@ -338,10 +280,6 @@ features:
           args:
             internal_kwargs:
               petrosian_fd: {}
-        - function: agg_numpy
-          args:
-            numpyfun: eval%np.mean
-            max_numitem: null
 
     entropyMultiscale: #TODO: i think the aggregation wont work here because multiscale return a complex datatype, check this
       overwrite: False
@@ -355,15 +293,15 @@ features:
                 tolerance : "sd"
                 method : "MSEn"
                 show : False
+
+    entropyMultiscaleSingle: #TODO: i think the aggregation wont work here because multiscale return a complex datatype, check this
+      overwrite: False
+      chain:
+        - feature: entropyMultiscale
         - function: extract_item
           args:
             fun: "eval%lambda x: x[0]"
             newtype: null
-        - function: agg_numpy
-          args:
-            numpyfun: eval%np.mean
-            max_numitem: null
-
 aggregate:
   path : 
     computecanada: '/home/yorguin/scratch/%PROJECT%/aggregate/' #
@@ -378,47 +316,47 @@ aggregate:
       return_function : "eval%lambda x: x.aperiodic_params_[0]"
       file_suffix : FooofFromAverage
     detrendedFluctuation: # no text
-      return_function : "eval%lambda x: x"
+      return_function : "eval%lambda x: agg_numpy(x, np.mean, 240, 'epochs')"
       file_suffix : detrendedFluctuation
     lzivComplexity: # text
-      return_function : "eval%lambda x: x"
+      return_function : "eval%lambda x: agg_numpy(x, np.mean, 240, 'epochs')"
       file_suffix : lzivComplexity
     sampleEntropy: # text
-      return_function : "eval%lambda x: x"
+      return_function : "eval%lambda x: agg_numpy(x, np.mean, 240, 'epochs')"
       file_suffix : sampleEntropy
     spectralEntropy: # text
-      return_function : "eval%lambda x: x"
+      return_function : "eval%lambda x: agg_numpy(x, np.mean, 240, 'epochs')"
       file_suffix : spectralEntropy
     appEntropy: # text
-      return_function : "eval%lambda x: x"
+      return_function : "eval%lambda x: agg_numpy(x, np.mean, 240, 'epochs')"
       file_suffix : appEntropy
     hjorthMobility: # text
-      return_function : "eval%lambda x: x"
+      return_function : "eval%lambda x: agg_numpy(x, np.mean, 240, 'epochs')"
       file_suffix : hjorthMobility
     hjorthComplexity: # text
-      return_function : "eval%lambda x: x"
+      return_function : "eval%lambda x: agg_numpy(x, np.mean, 240, 'epochs')"
       file_suffix : hjorthComplexity
     numZerocross: # text
-      return_function : "eval%lambda x: x"
+      return_function : "eval%lambda x: agg_numpy(x, np.mean, 240, 'epochs')"
       file_suffix : numZerocross
     permEntropy: # text
-      return_function : "eval%lambda x: x"
+      return_function : "eval%lambda x: agg_numpy(x, np.mean, 240, 'epochs')"
       file_suffix : permEntropy
     svdEntropy  : # text
-      return_function : "eval%lambda x: x"
+      return_function : "eval%lambda x: agg_numpy(x, np.mean, 240, 'epochs')"
       file_suffix : svdEntropy
     higuchiFd: # text
-      return_function : "eval%lambda x: x"
+      return_function : "eval%lambda x: agg_numpy(x, np.mean, 240, 'epochs')"
       file_suffix : higuchiFd
     katzFd: # text
-      return_function : "eval%lambda x: x"
+      return_function : "eval%lambda x: agg_numpy(x, np.mean, 240, 'epochs')"
       file_suffix : katzFd
     petrosianFd : # text
-      return_function : "eval%lambda x: x"
+      return_function : "eval%lambda x: agg_numpy(x, np.mean, 240, 'epochs')"
       file_suffix : petrosianFd
     entropyMultiscale:
-      return_function: "eval%lambda x: x[0]"
-      file_suffix : entropyMultiscale
+      return_function: "eval%lambda x: agg_numpy(x, np.mean, 240, 'epochs')"
+      file_suffix : entropyMultiscaleSingle
     PowerSpectrumAverage:
       return_function: "eval%lambda x: x"
       file_suffix : PowerSpectrumAverage
