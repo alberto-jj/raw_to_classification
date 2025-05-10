@@ -251,7 +251,7 @@ def fooof_from_average(data,internal_kwargs={'FOOOF':{},'fit':{}}):
     output['metadata'] = {'type':'fooofFromAverageSpectrum','kwargs':{'internal_kwargs':internal_kwargs},'freqs':freqs}
     output['metadata']['axes']={'spaces':spaces}
     output['metadata']['order']=('spaces')
-    
+    psd = spectra['values']
     for space in spaces:
         space_idx = spaces.index(space)
         thispsd = np.take(psd,indices=space_idx,axis=axes.index('spaces'))

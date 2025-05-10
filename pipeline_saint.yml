@@ -1,6 +1,6 @@
 project: 'saint'
 datasets_file: 'datasets_saint.yml'
-mount: computecanada
+mount: local
 inspect:
   path : 
     computecanada: '/home/yorguin/scratch/%PROJECT%/inspect/'
@@ -14,7 +14,6 @@ preprocess:
         skip_prep : True
         skip_reject : True
         normalization : True
-        line_noise : 60
       overwrite : False
     prep10min: # This is the name of the preprocessing pipeline
       prepare:
@@ -23,7 +22,6 @@ preprocess:
         skip_prep : True
         skip_reject : True
         normalization : True
-        line_noise : 60
       overwrite : False
 
   prep_list :
@@ -316,7 +314,7 @@ aggregate:
       return_function : "eval%lambda x: x.aperiodic_params_[0]"
       file_suffix : FooofFromAverage
     detrendedFluctuation: # no text
-      return_function : "eval%lambda x: agg_numpy(x, np.mean, 240, 'epochs')"
+      return_function : "eval%lambda x: agg_numpy(x, np.mean, 2, 'epochs')"
       file_suffix : detrendedFluctuation
     lzivComplexity: # text
       return_function : "eval%lambda x: agg_numpy(x, np.mean, 240, 'epochs')"

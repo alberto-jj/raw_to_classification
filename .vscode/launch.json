@@ -29,7 +29,7 @@
             "program": "${workspaceFolder}/3_preprocess.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args": ["pipeline_saint.yml","--external_jobs", "1", "--raise_on_error","--only_total"]
+            "args": ["pipeline_saint.yml","--max_files","1","--external_jobs", "1", "--raise_on_error"] //"--only_total"
         }
 
     ]
