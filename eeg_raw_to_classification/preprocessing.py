@@ -28,7 +28,7 @@ def rejlog2dict(rejlog):
     return d
 
 def prepare(filename, line_noise, keep_chans=None, epoch_length = 2,
-              downsample = 500, normalization = False, ica_method='infomax',skip_prep=False,njobs=1,skip_reject=False,amp_norm=False):
+              downsample = 500, normalization = False, ica_method='infomax',skip_prep=False,njobs=1,skip_reject=False,):
     """
     Run PREPARE pipeline for resting-state EEG signal preprocessing.
     Returns the preprocessed mne object in BIDS derivatives path. 
@@ -38,7 +38,9 @@ def prepare(filename, line_noise, keep_chans=None, epoch_length = 2,
     filename : str
         Full path of raw file and extension.
     line_noise : float
-        The line noise frequency (in Hz) to be removed using PyPREP.
+        The line noise frequency (in Hz) to be removed using PyPREP or notch.
+        if skip_prep is True, this will be used for notch filtering if not None
+        if skip_prep is False, this will be used for line noise removal in PyPREP unless None
     keep_chans : list
         Channel names to keep. Can be defined in dataset['ch_names'].
     epoch_length : float
@@ -50,8 +52,7 @@ def prepare(filename, line_noise, keep_chans=None, epoch_length = 2,
     normalization : bool 
         Whether to normalize the data or not (currently z transform).
     ica_method : str
-        ica method param as per MNE ICA class
-
+        ica method param as per MNE ICA class. Only used if skip_reject is False.
     """
     #log_file = os.path.join(bids_path,'code','sovabids','sovabids.log')
     #setup_logging(log_file)
@@ -84,8 +85,10 @@ def prepare(filename, line_noise, keep_chans=None, epoch_length = 2,
         prep_params = {
             "ref_chs": ch_names_eeg,
             "reref_chs": ch_names_eeg,
-            "line_freqs": np.arange(line_noise, sample_rate / 2, line_noise)
             }
+        if line_noise is not None:
+            prep_params["line_freqs"] = np.arange(line_noise, sample_rate / 2, line_noise)
+
         prep = PrepPipeline(raw, prep_params, montage)
         prep.fit()
         raw = prep.raw.copy()
@@ -102,9 +105,14 @@ def prepare(filename, line_noise, keep_chans=None, epoch_length = 2,
         raw = raw.copy()
 
         # Apply average reference?
-        #raw.set_eeg_reference('average',projection=False)
         raw.set_montage(montage)
+        raw.set_eeg_reference('average',projection=False)
         prep_info={'status':'skipped'}
+
+        # Notch filter
+        if line_noise is not None:
+            print('NOTCH FILTER')
+            raw.notch_filter(line_noise, picks=eeg_index, method='spectrum_fit', verbose=True)
 
     if normalization:
         # It is debatable where to normalize the data. Here we do it after PyPREP.
