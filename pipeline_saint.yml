@@ -314,7 +314,7 @@ aggregate:
       return_function : "eval%lambda x: x.aperiodic_params_[0]"
       file_suffix : FooofFromAverage
     detrendedFluctuation: # no text
-      return_function : "eval%lambda x: agg_numpy(x, np.mean, 2, 'epochs')"
+      return_function : "eval%lambda x: agg_numpy(x, np.mean, 2, 'epochs')" # this uses the first 2 epochs of the 10min epoch
       file_suffix : detrendedFluctuation
     lzivComplexity: # text
       return_function : "eval%lambda x: agg_numpy(x, np.mean, 240, 'epochs')"
