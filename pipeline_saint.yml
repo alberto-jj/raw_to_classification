@@ -55,9 +55,9 @@ features:
         - FooofFromAverage
         #- detrendedFluctuation
         - lzivComplexity
-        # sampleEntropy
+        - sampleEntropy
         - spectralEntropy
-        #- appEntropy
+        - appEntropy
         - hjorthParams
         - hjorthMobility
         - hjorthComplexity
@@ -67,7 +67,7 @@ features:
         - higuchiFd
         - katzFd
         - petrosianFd
-        # entropyMultiscale
+        - entropyMultiscale
     features@prep-prep10min: #you set the name of the feature pipeline with the key
       prep_pipeline : prep10min # This is the name of the preprocessing pipeline previously defined (must exist in derivatives)
       downsample : 200
