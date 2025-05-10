@@ -2,7 +2,7 @@
 #SBATCH --account=def-kjerbi
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=16G
-#SBATCH --time=0-01:00:00
+#SBATCH --time=0-02:00:00
 #SBATCH --array=0-977
 ##0-977
 #SBATCH --job-name=prepfeat
