@@ -53,6 +53,9 @@ features:
         - RelativeBandPowerFromAverageSpectrum
         #- RelativeBandPower
         - FooofFromAverage
+        - RelativeBandPowerFromAverageFooof
+        - BandRatiosFromAverageSpectrum
+        - BandRatiosFromAverageFooof
         #- detrendedFluctuation
         - lzivComplexity
         - sampleEntropy
@@ -111,7 +114,7 @@ features:
               FOOOF:
                 aperiodic_mode : knee
               fit:
-                freq_range : [2,35]
+                freq_range : [1,90]
     RelativeBandPowerFromAverageSpectrum:
       overwrite : False
       chain :
@@ -128,11 +131,7 @@ features:
       overwrite : False
       chain:
         - feature : FooofFromAverage
-        - function: extract_item
-          args:
-            fun: "eval%lambda x: x.get_data(component='peak', space='linear')"
-            newtype: FooofCorrectedSpectrum\
-        - function: relative_bandpower
+        - function: relative_bandpower_from_fooof
           args :
             bands:
               delta : [1,4]
@@ -145,13 +144,13 @@ features:
       chain:
         - feature : RelativeBandPowerFromAverageSpectrum
         - function: band_ratios
-          args: null
+          args: {}
     BandRatiosFromAverageFooof:
       overwrite : False
       chain:
         - feature : RelativeBandPowerFromAverageFooof
         - function: band_ratios
-          args: null
+          args: {}
     detrendedFluctuation:
       overwrite: False
       chain:

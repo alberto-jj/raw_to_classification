@@ -52,7 +52,7 @@ def foo(eeg_file, DOWNSAMPLE, keep_channels, featurepipelineCFG, FEATURE_CFG, fe
             epochs = epochs.reorder_channels(keep_channels)
 
         try:
-            print(f'Processing {feature}')
+            print(f'Processing {feature} for {finame}')
             output = feat.process_feature(epochs, derifile, FEATURE_CFG, feature, pipeline_name)
         except:
             if DEBUG:

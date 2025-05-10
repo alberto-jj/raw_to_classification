@@ -77,15 +77,15 @@ def process_feature(epochs,relevantpath,CFG,feature,pipeline_name,inspect_only=F
         output=inspect_only_output
     return output
 
-def extract_item(x,fun,newtype):
+def extract_item(data,fun,newtype):
     if isinstance(fun,str):
         fun=eval(fun.replace('eval%',''))
-    x = copy.deepcopy(x)
-    newfoo=np.vectorize(fun)
-    x['values'] = newfoo(x['values'])
+    data = copy.deepcopy(data)
+    newfoo=np.vectorize(fun)#, otypes=[object])
+    data['values'] = newfoo(data['values'])
     if newtype:
-        x['metadata']['type'] = newtype
-    return x
+        data['metadata']['type'] = newtype
+    return data
 def agg_numpy(x,numpyfun,axisname='epochs',max_numitem=None): # or give a more complex indexing for items
     if isinstance(numpyfun,str):
         numpyfun=eval(numpyfun.replace('eval%',''))
@@ -351,7 +351,36 @@ def relative_bandpower(data,bands=BANDS):
     output['values'] = values
     return output
 
-def band_ratio(data):
+
+def relative_bandpower_from_fooof(data,bands=BANDS):
+    # we can view this as a new feature or as an aggregate
+    if isinstance(data,dict):
+        spectra = data # Assume we have the output of spectrum() if input is dict
+    else: # Else assume epochs mne object
+        raise ValueError('Only dict input supported')
+    # Only the mean
+    axes= spectra['metadata']['order']
+
+    psd = spectra['values']
+    spaces =  spectra['metadata']['axes']['spaces']
+    output = {}
+    bands_list = list(bands.keys())
+    values = np.empty((len(bands_list),len(spaces)))
+    output['metadata'] = {'type':'RelativeBandPower','kwargs':{'bands':bands}}
+    output['metadata']['axes']={'bands':bands_list,'spaces':spaces}
+    output['metadata']['order']=('bands','spaces')
+    for space in spaces:
+        space_idx = spaces.index(space)
+        for blabel,brange in bands.items():
+            band_idx = bands_list.index(blabel)
+            fo = psd[space_idx]
+            x = np.power(10,fo.power_spectrum)-np.power(10,fo._ap_fit)
+            freqs = fo.freqs
+            values[band_idx,space_idx]= bandpower(x,freqs,brange,True)
+    output['values'] = values
+    return output
+
+def band_ratios(data):
     ## Assume output of bandpower
     import itertools
     if isinstance(data,dict):
