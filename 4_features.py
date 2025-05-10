@@ -142,12 +142,12 @@ def main(pipeline_file, external_jobs, debug, parallelize, retry_errors, single_
             all_EEGS = [all_EEGS[single_index]]
         if parallelize:
             for level in levels:
-                Parallel(n_jobs=external_jobs)(delayed(foo)(eeg_file, DOWNSAMPLE, keep_channels, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, debug, ) for eeg_file in all_EEGS for feature in level)
+                Parallel(n_jobs=external_jobs)(delayed(foo)(eeg_file, DOWNSAMPLE, keep_channels, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, debug, retry_errors ) for eeg_file in all_EEGS for feature in level)
         else:
             for count,eeg_file in enumerate(all_EEGS):
                 for level in levels:
                     for feature in level:
-                        foo(eeg_file, DOWNSAMPLE, keep_channels, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, debug)
+                        foo(eeg_file, DOWNSAMPLE, keep_channels, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, debug, retry_errors)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run EEG feature extraction pipeline.')
