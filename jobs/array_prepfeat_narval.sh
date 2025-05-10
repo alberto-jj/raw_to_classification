@@ -12,6 +12,15 @@
 ##SBATCH --mail-user=yjmantilla@gmail.com
 ##SBATCH --mail-type=ALL
 
+
+## Note, to test use:
+## sbatch --export=STEP=3 --array=0-2 array_prepfeat_narval.sh
+## sbatch --export=STEP=4 --array=0-2 array_prepfeat_narval.sh
+
+## To just run the script, use:
+## sbatch --export=STEP=3 array_prepfeat_narval.sh
+## sbatch --export=STEP=4 array_prepfeat_narval.sh
+
 module purge
 ##module load StdEnv/2020
 module load StdEnv/2023
@@ -31,7 +40,16 @@ cd /home/yorguin/raw_to_classification
 ## pip install --no-index -r requirements_minimal.txt
 ## pip install -r requirements_extra.txt
 ## pip install -e .
-##python -u 3_preprocess.py pipeline_saint.yml --index $SLURM_ARRAY_TASK_ID --external_jobs 1 --internal_jobs 1 --retry_errors
-python -u 4_features.py pipeline_saint.yml --index $SLURM_ARRAY_TASK_ID --retry_errors
+
+
+# Decide which step to run based on $STEP
+if [ "$STEP" == "3" ]; then
+    python -u 3_preprocess.py pipeline_saint.yml --index $SLURM_ARRAY_TASK_ID --external_jobs 1 --internal_jobs 1 --retry_errors
+elif [ "$STEP" == "4" ]; then
+    python -u 4_features.py pipeline_saint.yml --index $SLURM_ARRAY_TASK_ID --retry_errors
+else
+    echo "Error: Unknown STEP '$STEP'. Use STEP=3 or STEP=4."
+    exit 1
+fi
 
 
