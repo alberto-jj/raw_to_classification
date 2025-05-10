@@ -3,11 +3,11 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=16G
 #SBATCH --time=0-01:00:00
-#SBATCH --array=0-1
+#SBATCH --array=0-977
 ##0-977
-#SBATCH --job-name=preprocess
-#SBATCH --output=%A_%a-preprocess.out
-#SBATCH --error=%A_%a-preprocess.err
+#SBATCH --job-name=prepfeat
+#SBATCH --output=%A_%a-prepfeat.out
+#SBATCH --error=%A_%a-prepfeat.err
 ## uncomment if you want to receive emails
 ##SBATCH --mail-user=yjmantilla@gmail.com
 ##SBATCH --mail-type=ALL
