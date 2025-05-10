@@ -39,3 +39,7 @@ saint:
     computecanada: "/home/yorguin/scratch/saint/BIDS/" 
     local: "Y:/datasets/saint-justine/bids/all/"
     narval: "/home/yorguin/projects/rrg-shahabkb/cocolab_data/EEG_ADHD_epilepsy_psychostimulants/BIDS"
+  derivatives_root : 
+    computecanada: "/home/yorguin/scratch/saint/BIDS/derivatives/"
+    local: "Y:/datasets/saint-justine/bids/derivatives"
+    narval: "/home/yorguin/scratch/saint/derivatives"

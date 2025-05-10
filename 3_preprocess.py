@@ -129,7 +129,15 @@ def main():
                 eegs = eegs[:limit]
             eegs = [pathlib.Path(x).as_posix() for x in eegs]
             print(len(eegs), eegs)
-            derivatives_root = os.path.join(layout.root, f'derivatives/{preplabel}/')
+            
+
+            derivatives_root = DATASET.get('derivatives_root', None)
+            
+            if derivatives_root is not None:
+                derivatives_root = get_path(derivatives_root, MOUNT)
+                derivatives_root = os.path.join(derivatives_root, f'{preplabel}/')
+            else:
+                derivatives_root = os.path.join(layout.root, f'derivatives/{preplabel}/')
             
             get_derivative = lambda x: pathlib.Path(get_derivative_path(layout, x, 'reject', 'epo', '.fif', bids_root, derivatives_root)).as_posix()
 

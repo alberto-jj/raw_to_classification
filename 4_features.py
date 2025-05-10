@@ -114,18 +114,28 @@ def main(pipeline_file, external_jobs, debug, parallelize, retry_errors, single_
             file_filter = DATASET.get('raw_layout', None)
             layout = bids.BIDSLayout(bids_root)
             all_raws = layout.get(**file_filter)
-            derivatives_root = os.path.join(layout.root, f'derivatives/{prep_pipeline}/')
-            derivatives_root = pathlib.Path(derivatives_root).as_posix()
+
+
+            derivatives_root = DATASET.get('derivatives_root', None)
+            
+            if derivatives_root is not None:
+                derivatives_root = get_path(derivatives_root, MOUNT)
+            else:
+                derivatives_root = os.path.join(layout.root, f'derivatives/')
+            prep_root = pathlib.Path(os.path.join(derivatives_root,prep_pipeline)).as_posix()
             bids_root = pathlib.Path(bids_root).as_posix()
             
             if single_index is not None or only_total:
-                get_derivative = lambda x: get_derivative_path(layout, x, 'reject', 'epo', '.fif', bids_root, derivatives_root)
+                get_derivative = lambda x: get_derivative_path(layout, x, 'reject', 'epo', '.fif', bids_root, prep_root)
                 eegs = [get_derivative(x) for x in all_raws]
             else:
-                pattern = os.path.join(bids_root, 'derivatives', prep_pipeline, '**/*_epo.fif')
+                pattern = os.path.join(prep_root, '**/*_epo.fif')
                 pattern = pathlib.Path(pattern).as_posix()
                 eegs = glob.glob(pattern, recursive=True)
-            os.makedirs(os.path.join(bids_root, 'derivatives', pipeline_name), exist_ok=True)
+                eegs = [pathlib.Path(x).as_posix() for x in eegs ]
+
+            feat_root = pathlib.Path(os.path.join(derivatives_root, pipeline_name)).as_posix()
+            os.makedirs(feat_root, exist_ok=True)
 
             for eeg_file in eegs:
                 all_EEGS.append(eeg_file)

@@ -37,7 +37,16 @@ def main(pipeline_file):
                 CFG = PIPELINE['features']
                 bids_root = DATASET.get('bids_root', None)
                 bids_root = get_path(bids_root, MOUNT)
-                pattern = os.path.join(bids_root, 'derivatives', preplabel, '**/*_epo.fif')
+
+                derivatives_root = DATASET.get('derivatives_root', None)
+                
+                if derivatives_root is not None:
+                    derivatives_root = get_path(derivatives_root, MOUNT)
+                    derivatives_root = os.path.join(derivatives_root, f'{preplabel}/')
+                else:
+                    derivatives_root = os.path.join(bids_root, f'derivatives/{preplabel}/')
+
+                pattern = os.path.join(derivatives_root, '**/*_epo.fif')
                 pattern = pathlib.Path(pattern).as_posix()
                 eegs = glob.glob(pattern, recursive=True)
                 for eeg_file in eegs:
