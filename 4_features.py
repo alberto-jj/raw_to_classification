@@ -44,7 +44,8 @@ def foo(eeg_file, DOWNSAMPLE, keep_channels, featurepipelineCFG, FEATURE_CFG, fe
     try:
         epochs = mne.read_epochs(eeg_file, preload=True)
         standardize(epochs)
-        epochs = epochs.filter(**featurepipelineCFG['prefilter'])
+        if featurepipelineCFG.get('prefilter', None) is not None:
+            epochs = epochs.filter(**featurepipelineCFG['prefilter'])
         epochs = epochs.resample(DOWNSAMPLE)
         if keep_channels:
                         # We picked the common channels between datasets for simplicity
