@@ -5,6 +5,7 @@ saint:
   participants_file : 
     computecanada: "/home/yorguin/scratch/saint/BIDS/participants.tsv"
     local: "Y:/datasets/saint-justine/bids/all/participants.tsv"
+    narval: "/home/yorguin/projects/rrg-shahabkb/cocolab_data/EEG_ADHD_epilepsy_psychostimulants/BIDS/participants.tsv"
   reader : 
     function : "pd.read_csv"
     args : 
@@ -13,6 +14,7 @@ saint:
   cleaned_participants : 
     computecanada: "/home/yorguin/scratch/saint/BIDS/participants.csv"
     local: "Y:/datasets/saint-justine/bids/all/participants.csv"
+    narval: "/home/yorguin/projects/rrg-shahabkb/cocolab_data/EEG_ADHD_epilepsy_psychostimulants/BIDS/participants.csv"
 
   # Files to be included in the study
   raw_layout:
@@ -25,6 +27,7 @@ saint:
   example_file: 
     computecanada: "/home/yorguin/scratch/saint/BIDS/sub-*/ses-*/eeg/sub-*_ses-*_task-RESTING_run-*_eeg.vhdr"
     local: "Y:/datasets/saint-justine/bids/all/sub-*/ses-*/eeg/sub-*_ses-*_task-RESTING_run-*_eeg.vhdr"
+    narval: "/home/yorguin/projects/rrg-shahabkb/cocolab_data/EEG_ADHD_epilepsy_psychostimulants/BIDS/sub-*/ses-*/eeg/sub-*_ses-*_task-RESTING_run-*_eeg.vhdr"
   ch_names: [ "F4", "F8", "P3","T4", "F7", "T5", "C3", "T3", "Fz", "O1","F3", "O2", "Fp1", "P4", "Fp2", "Pz", "C4", "Cz", "T6"]
   # Common
   # [ "F4", "F8", "P3", "SpO2", "X2", "T4", "$A1", "F7", "T5", "C3", "A1", "EtCO2", "CO2Wave", "T3", "Fz", "DC03", "DC04", "O1", "Pulse", "DC05", "DC06", "F3", "O2", "Fp1", "P4", "Fp2", "Pz", "C4", "Cz", "T6", "X1", "$A2", "A2"]
@@ -35,4 +38,4 @@ saint:
   bids_root : 
     computecanada: "/home/yorguin/scratch/saint/BIDS/" 
     local: "Y:/datasets/saint-justine/bids/all/"
-  # 
+    narval: "/home/yorguin/projects/rrg-shahabkb/cocolab_data/EEG_ADHD_epilepsy_psychostimulants/BIDS"

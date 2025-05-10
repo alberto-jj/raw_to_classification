@@ -5,6 +5,7 @@ inspect:
   path : 
     computecanada: '/home/yorguin/scratch/%PROJECT%/inspect/'
     local: './data/%PROJECT%/inspect/'
+    narval: '/home/yorguin/scratch/%PROJECT%/inspect/'
 preprocess:
   prep_cfg:
     defaultprep: # This is the name of the preprocessing pipeline
@@ -32,6 +33,7 @@ prep_inspection:
   path : 
     computecanada: '/home/yorguin/scratch/%PROJECT%/prep_inspection/'
     local: './data/%PROJECT%/prep_inspection/'
+    narval: '/home/yorguin/scratch/%PROJECT%/prep_inspection/'
   overwrite : False
   checks:
     - 'epochs'
