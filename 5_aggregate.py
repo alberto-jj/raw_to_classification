@@ -57,7 +57,16 @@ def main(config_file):
                 filesuffix = foodict['file_suffix']
                 bids_root = DATASET.get('bids_root', None)
                 bids_root = get_path(bids_root, MOUNT)
-                pattern = os.path.join(bids_root, 'derivatives', featfolder, f'**/*_{filesuffix}.npy')
+
+                derivatives_root = DATASET.get('derivatives_root', None)
+                
+                if derivatives_root is not None:
+                    derivatives_root = get_path(derivatives_root, MOUNT)
+
+                else:
+                    derivatives_root = os.path.join(bids_root, f'derivatives/')
+                pattern = os.path.join(derivatives_root, featfolder, f'**/*_{filesuffix}.npy')
+
                 pattern = pathlib.Path(pattern).as_posix()
                 eegs = glob.glob(pattern, recursive=True)
                 dict_list = []
