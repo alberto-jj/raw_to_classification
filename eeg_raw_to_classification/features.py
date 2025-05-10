@@ -97,7 +97,12 @@ def agg_numpy(x,numpyfun,axisname='epochs',max_numitem=None): # or give a more c
     axis = axis.index(axisname)
 
     if max_numitem is not None:
-        x['values'] = np.take(x['values'], indices=range(max_numitem), axis=axis)
+        if x['values'].shape[axis] >= max_numitem:
+            # if we have more than max_numitem, we take the first max_numitem
+            x['values'] = np.take(x['values'], indices=range(max_numitem), axis=axis)
+        else:
+            print(f"Warning: {x['values'].shape[axis]} items in axis {axisname} are less than max_numitem {max_numitem}.")
+
     # handle metadata appropriately
     x['values'] = numpyfun(x['values'],axis=axis)
     order = list(x['metadata']['order'])
@@ -221,7 +226,7 @@ def single_fooof(freqs, psds, internal_kwargs={'FOOOF':{},'fit':{}}):
     fm.fit(freqs, psds,**kwargs['fit']) # correct, if we used add_data it would ignore for examle freq_range
     return fm
 
-def fooof_from_average(data,agg_fun=None,internal_kwargs={'FOOOF':{},'fit':{}}):
+def fooof_from_average(data,internal_kwargs={'FOOOF':{},'fit':{}}):
     #data,internal_kwargs={'compute_psd':{},'single_fooof':{}},extra_metadata={},n_jobs=1):
     # we can view this as a new feature or as an aggregate
     if isinstance(data,dict):
@@ -234,13 +239,6 @@ def fooof_from_average(data,agg_fun=None,internal_kwargs={'FOOOF':{},'fit':{}}):
             if isinstance(v,str) and 'eval%' in v:
                 expression = v.replace('eval%','')
                 kwargs[key][k] = eval(expression)
-
-    if agg_fun is None:
-      psd = data['values'].mean(axis=axes.index('epochs'))
-    else:
-      agg_fun = eval(agg_fun.replace('eval%',''))
-      spectra = agg_fun(data)
-      psd = spectra['values']
 
     spaces =  spectra['metadata']['axes']['spaces']
     freqs =   spectra['metadata']['axes']['frequencies']
@@ -327,27 +325,22 @@ def roi_aggregator(data,mapping=default_mapping,numpyfun=None,axisname='spaces',
 
     return data
 
-def relative_bandpower(data,bands=BANDS,multitaper={},agg_fun=None):
+def relative_bandpower(data,bands=BANDS):
     # we can view this as a new feature or as an aggregate
     if isinstance(data,dict):
-      spectra = data # Assume we have the output of spectrum() if input is dict
+        spectra = data # Assume we have the output of spectrum() if input is dict
     else: # Else assume epochs mne object
-      spectra = spectrum_multitaper(data,multitaper)
+        raise ValueError('Only dict input supported')
     # Only the mean
     axes= spectra['metadata']['order']
 
-    if agg_fun is None:
-      psd = spectra['values'].mean(axis=axes.index('epochs'))
-    else:
-      agg_fun = eval(agg_fun.replace('eval%',''))
-      spectra = agg_fun(spectra)
-      psd = spectra['values']
+    psd = spectra['values']
     spaces =  spectra['metadata']['axes']['spaces']
     freqs =   spectra['metadata']['axes']['frequencies']
     output = {}
     bands_list = list(bands.keys())
     values = np.empty((len(bands_list),len(spaces)))
-    output['metadata'] = {'type':'RelativeBandPower','kwargs':{'bands':bands,'multitaper':multitaper}}
+    output['metadata'] = {'type':'RelativeBandPower','kwargs':{'bands':bands}}
     output['metadata']['axes']={'bands':bands_list,'spaces':spaces}
     output['metadata']['order']=('bands','spaces')
     for space in spaces:
@@ -355,6 +348,42 @@ def relative_bandpower(data,bands=BANDS,multitaper={},agg_fun=None):
         for blabel,brange in bands.items():
             band_idx = bands_list.index(blabel)
             values[band_idx,space_idx]= bandpower(psd[space_idx,:],freqs,brange,True)
+    output['values'] = values
+    return output
+
+def band_ratio(data):
+    ## Assume output of bandpower
+    import itertools
+    if isinstance(data,dict):
+        band_data = data # Assume we have the output of bandpower() if input is dict
+    else: # Else assume epochs mne object
+        raise ValueError('Only dict input supported')
+
+    axes = band_data['metadata']['order']
+    spaces = band_data['metadata']['axes']['spaces']
+    bands_list = band_data['metadata']['axes']['bands']
+    bands_list = list(bands_list)
+
+    # get all permutations of bands (order matters)
+    band_combinations = list(itertools.permutations(bands_list, 2))
+
+    output = {}
+    values = np.empty((len(band_combinations),len(spaces)))
+    output['metadata'] = {'type':'BandsRatio','kwargs':{'bands':bands_list}}
+    output['metadata']['axes']={'bands_pairs':band_combinations,'spaces':spaces}
+    output['metadata']['order']=('bands_pairs','spaces')
+
+    for space in spaces:
+        space_idx = spaces.index(space)
+        for btop,bbottom in band_combinations:
+            band_idx_top = bands_list.index(btop)
+            band_idx_bottom = bands_list.index(bbottom)
+
+            if band_data['values'][band_idx_bottom,space_idx] == 0:
+                values[band_idx_top,space_idx] = np.nan
+            else:
+                values[band_idx_top,space_idx] = band_data['values'][band_idx_top,space_idx] / band_data['values'][band_idx_bottom,space_idx]
+
     output['values'] = values
     return output
 
