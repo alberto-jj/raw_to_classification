@@ -346,8 +346,14 @@ aggregate:
     higuchiFd: # text
       return_function : "eval%lambda x: agg_numpy(x, np.mean, 240, 'epochs')"
       file_suffix : higuchiFd
+    higuchiFdVar: # text
+      return_function : "eval%lambda x: agg_numpy(x, np.var, 240, 'epochs')"
+      file_suffix : higuchiFd
     katzFd: # text
       return_function : "eval%lambda x: agg_numpy(x, np.mean, 240, 'epochs')"
+      file_suffix : katzFd
+    katzFdSD: # text
+      return_function : "eval%lambda x: agg_numpy(x, np.std, 240, 'epochs')"
       file_suffix : katzFd
     petrosianFd : # text
       return_function : "eval%lambda x: agg_numpy(x, np.mean, 240, 'epochs')"
