@@ -4,7 +4,7 @@ from mne.datasets.eegbci import standardize
 import numpy as np
 import mne
 import pandas as pd
-from eeg_raw_to_classification.utils import parse_bids
+from eeg_raw_to_classification.utils import parse_bids,extract_item,agg_numpy
 import os
 from fooof import FOOOF
 import copy
@@ -76,41 +76,6 @@ def process_feature(epochs,relevantpath,CFG,feature,pipeline_name,inspect_only=F
     if inspect_only:
         output=inspect_only_output
     return output
-
-def extract_item(data,fun,newtype):
-    if isinstance(fun,str):
-        fun=eval(fun.replace('eval%',''))
-    data = copy.deepcopy(data)
-    newfoo=np.vectorize(fun)#, otypes=[object])
-    data['values'] = newfoo(data['values'])
-    if newtype:
-        data['metadata']['type'] = newtype
-    return data
-def agg_numpy(x,numpyfun,axisname='epochs',max_numitem=None): # or give a more complex indexing for items
-    if isinstance(numpyfun,str):
-        numpyfun=eval(numpyfun.replace('eval%',''))
-    x = copy.deepcopy(x)
-    # input is the dict from np.load
-    # a function like this could help for rois
-    # spaces gets mapped to rois for example, and you modify the metadata appropiately
-    axis= x['metadata']['order']
-    axis = axis.index(axisname)
-
-    if max_numitem is not None:
-        if x['values'].shape[axis] >= max_numitem:
-            # if we have more than max_numitem, we take the first max_numitem
-            x['values'] = np.take(x['values'], indices=range(max_numitem), axis=axis)
-        else:
-            print(f"Warning: {x['values'].shape[axis]} items in axis {axisname} are less than max_numitem {max_numitem}.")
-
-    # handle metadata appropriately
-    x['values'] = numpyfun(x['values'],axis=axis)
-    order = list(x['metadata']['order'])
-    order.remove(axisname)
-    x['metadata']['order'] = tuple(order)
-    del x['metadata']['axes'][axisname]
-    return x
-
 
 def spectrum(data, sf, method='multitaper_average', window_sec=None):
     """Compute the spectrum of the signal x.
