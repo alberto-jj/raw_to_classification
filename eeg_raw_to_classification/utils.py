@@ -83,7 +83,7 @@ def load_yaml(rules):
     else:
         raise ValueError(f'Expected str or dict as rules, got {type(rules)} instead.')
 
-def get_output_dict(eeg_file,FORMAT='WIDE',dataset_label='',feature_suffix='', agg_fun= None,keyvalformat=False):
+def get_output_dict(eeg_file,FORMAT='WIDE',dataset_label='',feature_suffix='', agg_fun= None,keyvalformat=False,showinfo=False):
     output = np.load(eeg_file,allow_pickle=True).item()
     filename = os.path.basename(eeg_file)
     subject = parse_bids(filename)['sub']
@@ -95,9 +95,11 @@ def get_output_dict(eeg_file,FORMAT='WIDE',dataset_label='',feature_suffix='', a
     
     dict_list = []
     d = {'dataset':dataset,'subject':subject,'task':task}
-    print(eeg_file)
-    print('axes:',axes)
-    print(output['values'].shape)
+    if showinfo:
+        print(eeg_file)
+        print('axes:',axes)
+        print(output['values'].shape)
+    
     for combination in itertools.product(*axes):
         indexes = []
         for i,j in enumerate(combination):
@@ -130,7 +132,14 @@ def get_output_dict(eeg_file,FORMAT='WIDE',dataset_label='',feature_suffix='', a
                 d['feature-'+feature_suffix+final_key]=agg_fun(value)
             else:
                 d[feature_suffix+final_key]=agg_fun(value)
-
+            if showinfo:
+                try:
+                    showinfo=False
+                    print('feature:',feature_suffix+final_key)
+                    print('value:',value)
+                    print('agg value:',agg_fun(value))
+                except:
+                    pass
     if FORMAT=='WIDE':
         dict_list.append(d)
     return dict_list

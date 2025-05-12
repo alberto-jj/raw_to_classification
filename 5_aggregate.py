@@ -73,11 +73,12 @@ def main(config_file):
                 foodict = cfg['aggregate']['feature_return'][feature]
                 foo = eval(foodict['return_function'].replace('eval%', ''))
                 print('Using function:', foodict['return_function'])
+                showinfo = True
                 for eeg_file in eegs:
                     suffix = os.path.basename(eeg_file).split('_')[-1].split('.')[0] + '.'
                     desired_label = feature + '.'  # dot is important for combination format
-                    dict_list += get_output_dict(eeg_file, 'WIDE', DATASET['dataset_label'], desired_label, agg_fun=foo, keyvalformat=True)
-
+                    dict_list += get_output_dict(eeg_file, 'WIDE', DATASET['dataset_label'], desired_label, agg_fun=foo, keyvalformat=True,showinfo=showinfo)
+                    showinfo = False
                 if len(dict_list) == 0:
                     print(f'No files found for {feature} in {dslabel}')
                     continue
