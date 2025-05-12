@@ -534,22 +534,22 @@ aggregate:
     FeaturesChannels@prep-defaultprep:
       feature_folder : 'features@prep-defaultprep' # what if we have multiple feature folders?
       feature_list: # CHOOSE FEATURES WITH SAME DIMENSIONS, OTHERWISE THE DATAFRAME CANT BE MADE
-        - appEntropy
-        - entropyMultiscale
-        - higuchiFd
-        - higuchiFdVar
-        - hjorthMobility
-        - hjorthComplexity
-        - katzFd
-        - katzFdSD
-        - lzivComplexity
-        - numZerocross
-        - detrendedFluctuation
-        - sampleEntropy
-        - spectralEntropy
-        - permEntropy
-        - svdEntropy
-        - petrosianFd
+        - appEntropyMeanEpochs
+        - entropyMultiscaleMeanEpochs
+        - higuchiFdMeanEpochs
+        - higuchiFdVarEpochs
+        - hjorthMobilityMeanEpochs
+        - hjorthComplexityMeanEpochs
+        - katzFdMeanEpochs
+        - katzFdSDEpochs
+        - lzivComplexityMeanEpochs
+        - numZerocrossMeanEpoch
+        #- detrendedFluctuationMeanEpochs
+        - sampleEntropyMeanEpochs
+        - spectralEntropyMeanEpochs
+        - permEntropyMeanEpochs
+        - svdEntropyMeanEpochs
+        - petrosianFdMeanEpochs
         - BandRatiosFromAverageFooof # Could be the original name or a post-processed name
         - BandRatiosFromAverageSpectrum # Could be the original name or a post-processed name
         - fooofExponent
