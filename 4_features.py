@@ -112,8 +112,6 @@ def main(pipeline_file, external_jobs, debug, parallelize, retry_errors, single_
             bids_root = DATASET.get('bids_root', None)
             bids_root = get_path(bids_root, MOUNT)
             file_filter = DATASET.get('raw_layout', None)
-            #layout = bids.BIDSLayout(bids_root)
-            all_raws = layout.get(**file_filter)
 
 
             derivatives_root = DATASET.get('derivatives_root', None)
@@ -127,6 +125,8 @@ def main(pipeline_file, external_jobs, debug, parallelize, retry_errors, single_
             
             if single_index is not None or only_total:
                 layout = bids.BIDSLayout(bids_root)
+                all_raws = layout.get(**file_filter)
+
                 get_derivative = lambda x: get_derivative_path(layout, x, 'reject', 'epo', '.fif', bids_root, prep_root)
                 eegs = [get_derivative(x) for x in all_raws]
             else:
