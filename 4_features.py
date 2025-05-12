@@ -123,17 +123,21 @@ def main(pipeline_file, external_jobs, debug, parallelize, retry_errors, single_
             prep_root = pathlib.Path(os.path.join(derivatives_root,prep_pipeline)).as_posix()
             bids_root = pathlib.Path(bids_root).as_posix()
             
-            if single_index is not None or only_total:
-                layout = bids.BIDSLayout(bids_root)
-                all_raws = layout.get(**file_filter)
+            # if single_index is not None or only_total:
+            #     layout = bids.BIDSLayout(bids_root)
+            #     all_raws = layout.get(**file_filter)
 
-                get_derivative = lambda x: get_derivative_path(layout, x, 'reject', 'epo', '.fif', bids_root, prep_root)
-                eegs = [get_derivative(x) for x in all_raws]
-            else:
-                pattern = os.path.join(prep_root, '**/*_epo.fif')
-                pattern = pathlib.Path(pattern).as_posix()
-                eegs = glob.glob(pattern, recursive=True)
-                eegs = [pathlib.Path(x).as_posix() for x in eegs ]
+            #     get_derivative = lambda x: get_derivative_path(layout, x, 'reject', 'epo', '.fif', bids_root, prep_root)
+            #     eegs = [get_derivative(x) for x in all_raws]
+            # else:
+            #     pattern = os.path.join(prep_root, '**/*_epo.fif')
+            #     pattern = pathlib.Path(pattern).as_posix()
+            #     eegs = glob.glob(pattern, recursive=True)
+            #     eegs = [pathlib.Path(x).as_posix() for x in eegs ]
+            pattern = os.path.join(prep_root, '**/*_epo.fif')
+            pattern = pathlib.Path(pattern).as_posix()
+            eegs = glob.glob(pattern, recursive=True)
+            eegs = [pathlib.Path(x).as_posix() for x in eegs ]
 
             feat_root = pathlib.Path(os.path.join(derivatives_root, pipeline_name)).as_posix()
             os.makedirs(feat_root, exist_ok=True)
