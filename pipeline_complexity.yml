@@ -580,13 +580,13 @@ aggregate:
       return_function : "eval%lambda x: x"
       file_suffix : RelativeBandPower1ROI
     fooofSlopeNoKnee:
-      return_function : "eval%lambda x: x.aperiodic_params_[0]"
+      return_function : "eval%lambda x: x.aperiodic_params_[-1]"
       file_suffix : FooofFromAverageNoKnee
     fooofSlope:
-      return_function : "eval%lambda x: x.aperiodic_params_[0]"
+      return_function : "eval%lambda x: x.aperiodic_params_[-1]"
       file_suffix : FooofFromAverage
     fooofSlopeROI:
-      return_function : "eval%lambda x: x.aperiodic_params_[0]"
+      return_function : "eval%lambda x: x.aperiodic_params_[-1]"
       file_suffix : FooofFromAverageROI
     detrendedFluctuation: # no text
       return_function : "eval%lambda x: x"
