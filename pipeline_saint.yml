@@ -381,12 +381,6 @@ aggregate:
     FeaturesChannels@prep-defaultprep:
       feature_folder : 'features@prep-defaultprep' # what if we have multiple feature folders?
       feature_list: # CHOOSE FEATURES WITH SAME DIMENSIONS, OTHERWISE THE DATAFRAME CANT BE MADE
-        - BandRatiosFromAverageFooof # Could be the original name or a post-processed name
-        - BandRatiosFromAverageSpectrum # Could be the original name or a post-processed name
-        - fooofExponent
-        - foofOffset
-        - RelativeBandPowerFromAverageFooof
-        - RelativeBandPowerFromAverageSpectrum
         - appEntropy
         - entropyMultiscale
         - higuchiFd
@@ -403,6 +397,12 @@ aggregate:
         - permEntropy
         - svdEntropy
         - petrosianFd
+        - BandRatiosFromAverageFooof # Could be the original name or a post-processed name
+        - BandRatiosFromAverageSpectrum # Could be the original name or a post-processed name
+        - fooofExponent
+        - foofOffset
+        - RelativeBandPowerFromAverageFooof
+        - RelativeBandPowerFromAverageSpectrum
 
 scalingAndFolding:
   aggregate_folders:
