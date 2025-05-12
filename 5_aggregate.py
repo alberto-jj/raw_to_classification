@@ -2,7 +2,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import glob
-from eeg_raw_to_classification.utils import parse_bids, load_yaml, get_output_dict, save_dict_to_json, get_path
+from eeg_raw_to_classification.utils import parse_bids, load_yaml, get_output_dict, save_dict_to_json, get_path,agg_numpy,extract_item
 import itertools
 import pandas as pd
 from sklearn.model_selection import train_test_split
