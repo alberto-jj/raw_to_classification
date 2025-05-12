@@ -7,6 +7,7 @@ from copy import deepcopy
 import os
 import itertools
 import pathlib
+import copy
 
 def extract_item(data,fun,newtype):
     if isinstance(fun,str):
