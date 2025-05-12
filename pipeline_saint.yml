@@ -158,6 +158,18 @@ features:
           args:
             internal_kwargs:
               detrended_fluctuation : {}
+    detrendedFluctuationMeanEpochs:
+      overwrite: False
+      chain:
+        - function: compute_detrendedFluctuation
+          args:
+            internal_kwargs:
+              detrended_fluctuation : {}
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: 2 # 20min at 10min per epoch
+            axisname: 'epochs'
 
     lzivComplexity:
       overwrite: False
@@ -168,6 +180,15 @@ features:
             internal_kwargs:
               lziv_complexity :
                 normalize: True
+    lzivComplexityMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: lzivComplexity
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: 240 # 20min at 5sec per epoch
+            axisname: 'epochs'
 
     sampleEntropy:
       overwrite: False
@@ -178,7 +199,15 @@ features:
               sample_entropy :
                 order : 2
                 metric : chebyshev
-
+    sampleEntropyMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: sampleEntropy
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: 240 # 20min at 5sec per epoch
+            axisname: 'epochs'
     spectralEntropy:
       overwrite: False
       chain:
@@ -190,6 +219,16 @@ features:
                 method : 'welch'
                 nperseg : eval%int(np.round(eeg.info['sfreq']/1))
                 normalize : True
+    spectralEntropyMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: spectralEntropy
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: 240 # 20min at 5sec per epoch
+            axisname: 'epochs'
+
     appEntropy:
       overwrite: False
       chain:
@@ -199,6 +238,17 @@ features:
               app_entropy :
                 order : 2
                 metric : chebyshev
+
+    appEntropyMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: appEntropy
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: 240 # 20min at 5sec per epoch
+            axisname: 'epochs'
+
     hjorthParams:
       overwrite: False
       chain:
@@ -216,6 +266,15 @@ features:
             fun: "eval%lambda x: x[0]"
             newtype: hjorthMobility
 
+    hjorthMobilityMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: hjorthMobility
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: 240 # 20min at 5sec per epoch
+            axisname: 'epochs'
     hjorthComplexity:
       overwrite: False
       chain:
@@ -224,6 +283,16 @@ features:
           args:
             fun: "eval%lambda x: x[1]"
             newtype: hjorthComplexity
+
+    hjorthComplexityMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: hjorthComplexity
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: 240 # 20min at 5sec per epoch
+            axisname: 'epochs'
     numZerocross:
       overwrite: False
       chain:
@@ -233,6 +302,15 @@ features:
               num_zerocross:
                 normalize: True
 
+    numZerocrossMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: numZerocross
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: 240 # 20min at 5sec per epoch
+            axisname: 'epochs'
     permEntropy:
       overwrite: False
       chain:
@@ -244,6 +322,15 @@ features:
                 delay: 1
                 normalize: True
 
+    permEntropyMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: permEntropy
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: 240 # 20min at 5sec per epoch
+            axisname: 'epochs'
     svdEntropy:
       overwrite: False
       chain:
@@ -254,6 +341,15 @@ features:
                 order: 3
                 delay: 1
                 normalize: True
+    svdEntropyMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: svdEntropy
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: 240 # 20min at 5sec per epoch
+            axisname: 'epochs'
 
     higuchiFd:
       overwrite: False
@@ -263,7 +359,24 @@ features:
             internal_kwargs:
               higuchi_fd:
                 kmax: 10
-
+    higuchiFdMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: higuchiFd
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: 240 # 20min at 5sec per epoch
+            axisname: 'epochs'
+    higuchiFdVarEpochs:
+      overwrite: False
+      chain:
+        - feature: higuchiFd
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.var
+            max_numitem: 240 # 20min at 5sec per epoch
+            axisname: 'epochs'
     katzFd:
       overwrite: False
       chain:
@@ -271,7 +384,24 @@ features:
           args:
             internal_kwargs:
               katz_fd: {}
-
+    katzFdSDEpochs:
+      overwrite: False
+      chain:
+        - feature: katzFd
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.std
+            max_numitem: 240 # 20min at 5sec per epoch
+            axisname: 'epochs'
+    katzFdMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: katzFd
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: 240 # 20min at 5sec per epoch
+            axisname: 'epochs'
     petrosianFd:
       overwrite: False
       chain:
@@ -279,6 +409,15 @@ features:
           args:
             internal_kwargs:
               petrosian_fd: {}
+    petrosianFdMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: petrosianFd
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: 240 # 20min at 5sec per epoch
+            axisname: 'epochs'
 
     entropyMultiscale: #TODO: i think the aggregation wont work here because multiscale return a complex datatype, check this
       overwrite: False
@@ -301,6 +440,17 @@ features:
           args:
             fun: "eval%lambda x: x[0]"
             newtype: null
+
+    entropyMultiscaleMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: entropyMultiscaleSingle
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: 240 # 20min at 5sec per epoch
+            axisname: 'epochs'
+
 aggregate:
   path : 
     computecanada: '/home/yorguin/scratch/%PROJECT%/aggregate/' #
@@ -327,54 +477,54 @@ aggregate:
     RelativeBandPowerFromAverageSpectrum:
       return_function : "eval%lambda x: x"
       file_suffix : RelativeBandPowerFromAverageSpectrum
-    appEntropy: 
-      return_function : "eval%lambda x: agg_numpy(x, np.mean, 240, 'epochs')"
-      file_suffix : appEntropy
-    entropyMultiscale:
-      return_function: "eval%lambda x: agg_numpy(x, np.mean, 240, 'epochs')"
-      file_suffix : entropyMultiscaleSingle
-    higuchiFd: 
-      return_function : "eval%lambda x: agg_numpy(x, np.mean, 240, 'epochs')"
-      file_suffix : higuchiFd
-    higuchiFdVar: 
-      return_function : "eval%lambda x: agg_numpy(x, np.var, 240, 'epochs')"
-      file_suffix : higuchiFd
-    hjorthMobility: 
-      return_function : "eval%lambda x: agg_numpy(x, np.mean, 240, 'epochs')"
-      file_suffix : hjorthMobility
-    hjorthComplexity: 
-      return_function : "eval%lambda x: agg_numpy(x, np.mean, 240, 'epochs')"
-      file_suffix : hjorthComplexity
-    katzFd: 
-      return_function : "eval%lambda x: agg_numpy(x, np.mean, 240, 'epochs')"
-      file_suffix : katzFd
-    katzFdSD: 
-      return_function : "eval%lambda x: agg_numpy(x, np.std, 240, 'epochs')"
-      file_suffix : katzFd
-    lzivComplexity: 
-      return_function : "eval%lambda x: agg_numpy(x, np.mean, 240, 'epochs')"
-      file_suffix : lzivComplexity
-    numZerocross: 
-      return_function : "eval%lambda x: agg_numpy(x, np.mean, 240, 'epochs')"
-      file_suffix : numZerocross
-    detrendedFluctuation: # no text
-      return_function : "eval%lambda x: agg_numpy(x, np.mean, 2, 'epochs')" # this uses the first 2 epochs of the 10min epoch
-      file_suffix : detrendedFluctuation
-    sampleEntropy: 
-      return_function : "eval%lambda x: agg_numpy(x, np.mean, 240, 'epochs')"
-      file_suffix : sampleEntropy
-    spectralEntropy: 
-      return_function : "eval%lambda x: agg_numpy(x, np.mean, 240, 'epochs')"
-      file_suffix : spectralEntropy
-    permEntropy: 
-      return_function : "eval%lambda x: agg_numpy(x, np.mean, 240, 'epochs')"
-      file_suffix : permEntropy
-    svdEntropy  : 
-      return_function : "eval%lambda x: agg_numpy(x, np.mean, 240, 'epochs')"
-      file_suffix : svdEntropy
-    petrosianFd : 
-      return_function : "eval%lambda x: agg_numpy(x, np.mean, 240, 'epochs')"
-      file_suffix : petrosianFd
+    appEntropyMeanEpochs: 
+      return_function : "eval%lambda x: x"
+      file_suffix : appEntropyMeanEpochs
+    entropyMultiscaleMeanEpochs:
+      return_function: "eval%lambda x: x"
+      file_suffix : entropyMultiscaleMeanEpochs
+    higuchiFdMeanEpochs:
+      return_function : "eval%lambda x: x"
+      file_suffix : higuchiFdMeanEpochs
+    higuchiFdVarEpochs:
+      return_function : "eval%lambda x: x"
+      file_suffix : higuchiFdVarEpochs
+    hjorthMobilityMeanEpochs: 
+      return_function : "eval%lambda x: x"
+      file_suffix : hjorthMobilityMeanEpochs
+    hjorthComplexityMeanEpochs:
+      return_function : "eval%lambda x: x"
+      file_suffix : hjorthComplexityMeanEpochs
+    katzFdMeanEpochs: 
+      return_function : "eval%lambda x: x"
+      file_suffix : katzFdMeanEpochs
+    katzFdSDEpochs: 
+      return_function : "eval%lambda x: x"
+      file_suffix : katzFdSDEpochs
+    lzivComplexityMeanEpochs: 
+      return_function : "eval%lambda x: x"
+      file_suffix : lzivComplexityMeanEpochs
+    numZerocrossMeanEpochs: 
+      return_function : "eval%lambda x: x"
+      file_suffix : numZerocrossMeanEpochs
+    detrendedFluctuationMeanEpochs: # no text
+      return_function : "eval%lambda x: x" # this uses the first 2 epochs of the 10min epoch
+      file_suffix : detrendedFluctuationMeanEpochs
+    sampleEntropyMeanEpochs:
+      return_function : "eval%lambda x: x"
+      file_suffix : sampleEntropyMeanEpochs
+    spectralEntropyMeanEpochs:
+      return_function : "eval%lambda x: x"
+      file_suffix : spectralEntropyMeanEpochs
+    permEntropyMeanEpochs:
+      return_function : "eval%lambda x: x"
+      file_suffix : permEntropyMeanEpochs
+    svdEntropyMeanEpochs:
+      return_function : "eval%lambda x: x"
+      file_suffix : svdEntropyMeanEpochs
+    petrosianFdMeanEpochs : 
+      return_function : "eval%lambda x: x"
+      file_suffix : petrosianFdMeanEpochs
   feature_aggregate_list:
     - FeaturesChannels@prep-defaultprep
   aggregate_cfgs:
