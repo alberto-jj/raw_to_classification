@@ -36,19 +36,19 @@ def main(config_file):
             perfeature = []
             participants_file = DATASET['cleaned_participants']
             participants_file = get_path(participants_file, MOUNT)
-            participants = pd.read_csv(participants_file)
+            # participants = pd.read_csv(participants_file)
 
-            def parfun(query, field):
-                try:
-                    sub = int(query)  # im not conviced this is a good idea
-                except:
-                    sub = query
-                try:
-                    idx = participants[participants['subject'] == sub]
-                except:
-                    idx = participants[participants['number'] == sub]  # this is very hardcoded, this should be a configuration
-                assert idx.shape[0] == 1  # unique
-                return idx[field].item()
+            # def parfun(query, field):
+            #     try:
+            #         sub = int(query)  # im not conviced this is a good idea
+            #     except:
+            #         sub = query
+            #     try:
+            #         idx = participants[participants['subject'] == sub]
+            #     except:
+            #         idx = participants[participants['number'] == sub]  # this is very hardcoded, this should be a configuration
+            #     assert idx.shape[0] == 1  # unique
+            #     return idx[field].item()
 
             for feature in agg_cfg['feature_list']:
                 print(f'Processing {feature} in {dslabel}')
@@ -86,9 +86,9 @@ def main(config_file):
                 idx_space = metafeature['order'].index('spaces') + 1  # increase 1 because col name includes feature type at start
 
                 df.insert(loc=0, column='id', value=df['dataset'] + id_splitter + df['subject'] + id_splitter + df['task'])
-                for field in ['group', 'age', 'sex']:  # TODO: maybe this should be configured from outside
-                    auxdf = df['subject'].apply(lambda x: parfun(x, field))
-                    df.insert(loc=1, column=field, value=auxdf)
+                # for field in ['group', 'age', 'sex']:  # TODO: maybe this should be configured from outside
+                #     auxdf = df['subject'].apply(lambda x: parfun(x, field))
+                #     df.insert(loc=1, column=field, value=auxdf)
 
                 derivative_cols = [x if '.' in x else 'IGNORE' for x in df.columns]  # All derivatives must have a dot at least, to indicate the type
 
