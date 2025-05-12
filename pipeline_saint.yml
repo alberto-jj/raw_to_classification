@@ -305,6 +305,7 @@ aggregate:
   path : 
     computecanada: '/home/yorguin/scratch/%PROJECT%/aggregate/' #
     local: './data/%PROJECT%/aggregate'
+    narval: '/home/yorguin/scratch/%PROJECT%/aggregate/'
   filename : 'aggregate'
   id_splitter : '/'
   feature_return:
