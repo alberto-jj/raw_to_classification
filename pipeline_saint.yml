@@ -57,20 +57,22 @@ features:
         - BandRatiosFromAverageSpectrum
         - BandRatiosFromAverageFooof
         #- detrendedFluctuation
-        - lzivComplexity
-        - sampleEntropy
-        - spectralEntropy
-        - appEntropy
+        - lzivComplexityMeanEpochs
+        - sampleEntropyMeanEpochs
+        - spectralEntropyMeanEpochs
+        - appEntropyMeanEpochs
         - hjorthParams
-        - hjorthMobility
-        - hjorthComplexity
-        - numZerocross
-        - permEntropy
-        - svdEntropy
-        - higuchiFd
-        - katzFd
-        - petrosianFd
-        - entropyMultiscale
+        - hjorthMobilityMeanEpochs
+        - hjorthComplexityMeanEpochs
+        - numZerocrossMeanEpochs
+        - permEntropyMeanEpochs
+        - svdEntropyMeanEpochs
+        - higuchiFdMeanEpochs
+        - higuchiFdVarEpochs
+        - katzFdMeanEpochs
+        - katzFdSDEpochs
+        - petrosianFdMeanEpochs
+        - entropyMultiscaleMeanEpochs
     features@prep-prep10min: #you set the name of the feature pipeline with the key
       prep_pipeline : prep10min # This is the name of the preprocessing pipeline previously defined (must exist in derivatives)
       downsample : 200
@@ -78,6 +80,7 @@ features:
       keep_channels : False
       feature_list: # To say which features actually compute rather than configure
         - detrendedFluctuation
+        - detrendedFluctuationMeanEpochs
 
   feature_pipeline_list: #which feature pipelines to run
     - features@prep-prep10min
