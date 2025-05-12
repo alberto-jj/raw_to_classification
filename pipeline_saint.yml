@@ -543,7 +543,7 @@ aggregate:
         - katzFdMeanEpochs
         - katzFdSDEpochs
         - lzivComplexityMeanEpochs
-        - numZerocrossMeanEpoch
+        - numZerocrossMeanEpochs
         #- detrendedFluctuationMeanEpochs
         - sampleEntropyMeanEpochs
         - spectralEntropyMeanEpochs
