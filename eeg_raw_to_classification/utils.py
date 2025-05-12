@@ -95,7 +95,9 @@ def get_output_dict(eeg_file,FORMAT='WIDE',dataset_label='',feature_suffix='', a
     
     dict_list = []
     d = {'dataset':dataset,'subject':subject,'task':task}
-
+    print(eeg_file)
+    print('axes:',axes)
+    print(output['values'].shape)
     for combination in itertools.product(*axes):
         indexes = []
         for i,j in enumerate(combination):
@@ -128,6 +130,7 @@ def get_output_dict(eeg_file,FORMAT='WIDE',dataset_label='',feature_suffix='', a
                 d['feature-'+feature_suffix+final_key]=agg_fun(value)
             else:
                 d[feature_suffix+final_key]=agg_fun(value)
+
     if FORMAT=='WIDE':
         dict_list.append(d)
     return dict_list

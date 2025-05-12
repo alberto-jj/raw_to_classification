@@ -72,7 +72,7 @@ def main(config_file):
                 dict_list = []
                 foodict = cfg['aggregate']['feature_return'][feature]
                 foo = eval(foodict['return_function'].replace('eval%', ''))
-
+                print('Using function:', foodict['return_function'])
                 for eeg_file in eegs:
                     suffix = os.path.basename(eeg_file).split('_')[-1].split('.')[0] + '.'
                     desired_label = feature + '.'  # dot is important for combination format
