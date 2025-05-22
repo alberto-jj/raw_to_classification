@@ -4,13 +4,17 @@ FINLAND:
   skip : False
   
   # Participants 
-  participants_file : "Y:/datasets/HenryRailo/InfoAboutParticipants.xlsx"
+  participants_file : 
+    local: "Y:/datasets/HenryRailo/InfoAboutParticipants.xlsx"
+    narval: "Unavailable"
   reader : 
     function : "pd.read_excel"
     args : {}
   df_transform : "df=df.dropna(subset =['id']);" # exec function to be applied to the dataframe
 
-  cleaned_participants : "Y:/datasets/HenryRailo/participants.csv" # created whether transforms or not were applied
+  cleaned_participants : 
+    local: "Y:/datasets/HenryRailo/participants.csv" # created whether transforms or not were applied
+    narval: "Unavailable"
   columns:
     id : subject
     'PD group' : group
@@ -33,18 +37,26 @@ FINLAND:
     task : 'eyesClosed'
 
   # Processing
-  example_file: "Y:/datasets/HenryRailo/data/*.set"
+  example_file: 
+    local: "Y:/datasets/HenryRailo/data/*.set"
+    narval: "/home/yorguin/scratch/datasets/HenryRailo/bids/**/*.vhdr"
   # ch_names are channels to keep
   ch_names: [ "PO7", "FT8", "POz", "P8", "C5", "F1", "P7", "FC4", "Fp2", "F5", "P5", "T8", "FC6", "CP6", "C4", "T7", "Oz", "P1", "TP9", "P6", "AF8", "TP10", "C6", "AF4", "C3", "F3", "P3", "FC1", "FC2", "PO3", "F6", "AF7", "FT9", "CP1", "Fpz", "O1", "F8", "AF3", "CP3", "C2", "PO4", "Fp1", "FC3", "P4", "TP7", "FT7", "TP8", "CPz", "FT10", "P2", "CP4", "C1", "CP2", "O2", "CP5", "FC5", "Fz", "Cz", "F4", "PO8", "Pz", "F7", "F2" ]
   PowerLineFrequency : 50 # from inspection
 
 # BIDS
-  bids_root : "Y:/datasets/HenryRailo/bids/"
+  bids_root : 
+    local: "Y:/datasets/HenryRailo/bids/"
+    narval: "/home/yorguin/scratch/datasets/HenryRailo/bids/"
 
   sovabids:
     paths:
-      source_path : "Y:/datasets/HenryRailo/data"
-      bids_path : "Y:/datasets/HenryRailo/bids"
+      source_path : 
+        local: "Y:/datasets/HenryRailo/data"
+        narval: "Unavailable"
+      bids_path : 
+        local: "Y:/datasets/HenryRailo/bids"
+        narval: "Unavailable"
     rules:
       dataset_description:                            # Configuring the dataset_description.json file
         Name : "Parkinson-RESEEG"                     # Name of the dataset, set up as a fixed string
@@ -74,13 +86,17 @@ CALIFORNIA:
   skip : False
 
   # Participants 
-  participants_file : "Y:/datasets/ds002778-download/participants.tsv"
+  participants_file : 
+    local: "Y:/datasets/ds002778-download/participants.tsv"
+    narval: "/home/yorguin/scratch/datasets/ds002778/participants.tsv"
   reader : 
     function : "pd.read_csv"
     args : 
       delimiter: "\\t"
 
-  cleaned_participants : "Y:/datasets/ds002778-download/participants.csv"
+  cleaned_participants :
+    local: "Y:/datasets/ds002778-download/participants.csv"
+    narval: "/home/yorguin/scratch/datasets/ds002778/participants.csv"
 
   df_transform : "group=df['participant_id'].apply(lambda x: x.replace('sub-',''));group=group.apply(lambda x: ''.join(i for i in x if i.isalpha()));df['group'] = group;"
   columns:
@@ -110,7 +126,9 @@ CALIFORNIA:
   ch_names: ["P8", "P7", "T8", "Fp2", "FC6", "CP6", "T7", "Oz", "C4", "AF4", "C3", "FC1", "F3", "P3", "PO3", "FC2", "CP1", "O1", "AF3", "F8", "PO4", "Fp1", "P4", "CP2", "CP5", "O2", "FC5", "Fz", "Cz", "F4", "Pz", "F7" ]
   PowerLineFrequency : 60
   # BIDS
-  bids_root : "Y:/datasets/ds002778-download"
+  bids_root : 
+    local : "Y:/datasets/ds002778-download"
+    narval : "/home/yorguin/scratch/datasets/ds002778/"
 
 GREECE:
   url : https://openneuro.org/datasets/ds004504/versions/
@@ -118,13 +136,17 @@ GREECE:
   skip : False
 
   # Participants 
-  participants_file : "Y:/datasets/ds004504-download/participants.tsv"
+  participants_file : 
+    local: "Y:/datasets/ds004504-download/participants.tsv"
+    narval: "/home/yorguin/scratch/datasets/ds004504/participants.tsv"
   reader : 
     function : "pd.read_csv"
     args : 
       delimiter: "\\t"
 
-  cleaned_participants : "Y:/datasets/ds004504-download/participants.csv"
+  cleaned_participants : 
+    local : "Y:/datasets/ds004504-download/participants.csv"
+    narval: "/home/yorguin/scratch/datasets/ds004504/participants.csv"
 
   df_transform : None
 
@@ -149,11 +171,15 @@ GREECE:
     #session : None
 
   # Processing
-  example_file: "Y:/datasets/ds004504-download/sub-*/eeg/sub-*_task-*_eeg.set"
+  example_file: 
+    local: "Y:/datasets/ds004504-download/sub-*/eeg/sub-*_task-*_eeg.set"
+    narval: "/home/yorguin/scratch/datasets/ds004504/sub-*/eeg/sub-*_task-*_eeg.set"
   ch_names: [ "Fp2", "C4", "T3", "C3", "T6", "F3", "P3", "O1", "F8", "Fp1", "P4", "T5", "T4", "O2", "Fz", "Cz", "F4", "Pz", "F7" ]
   PowerLineFrequency : 50
   # BIDS
-  bids_root : "Y:/datasets/ds004504-download/"
+  bids_root : 
+    local : "Y:/datasets/ds004504-download/"
+    narval : "/home/yorguin/scratch/datasets/ds004504/"
 
 
 OSLO:
@@ -162,13 +188,17 @@ OSLO:
   skip : False
 
   # Participants 
-  participants_file : "Y:/datasets/ds003775-download/participants.tsv"
+  participants_file : 
+    local: "Y:/datasets/ds003775-download/participants.tsv"
+    narval: "/home/yorguin/scratch/datasets/ds003775/participants.tsv"
   reader : 
     function : "pd.read_csv"
     args : 
       delimiter: "\\t"
 
-  cleaned_participants : "Y:/datasets/ds003775-download/participants.csv"
+  cleaned_participants : 
+    local: "Y:/datasets/ds003775-download/participants.csv"
+    narval: "/home/yorguin/scratch/datasets/ds003775/participants.csv"
 
   df_transform : "group=df['participant_id'].apply(lambda x: 'HC');df['group'] = group;" # all are healthy
 
@@ -192,11 +222,15 @@ OSLO:
     session : t1 # include t2?
 
   # Processing
-  example_file: "Y:/datasets/ds003775-download/sub-*/ses-*/eeg/sub-*_ses-*_task-*_eeg.edf"
+  example_file: 
+    local: "Y:/datasets/ds003775-download/sub-*/ses-*/eeg/sub-*_ses-*_task-*_eeg.edf"
+    narval: "/home/yorguin/scratch/datasets/ds003775/sub-*/ses-*/eeg/sub-*_ses-*_task-*_eeg.edf"
   ch_names: ["PO7", "FT8", "POz", "P8", "C5", "F1", "P7", "T8", "F5", "P5", "Fp2", "FC4", "FC6", "CP6", "T7", "Oz", "C4", "P1", "P6", "AF8", "C6", "AF4", "C3", "AFz", "F3", "FC1", "P3", "PO3", "F6", "AF7", "FC2", "P9", "CP1", "CP3", "AF3", "TP7", "PO4", "PO8", "O1", "Fpz", "F8", "FC3", "Fp1", "C2", "TP8", "FT7", "P4", "P10", "CPz", "CP4", "P2", "C1", "CP2", "CP5", "O2", "FC5", "Fz", "Cz", "F4", "FCz", "Pz", "F7", "F2" ]
   PowerLineFrequency : 50
   # BIDS
-  bids_root : "Y:/datasets/ds003775-download/"
+  bids_root : 
+    local: "Y:/datasets/ds003775-download/"
+    narval: "/home/yorguin/scratch/datasets/ds003775/"
 
 
 IOWA:
@@ -205,13 +239,17 @@ IOWA:
   skip : False
 
   # Participants 
-  participants_file : "Y:/datasets/Iowa/Dataset/IowaDataset/DataIowa.xlsx"
+  participants_file : 
+    local: "Y:/datasets/Iowa/Dataset/IowaDataset/DataIowa.xlsx"
+    narval: "Unavailable"
   reader : 
     function : "pd.read_excel"
     args : {}
   df_transform : "group=df['Rest'].apply(lambda x: ''.join(char for char in x if not char.isdigit()));df['group'] = group;" # exec function to be applied to the dataframe
 
-  cleaned_participants : "Y:/datasets/Iowa/Dataset/IowaDataset/participants.csv" # created whether transforms or not were applied
+  cleaned_participants : 
+    local: "Y:/datasets/Iowa/Dataset/IowaDataset/participants.csv" # created whether transforms or not were applied
+    narval: "Unavailable"
   columns:
     Rest : subject
     group : group
