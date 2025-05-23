@@ -37,16 +37,16 @@ source raw_to_classification_env/bin/activate
 ##pip install --no-index --upgrade pip
 cd /home/yorguin/raw_to_classification
 
-## pip install --no-index -r requirements_minimal.txt
+## pip install --no-index -r requirements_cc_noindex.txt
 ## pip install -r requirements_extra.txt
 ## pip install -e .
 
 
 # Decide which step to run based on $STEP
 if [ "$STEP" == "3" ]; then
-    python -u 3_preprocess.py pipeline_saint.yml --index $SLURM_ARRAY_TASK_ID --external_jobs 1 --internal_jobs 1 --retry_errors
+    python -u scripts/3_preprocess.py pipeline_saint.yml --index $SLURM_ARRAY_TASK_ID --external_jobs 1 --internal_jobs 1 --retry_errors
 elif [ "$STEP" == "4" ]; then
-    python -u 4_features.py pipeline_saint.yml --index $SLURM_ARRAY_TASK_ID --retry_errors
+    python -u scripts/4_features.py pipeline_saint.yml --index $SLURM_ARRAY_TASK_ID --retry_errors
 else
     echo "Error: Unknown STEP '$STEP'. Use STEP=3 or STEP=4."
     exit 1

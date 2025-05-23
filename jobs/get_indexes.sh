@@ -19,8 +19,8 @@ source $SLURM_TMPDIR/env/bin/activate
 ##pip install --no-index --upgrade pip
 cd /home/yorguin/projects/def-kjerbi/yorguin/raw_to_classification
 ##pip install --no-index -r requirements.txt
-pip install --no-index -r requirements_minimal.txt
+pip install --no-index -r requirements_cc_noindex.txt
 pip install .
-python -u 4_preprocess.py pipeline_saint.yml --only_total
+python -u scripts/4_preprocess.py pipeline_saint.yml --only_total
 
 
