@@ -20,7 +20,7 @@
             "program": "${workspaceFolder}/4_features.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args": ["pipeline_saint.yml","--external_jobs", "1", "--raise_on_error"]
+            "args": ["project_files/pipeline_saint.yml","--external_jobs", "1", "--raise_on_error"]
         },
         {
             "name": "preprocess",
@@ -29,7 +29,7 @@
             "program": "${workspaceFolder}/3_preprocess.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args": ["pipeline_saint.yml","--max_files","1","--external_jobs", "1", "--raise_on_error"] //"--only_total"
+            "args": ["project_files/pipeline_saint.yml","--max_files","1","--external_jobs", "1", "--raise_on_error"] //"--only_total"
         },
 
         {
@@ -39,7 +39,7 @@
             "program": "${workspaceFolder}/3_preprocess.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args": ["pipeline_epilepsy.yml","--max_files","1","--external_jobs", "1", "--raise_on_error"] //"--only_total"
+            "args": ["project_files/pipeline_epilepsy.yml","--max_files","1","--external_jobs", "1", "--raise_on_error"] //"--only_total"
         },
         {
             "name": "preprocess epilepsy run",
@@ -48,7 +48,7 @@
             "program": "${workspaceFolder}/3_preprocess.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args": ["pipeline_epilepsy.yml","--external_jobs", "1", "--raise_on_error"] //"--only_total"
+            "args": ["project_files/pipeline_epilepsy.yml","--external_jobs", "1", "--raise_on_error"] //"--only_total"
         }
 
 
