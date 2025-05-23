@@ -6,6 +6,27 @@ import numpy as np
 import glob
 import scipy
 
+
+from ssqueezepy.experimental import scale_to_freq
+from ssqueezepy import Wavelet
+
+def scales_to_frequencies(scales, sampling_rate=1.0, w0=6.0):
+    """
+    Convert CWT scales to frequency equivalents for the Morlet wavelet.
+
+    Parameters:
+    - scales: Array-like, scales from the CWT.
+    - sampling_rate: float, sampling rate of the signal.
+    - w0: float, center frequency of the Morlet wavelet (usually around 6).
+
+    Returns:
+    - Array-like, frequency values corresponding to the given scales.
+    """
+    delta = 1.0 / sampling_rate
+    return w0 / (2 * np.pi * scales * delta)
+
+
+
 def loadmat(x,kwargs={}):
     try:
         return sio.loadmat(x,**kwargs)
@@ -104,8 +125,20 @@ def prepare(filename, line_noise=None, keep_chans=None, downsample = 500, normal
     line_noise: is ignored, only used to keep the same signature as the original function
     njobs: is ignored, only used to keep the same signature as the original function
     """
-    print('PREPARE FUNCTION OVERRIDENED')
+    info = {}
+    figures = []
+
+    info['filename'] = filename
+    info['line_noise'] = line_noise
+    info['keep_chans'] = keep_chans
+    info['downsample'] = downsample
+    info['normalization'] = normalization
+    info['filter_args'] = filter_args
+    info['njobs'] = njobs
+    info['epoch_config'] = epoch_config
+
     eegpath = filename
+    print('PREPARE FUNCTION OVERRIDENED')
     if '.mat' in eegpath:
         bads = get_suffix_from_path(eegpath,'flag.mat')
         bads = [bool(aux) for aux in np.squeeze(loadmat(bads)['BadChannel']).tolist()]
@@ -127,7 +160,6 @@ def prepare(filename, line_noise=None, keep_chans=None, downsample = 500, normal
         raw._data = scipy.stats.zscore(raw.get_data(),axis=1)
         print('AMPLITUDE NORMALIZATION DONE')
 
-
     # Filter the data
     if filter_args is not None:
         raw = raw.filter(**filter_args,verbose=False)
@@ -138,7 +170,5 @@ def prepare(filename, line_noise=None, keep_chans=None, downsample = 500, normal
     epochs = mne.make_fixed_length_epochs(raw,preload=True,**epoch_config)
     epochs = epochs.resample(downsample)
 
-    info = {}
-    figures = []
 
     return epochs,info,figures
