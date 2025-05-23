@@ -4,7 +4,7 @@ from .baseChain import ChainFeatureStructure
 from .utils import get_mne_metadata, snake_to_camel, functional_feature_to_format, functional_save, functional_load
 from typing import Optional, Dict, Any, Union, Callable
 from .spectralFunctionals import *
-from .aggregateFunctional import *
+from .aggregateFunctionals import *
 from .chain_features import *
 
 
