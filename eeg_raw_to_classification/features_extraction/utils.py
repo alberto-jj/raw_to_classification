@@ -8,18 +8,19 @@ import json
 import pickle
 from mne.io import read_raw
 from mne import read_epochs
+
 def functional_feature_to_format(this_type:str):
-    """Convert a feature _type to a standardized format.
+    """Convert a feature type_ to a standardized format.
 
     Parameters
     ----------
     this_type : str
-        The input feature _type.
+        The input feature type_.
 
     Returns
     -------
     str
-        The converted feature _type in a standardized format.
+        The converted feature type_ in a standardized format.
     """
     if this_type == 'array':
         return 'npy'
@@ -30,7 +31,7 @@ def functional_feature_to_format(this_type:str):
     elif this_type == 'pickle':
         return 'pickle'
     else:
-        raise ValueError(f"Unknown feature _type: {this_type}")
+        raise ValueError(f"Unknown feature type_: {this_type}")
 
 def functional_save(output, outputfile, output_format):
     """Save the output in the specified format.
@@ -139,12 +140,12 @@ def get_mne_metadata(input, save_input_no_data=False):
 
     if len(input.get_data().shape) == 2:
         input_order = ('spaces', 'times')
-        extra_metadata['filename'] = deepcopy(input.filenames) # for Raw is a list of strings
+        extra_metadata['provenance'] = [deepcopy(input.filenames)] # for Raw is a list of strings, but we will keep them as a unit
         extra_metadata['input_type'] = 'Raw'
     if len(input.get_data().shape) == 3:
         input_order =  ('epochs', 'spaces', 'times')
         input_axes['epochs'] = list(range(input.get_data().shape[0]))
-        extra_metadata['filename'] = deepcopy(input.filename) # for Epochs is singular, a string
+        extra_metadata['provenance'] = [deepcopy(input.filename)] # for Epochs is singular, a string
         extra_metadata['input_type'] = 'Epochs'
 
     if save_input_no_data:

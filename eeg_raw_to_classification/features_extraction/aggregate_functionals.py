@@ -6,7 +6,7 @@ import numpy as np
 from copy import deepcopy
 from .registry import FunctionalFeatureRegistry
 from typing import Optional, Dict, Any, Union,Callable
-from .baseFunctional import FunctionalFeatureMetadata, FunctionalFeatureStructure
+from .base_functional import FunctionalFeatureMetadata, FunctionalFeatureStructure
 from .utils import snake_to_camel
 
 def functional_aggregate_feature(input, label: Optional[str] = None, fun: Union[Callable, str] = np.mean, axisname: str ='epochs', max_numitem: Optional[int]=None) -> FunctionalFeatureStructure:

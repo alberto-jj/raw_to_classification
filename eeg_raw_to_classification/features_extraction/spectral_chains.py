@@ -1,4 +1,4 @@
-from .baseChain import ChainFeatureStructure
+from .base_chain import ChainFeatureStructure
 from .registry import ChainFeatureRegistry
 import numpy as np
 import os
@@ -10,7 +10,7 @@ import os
 SpectrumMultitaper = ChainFeatureStructure(
     label='SpectrumMultitaper',
     overwrite=False,
-    _type='array',
+    type_='array',
     chain=[
         dict(
             function='functional_spectrum_feature',
@@ -33,11 +33,10 @@ ChainFeatureRegistry.register(SpectrumMultitaper.label, SpectrumMultitaper)
 SpectrumMultitaperAverage = ChainFeatureStructure(
     label='SpectrumMultitaperAverage',
     overwrite=False,
-    _type='array',
+    type_='array',
     chain=[
         dict(feature='SpectrumMultitaper'),
-        dict(
-            function='functional_aggregate_feature',
+        dict(function='functional_aggregate_feature',
             args=dict(
                 label='SpectrumMultitaperAverage',
                 fun=np.mean,

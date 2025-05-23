@@ -8,7 +8,8 @@ path = r"Y:\datasets\epilepsy\bids\derivatives\defaultprep\sub-S001\run-1P\sub-S
 epochs = mne.read_epochs(path, verbose=False)
 print(epochs)
 
-from eeg_raw_to_classification.features_extraction.spectralFunctionals import functional_spectrum_feature
+from eeg_raw_to_classification.features_extraction import process_feature, FunctionalFeatureRegistry, ChainFeatureRegistry
+from eeg_raw_to_classification.features_extraction.spectral_functionals import functional_spectrum_feature
 
 output = functional_spectrum_feature(epochs, method='welch', mne_kwargs={'n_fft': 256, 'n_overlap': 128, 'average': 'mean'}, label='test')
 
@@ -17,6 +18,8 @@ epochs.get_data().shape
 output.values.shape
 output.metadata.axes
 output.metadata.order
+
+
 sample_data_folder = mne.datasets.sample.data_path(download=True)
 sample_data_raw_file = sample_data_folder / "MEG" / "sample" / "sample_audvis_raw.fif"
 raw = mne.io.read_raw_fif(sample_data_raw_file,preload=True,verbose=False)

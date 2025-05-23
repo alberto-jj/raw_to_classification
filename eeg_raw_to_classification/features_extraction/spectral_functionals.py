@@ -7,7 +7,7 @@ from mne.io import Raw
 from mne import Epochs
 
 # Custom Imports
-from .baseFunctional import FunctionalFeatureMetadata, FunctionalFeatureStructure
+from .base_functional import FunctionalFeatureMetadata, FunctionalFeatureStructure
 from .registry import FunctionalFeatureRegistry
 from .utils import get_mne_metadata
 
@@ -121,7 +121,7 @@ def functional_spectrum_feature(input: Union[Epochs,Raw],*, label: Optional[str]
     metadata = FunctionalFeatureMetadata(
         label = label,
         kind = 'spectrum',
-        _type = 'array',
+        type_ = 'array',
         axes = output_axes,
         order = output_order,
         extra_metadata = extra_metadata,

@@ -1,6 +1,6 @@
 from typing import Dict, Type, List, Callable, Any
-from .baseChain import ChainFeatureStructure
-from .baseFunctional import FunctionalFeatureStructure
+from .base_chain import ChainFeatureStructure
+from .base_functional import FunctionalFeatureStructure
 
 class FunctionalFeatureRegistry:
     """

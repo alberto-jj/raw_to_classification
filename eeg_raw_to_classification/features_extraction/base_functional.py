@@ -27,7 +27,7 @@ class FunctionalFeatureMetadata:
             The name of the feature family or conceptual category this functional feature belongs to.
             Example values: "spectrum", "specparam", "complexity".
 
-        _type (str):
+        type_ (str):
             A descriptor of the output format. This informs how the `values` should be interpreted and handled.
             Common values include:
               - "array" → for standard `np.ndarray` outputs
@@ -64,7 +64,7 @@ class FunctionalFeatureMetadata:
         -------------   ----------------------------------------------------------
         label           A unique name for this instance (e.g., 'spectrum_plot_summary')
         kind            The category of the source feature (e.g., 'spectrum')
-        _type            Set to 'html' for visual output, 'dict' for summaries, etc.
+        type_            Set to 'html' for visual output, 'dict' for summaries, etc.
         axes            Include only if relevant to the structure of the representation; otherwise use {}
         order           Use () if output is not a structured array
         extra_metadata  Describe the output format and context (e.g., {'rendered_as': 'html'})
@@ -72,10 +72,10 @@ class FunctionalFeatureMetadata:
     """
     label: str
     kind: str
-    _type: str
+    type_: str
     axes: Dict[str, Any]
     order: Tuple[str, ...]
-    extra_metadata: Optional[Dict[str, Any]] = None
+    extra_metadata: Optional[Dict[str, Any]] = field(default_factory=dict)
     kwargs: Dict[str, Any] = field(default_factory=dict)
 
 
@@ -90,7 +90,7 @@ class FunctionalFeatureStructure:
 
     Attributes:
         values (Union[np.ndarray, str, Dict, Any]):
-            The main result of the functional feature computation. Its _type depends on the nature of the functional feature:
+            The main result of the functional feature computation. Its type_ depends on the nature of the functional feature:
             
             - np.ndarray: typical for core functional features (e.g., spectral power, entropy)
             - str: for visual or HTML-based inspectors
@@ -99,7 +99,7 @@ class FunctionalFeatureStructure:
 
         metadata (FunctionalFeatureMetadata):
             Metadata describing the axes, dimensions, and parameters associated with the computation.
-            For inspector features or non-array outputs, `axes` and `order` can be empty, but `_type`,
+            For inspector features or non-array outputs, `axes` and `order` can be empty, but `type_`,
             `kwargs`, and `extra_metadata` should still describe the context of the result.
     """
     values: Union[np.ndarray, str, Dict, Any]
@@ -117,5 +117,5 @@ def inspect_example(input: Optional[FunctionalFeatureStructure] = None) -> str:
     Returns:
         str: HTML-formatted inspection report.
     """
-    return f"<p><b>{input.metadata._type}</b>: no custom inspect defined.</p>"
+    return f"<p><b>{input.metadata.type_}</b>: no custom inspect defined.</p>"
 
