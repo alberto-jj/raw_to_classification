@@ -2,6 +2,7 @@ import mne
 
 # pip install pympler
 
+#TODO: make tests using epochs and raw files from sample datasets of mne
 path = r"Y:\datasets\epilepsy\bids\derivatives\defaultprep\sub-S001\run-1P\sub-S001_run-1P_task-SZ_acq-EZ0_outcome-SF_desc-reject_epo.fif"
 
 epochs = mne.read_epochs(path, verbose=False)

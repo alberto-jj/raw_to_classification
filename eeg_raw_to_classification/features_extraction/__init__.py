@@ -5,7 +5,7 @@ from .utils import get_mne_metadata, snake_to_camel, functional_feature_to_forma
 from typing import Optional, Dict, Any, Union, Callable
 from .spectralFunctional import *
 from .aggregateFunctional import *
-from .features import *
+from .chain_features import *
 
 
 
