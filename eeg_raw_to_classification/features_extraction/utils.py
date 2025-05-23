@@ -8,7 +8,7 @@ import json
 import pickle
 from mne.io import read_raw
 from mne import read_epochs
-def primitive_feature_to_format(this_type:str):
+def functional_feature_to_format(this_type:str):
     """Convert a feature _type to a standardized format.
 
     Parameters
@@ -32,7 +32,7 @@ def primitive_feature_to_format(this_type:str):
     else:
         raise ValueError(f"Unknown feature _type: {this_type}")
 
-def primitive_save(output, outputfile, output_format):
+def functional_save(output, outputfile, output_format):
     """Save the output in the specified format.
 
     Parameters
@@ -63,7 +63,7 @@ def primitive_save(output, outputfile, output_format):
     else:
         raise ValueError(f"Unknown format: {output_format}")
 
-def primitive_load(outputfile, output_format):
+def functional_load(outputfile, output_format):
     """Load the output from the specified format.
 
     Parameters

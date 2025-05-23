@@ -7,9 +7,9 @@ path = r"Y:\datasets\epilepsy\bids\derivatives\defaultprep\sub-S001\run-1P\sub-S
 epochs = mne.read_epochs(path, verbose=False)
 print(epochs)
 
-from eeg_raw_to_classification.features_extraction.spectralPrimitive import primitive_spectrum_feature
+from eeg_raw_to_classification.features_extraction.spectralFunctional import functional_spectrum_feature
 
-output = primitive_spectrum_feature(epochs, method='welch', mne_kwargs={'n_fft': 256, 'n_overlap': 128, 'average': 'mean'}, label='test')
+output = functional_spectrum_feature(epochs, method='welch', mne_kwargs={'n_fft': 256, 'n_overlap': 128, 'average': 'mean'}, label='test')
 epochs.get_data().shape
 output.values.shape
 output.metadata.axes
@@ -28,13 +28,13 @@ raw3 = mne.io.read_raw_fif(sample_data_raw_file,preload=False,verbose=False)
 from pympler import asizeof
 
 
-from eeg_raw_to_classification.features_extraction import process_feature, PrimitiveFeatureRegistry, FeatureRegistry
+from eeg_raw_to_classification.features_extraction import process_feature, FunctionalFeatureRegistry, ChainFeatureRegistry
 from eeg_raw_to_classification.features_extraction import SpectrumMultitaperAverage
 
-output = process_feature(epochs, SpectrumMultitaperAverage, path,inspect_only=False, feature_registry=FeatureRegistry, primitive_feature_registry=PrimitiveFeatureRegistry)
-output = process_feature(epochs, SpectrumMultitaperAverage, None,inspect_only=False, feature_registry=FeatureRegistry, primitive_feature_registry=PrimitiveFeatureRegistry)
-output = process_feature(epochs, SpectrumMultitaperAverage, path,inspect_only=True, feature_registry=FeatureRegistry, primitive_feature_registry=PrimitiveFeatureRegistry)
-output = process_feature(epochs, SpectrumMultitaperAverage, None,inspect_only=True, feature_registry=FeatureRegistry, primitive_feature_registry=PrimitiveFeatureRegistry)
+output = process_feature(epochs, SpectrumMultitaperAverage, path,inspect_only=False, chain_feature_registry=ChainFeatureRegistry, functional_feature_registry=FunctionalFeatureRegistry)
+output = process_feature(epochs, SpectrumMultitaperAverage, None,inspect_only=False, chain_feature_registry=ChainFeatureRegistry, functional_feature_registry=FunctionalFeatureRegistry)
+output = process_feature(epochs, SpectrumMultitaperAverage, path,inspect_only=True,  chain_feature_registry=ChainFeatureRegistry, functional_feature_registry=FunctionalFeatureRegistry)
+output = process_feature(epochs, SpectrumMultitaperAverage, None,inspect_only=True,  chain_feature_registry=ChainFeatureRegistry, functional_feature_registry=FunctionalFeatureRegistry)
 
 def examine_object(obj):
     for attr_name in dir(obj):

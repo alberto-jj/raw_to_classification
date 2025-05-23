@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 @dataclass
-class FeatureStructure:
+class ChainFeatureStructure:
     label: str
     overwrite: bool
     _type: str

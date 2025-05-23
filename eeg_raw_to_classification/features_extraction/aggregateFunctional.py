@@ -4,12 +4,12 @@ from mne.io import Raw
 from mne import Epochs
 import numpy as np
 from copy import deepcopy
-from .registry import PrimitiveFeatureRegistry
+from .registry import FunctionalFeatureRegistry
 from typing import Optional, Dict, Any, Union,Callable
-from .basePrimitive import PrimitiveFeatureMetadata, PrimitiveFeatureStructure
+from .baseFunctional import FunctionalFeatureMetadata, FunctionalFeatureStructure
 from .utils import snake_to_camel
 
-def primitive_aggregate_feature(input, label: Optional[str] = None, fun: Union[Callable, str] = np.mean, axisname: str ='epochs', max_numitem: Optional[int]=None) -> PrimitiveFeatureStructure:
+def functional_aggregate_feature(input, label: Optional[str] = None, fun: Union[Callable, str] = np.mean, axisname: str ='epochs', max_numitem: Optional[int]=None) -> FunctionalFeatureStructure:
     """
     Aggregate the input data using a specified function along a specified axis.
     Parameters:
@@ -56,4 +56,4 @@ def primitive_aggregate_feature(input, label: Optional[str] = None, fun: Union[C
         output.metadata.label = output.metadata.label + snake_to_camel(axisname) + snake_to_camel(fun.__name__) + str(max_numitem) if max_numitem is not None else ''
     return output
 
-PrimitiveFeatureRegistry.register(primitive_aggregate_feature.__name__, 'array', primitive_aggregate_feature)
+FunctionalFeatureRegistry.register(functional_aggregate_feature.__name__, 'array', functional_aggregate_feature)

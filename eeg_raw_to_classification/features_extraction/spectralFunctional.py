@@ -7,8 +7,8 @@ from mne.io import Raw
 from mne import Epochs
 
 # Custom Imports
-from .basePrimitive import PrimitiveFeatureMetadata, PrimitiveFeatureStructure
-from .registry import PrimitiveFeatureRegistry
+from .baseFunctional import FunctionalFeatureMetadata, FunctionalFeatureStructure
+from .registry import FunctionalFeatureRegistry
 from .utils import get_mne_metadata
 
 # Feature Imports
@@ -21,7 +21,7 @@ from io import BytesIO
 
 
 # enforce keyword only with *
-def primitive_spectrum_feature(input: Union[Epochs,Raw],*, label: Optional[str] = None, method: str = "multitaper", mne_kwargs: Optional[Dict[str, Any]] = None) -> PrimitiveFeatureStructure:
+def functional_spectrum_feature(input: Union[Epochs,Raw],*, label: Optional[str] = None, method: str = "multitaper", mne_kwargs: Optional[Dict[str, Any]] = None) -> FunctionalFeatureStructure:
     """
     Compute the power spectrum from time-domain EEG data using MNE's multitaper method.
 
@@ -35,6 +35,9 @@ def primitive_spectrum_feature(input: Union[Epochs,Raw],*, label: Optional[str] 
     Returns:
         FeatureOutput: Contains power spectral density and metadata.
     """
+
+    # In general for all features, validate the input array dimensions (number and order or set of dimensions)
+    assert input.get_data().ndim in [2,3], "Input data must be 2D or 3D (e.g., mne.io.Raw or mne.Epochs)."
     # Get metadata from the input data
     input_order, input_axes, extra_metadata = get_mne_metadata(input)
 
@@ -82,10 +85,10 @@ def primitive_spectrum_feature(input: Union[Epochs,Raw],*, label: Optional[str] 
         raise ValueError("Method must be either 'multitaper' or 'welch'.")
 
 
-    # Create the PrimitiveFeatureMetadata object
+    # Create the FunctionalFeatureMetadata object
     kwargs = dict(label=label, method=method, mne_kwargs=mne_kwargs)
     
-    metadata = PrimitiveFeatureMetadata(
+    metadata = FunctionalFeatureMetadata(
         label = label,
         kind = 'spectrum',
         _type = 'array',
@@ -95,15 +98,15 @@ def primitive_spectrum_feature(input: Union[Epochs,Raw],*, label: Optional[str] 
         kwargs = kwargs
     )
 
-    # Create the PrimitiveFeatureStructure object
-    feature_structure = PrimitiveFeatureStructure(
+    # Create the FunctionalFeatureStructure object
+    feature_structure = FunctionalFeatureStructure(
         values = psds,
         metadata = metadata
     )
 
     return feature_structure
 
-PrimitiveFeatureRegistry.register(primitive_spectrum_feature.__name__, "array", primitive_spectrum_feature)
+FunctionalFeatureRegistry.register(functional_spectrum_feature.__name__, "array", functional_spectrum_feature)
 
 # from ssqueezepy.experimental import scale_to_freq
 # from ssqueezepy import Wavelet

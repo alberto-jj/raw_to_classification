@@ -1,20 +1,20 @@
-from .registry import PrimitiveFeatureRegistry, FeatureRegistry
-from .basePrimitive import PrimitiveFeatureStructure, PrimitiveFeatureMetadata
-from .baseFeature import FeatureStructure
-from .utils import get_mne_metadata, snake_to_camel, primitive_feature_to_format, primitive_save, primitive_load
+from .registry import FunctionalFeatureRegistry, ChainFeatureRegistry
+from .baseFunctional import FunctionalFeatureStructure, FunctionalFeatureMetadata
+from .baseChain import ChainFeatureStructure
+from .utils import get_mne_metadata, snake_to_camel, functional_feature_to_format, functional_save, functional_load
 from typing import Optional, Dict, Any, Union, Callable
-from .spectralPrimitive import *
-from .aggregatePrimitive import *
+from .spectralFunctional import *
+from .aggregateFunctional import *
 from .features import *
 
 
 
 def process_feature(input: Any,
-                    feature_structure: FeatureStructure,
+                    feature_structure: ChainFeatureStructure,
                     relevantpath: Optional[str] = None,
                     inspect_only: bool = False,
-                    feature_registry: Optional[Dict[str, Any]] = FeatureRegistry,
-                    primitive_feature_registry: Optional[Dict[str, Any]] = PrimitiveFeatureRegistry
+                    chain_feature_registry: Optional[Dict[str, Any]] = ChainFeatureRegistry,
+                    functional_feature_registry: Optional[Dict[str, Any]] = FunctionalFeatureRegistry
                     ) -> Any:
     featdict = feature_structure
     overwrite = featdict.overwrite
@@ -32,10 +32,10 @@ def process_feature(input: Any,
         if 'feature' in stage.keys():
             # is a feature that is saved or should be saved
             suffix = stage['feature']
-            that_feature = feature_registry.get(suffix)
-            output_format = primitive_feature_to_format(that_feature._type)
+            that_feature = chain_feature_registry.get(suffix)
+            output_format = functional_feature_to_format(that_feature._type)
 
-            inner_featdict = feature_registry.get(suffix)
+            inner_featdict = chain_feature_registry.get(suffix)
 
             if relevantpath is not None:
                 input_suffix = relevantpath.split('_')[-1]
@@ -52,17 +52,17 @@ def process_feature(input: Any,
                                         inner_featdict,
                                         relevantpath,
                                         inspect_only=inspect_only,
-                                        feature_registry=feature_registry,
-                                        primitive_feature_registry=primitive_feature_registry)
+                                        chain_feature_registry=chain_feature_registry,
+                                        functional_feature_registry=functional_feature_registry)
                 if outputfile is not None:
                     os.makedirs(os.path.dirname(outputfile),exist_ok=True)
-                    primitive_save(output, outputfile, output_format)
+                    functional_save(output, outputfile, output_format)
             else:
                 if inspect_only:
                     inspect_only_output.append(True)
                     continue
                 print(f'Already Exists:{outputfile}')
-                output = primitive_load(outputfile, output_format)
+                output = functional_load(outputfile, output_format)
                 inspect_only_output.append(True)
 
         if 'function' in stage.keys():
@@ -70,11 +70,11 @@ def process_feature(input: Any,
             if i_f == len(featdict.chain)-1:
                 # Last stage, assume we want to save it with the feature name
                 suffix = featdict.label
-                primitive_type = primitive_feature_registry.get_type(stage['function'])
+                functional_type = functional_feature_registry.get_type(stage['function'])
 
                 if relevantpath is not None:
                     input_suffix = relevantpath.split('_')[-1]
-                    output_format = primitive_feature_to_format(primitive_type)
+                    output_format = functional_feature_to_format(functional_type)
                     outputfile = relevantpath.replace('_'+ input_suffix,f'_{suffix}.{output_format}')
                 else:
                     outputfile = None
@@ -82,21 +82,21 @@ def process_feature(input: Any,
                     if inspect_only:
                         inspect_only_output.append(False)
                         continue
-                    fun = primitive_feature_registry.get(inner_featdict['function'])
+                    fun = functional_feature_registry.get(inner_featdict['function'])
                     if isinstance(fun,str):
                         fun=eval(fun)
                     output = fun(input_data,**inner_featdict['args'])
 
                     if outputfile is not None:
                         os.makedirs(os.path.dirname(outputfile),exist_ok=True)
-                        primitive_save(output, outputfile, output_format)
+                        functional_save(output, outputfile, output_format)
                     
                 else:
                     if inspect_only:
                         inspect_only_output.append(True)
                         continue
                     print(f'Already Exists:{outputfile}')
-                    output = primitive_load(outputfile, output_format)
+                    output = functional_load(outputfile, output_format)
             else:
                 if inspect_only:
                     continue

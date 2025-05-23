@@ -1,5 +1,5 @@
-from .baseFeature import FeatureStructure
-from .registry import FeatureRegistry
+from .baseChain import ChainFeatureStructure
+from .registry import ChainFeatureRegistry
 import numpy as np
 import os
 
@@ -7,13 +7,13 @@ import os
 # but then how to handle the imports without hardcoding them in chains.py?
 
 
-SpectrumMultitaper = FeatureStructure(
+SpectrumMultitaper = ChainFeatureStructure(
     label='SpectrumMultitaper',
     overwrite=False,
     _type='array',
     chain=[
         dict(
-            function='primitive_spectrum_feature',
+            function='functional_spectrum_feature',
             args=dict(
                 method='multitaper',
                 mne_kwargs=dict(
@@ -27,16 +27,16 @@ SpectrumMultitaper = FeatureStructure(
     ]
 )
 
-FeatureRegistry.register(SpectrumMultitaper.label, SpectrumMultitaper)
+ChainFeatureRegistry.register(SpectrumMultitaper.label, SpectrumMultitaper)
 
-SpectrumMultitaperAverage = FeatureStructure(
+SpectrumMultitaperAverage = ChainFeatureStructure(
     label='SpectrumMultitaperAverage',
     overwrite=False,
     _type='array',
     chain=[
         dict(feature='SpectrumMultitaper'),
         dict(
-            function='primitive_aggregate_feature',
+            function='functional_aggregate_feature',
             args=dict(
                 fun=np.mean,
                 axisname='epochs',
@@ -46,4 +46,4 @@ SpectrumMultitaperAverage = FeatureStructure(
     ]
 )
 
-FeatureRegistry.register(SpectrumMultitaperAverage.label, SpectrumMultitaperAverage)
+ChainFeatureRegistry.register(SpectrumMultitaperAverage.label, SpectrumMultitaperAverage)
