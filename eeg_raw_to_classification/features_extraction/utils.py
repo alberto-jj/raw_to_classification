@@ -59,7 +59,7 @@ def functional_save(output, outputfile, output_format):
             f.write(output)
     elif output_format == 'pickle':
         with open(outputfile, 'wb') as f:
-            pickle.dump(output, f)
+            pickle.dump(output, f, protocol=pickle.HIGHEST_PROTOCOL)
     else:
         raise ValueError(f"Unknown format: {output_format}")
 
