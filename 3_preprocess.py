@@ -45,7 +45,9 @@ def foo(eeg_file, this_prep, DATASET, preprocessed_path, DEBUG, internal_njobs=1
             from eeg_raw_to_classification.utils import save_figs_in_html, save_dict_to_json
 
             if 'redefine_prepare' in this_prep:
-                module_name, func_name = this_prep['redefine_prepare']
+                import_dict = this_prep['redefine_prepare']
+                module_name = import_dict['from_this']
+                func_name = import_dict['import_that']
                 module = importlib.import_module(module_name)
                 prepare = getattr(module, func_name)
             else:
@@ -148,7 +150,7 @@ def main():
             else:
                 derivatives_root = os.path.join(layout.root, f'derivatives/{preplabel}/')
             
-            get_derivative = lambda x: pathlib.Path(get_derivative_path(layout, x, 'reject', 'epo', '.fif', bids_root, derivatives_root)).as_posix()
+            get_derivative = lambda x: pathlib.Path(get_derivative_path(layout, x, 'None', 'epo', '.fif', bids_root, derivatives_root)).as_posix()
 
             if PARALLELIZE:
                 Parallel(n_jobs=external_njobs)(delayed(foo)(eeg_file, this_prep, DATASET, get_derivative(eeg_file), DEBUG,internal_njobs, args.retry_errors ) for eeg_file in eegs)

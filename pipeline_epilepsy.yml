@@ -7,8 +7,8 @@ preprocess:
   prep_cfg:
     defaultprep: # This is the name of the preprocessing pipeline
       redefine_prepare:
-        - redefinitions_epilepsy
-        - prepare
+        from_this: redefinitions_epilepsy
+        import_that: prepare
       prepare:
         epoch_config:
           duration: 1
