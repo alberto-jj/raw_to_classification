@@ -7,7 +7,9 @@ from .spectralFunctionals import *
 from .aggregateFunctionals import *
 from .chain_features import *
 
-
+#TODO: add mne basic processing feature used in chains (not saved): filter, resample, norm, etc.
+# with that we could get rid of prefilter key in the config
+# simiilarly we can use the same idea for prefoo in lempelziv
 
 def process_feature(input: Any,
                     feature_structure: ChainFeatureStructure,
