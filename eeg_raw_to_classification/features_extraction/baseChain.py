@@ -21,12 +21,12 @@ class ChainFeatureStructure:
 
         If you use a feature, then the dict will be:
         {
-            'feature': 'FeatureName',
+            'feature': 'FeatureName', (FeatureName must be registered in the ChainFeatureRegistry)
         }
 
         If you use a function, then the dict will be:
         {
-            'function': 'function_name',
+            'function': 'function_name', ( function_name must be registered in the FunctionalFeatureRegistry)
             'args': {
                 'arg1': value1,
                 'arg2': value2,
