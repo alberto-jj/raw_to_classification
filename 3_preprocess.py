@@ -8,8 +8,10 @@ from eeg_raw_to_classification.utils import load_yaml
 from eeg_raw_to_classification.utils import get_derivative_path,get_path
 import time
 import pathlib
+import importlib
 
-def foo(eeg_file, this_prep, DATASET, reject_path, DEBUG, internal_njobs=1, retry_errors=False):
+
+def foo(eeg_file, this_prep, DATASET, preprocessed_path, DEBUG, internal_njobs=1, retry_errors=False):
     # imports here to avoid problems with joblib
     import os
 
@@ -17,15 +19,13 @@ def foo(eeg_file, this_prep, DATASET, reject_path, DEBUG, internal_njobs=1, retr
     njobs = internal_njobs #internal jobs #len(psutil.Process().cpu_affinity())
     print('Internal NJOBS:', njobs)
     print(eeg_file)
-    fifname = os.path.basename(reject_path)
-    fifpath = os.path.dirname(reject_path)
+    fifname = os.path.basename(preprocessed_path)
+    fifpath = os.path.dirname(preprocessed_path)
 
-    if not os.path.isfile(reject_path) or this_prep['overwrite']:
-        if os.path.isfile(reject_path.replace('.fif', '_problem.txt')) and not retry_errors:
-            print(f'Error file exists: {reject_path.replace(".fif", "_problem.txt")}, skipping')
+    if not os.path.isfile(preprocessed_path) or this_prep['overwrite']:
+        if os.path.isfile(preprocessed_path.replace('.fif', '_problem.txt')) and not retry_errors:
+            print(f'Error file exists: {preprocessed_path.replace(".fif", "_problem.txt")}, skipping')
             return
-        from eeg_raw_to_classification.utils import save_figs_in_html, save_dict_to_json
-        from eeg_raw_to_classification.preprocessing import prepare
         import matplotlib.pyplot as plt
 
         line_noise = DATASET['PowerLineFrequency']
@@ -42,9 +42,18 @@ def foo(eeg_file, this_prep, DATASET, reject_path, DEBUG, internal_njobs=1, retr
             else:
                 raw_file = eeg_file
 
+            from eeg_raw_to_classification.utils import save_figs_in_html, save_dict_to_json
+
+            if 'redefine_prepare' in this_prep:
+                module_name, func_name = this_prep['redefine_prepare']
+                module = importlib.import_module(module_name)
+                prepare = getattr(module, func_name)
+            else:
+                from eeg_raw_to_classification.preprocessing import prepare
+
             reject_eeg, info, figures = prepare(filename=raw_file, keep_chans=DATASET['ch_names'], line_noise=line_noise, njobs=njobs, **this_prep['prepare'])
-            figs_path = reject_path.replace('reject_epo.fif', 'reject_figs.html')
-            info_path = reject_path.replace('reject_epo.fif', 'reject_info.txt')
+            figs_path = preprocessed_path.replace('reject_epo.fif', 'reject_figs.html')
+            info_path = preprocessed_path.replace('reject_epo.fif', 'reject_info.txt')
 
             save_figs_in_html(figs_path, figures)
             save_dict_to_json(info_path, info)
@@ -60,9 +69,9 @@ def foo(eeg_file, this_prep, DATASET, reject_path, DEBUG, internal_njobs=1, retr
             if DEBUG:
                 raise
             else:
-                save_dict_to_json(reject_path.replace('.fif', '_problem.txt'), {'file': eeg_file, 'problem': traceback.format_exc()})
+                save_dict_to_json(preprocessed_path.replace('.fif', '_problem.txt'), {'file': eeg_file, 'problem': traceback.format_exc()})
     else:
-        print(f'Already Exists: {reject_path} or overwrite is False')
+        print(f'Already Exists: {preprocessed_path} or overwrite is False')
 
 def main():
     parser = argparse.ArgumentParser(description='Preprocess EEG data.')
@@ -115,7 +124,7 @@ def main():
             start_time = time.time()
             bids_root = DATASET.get('bids_root', None)
             bids_root = get_path(bids_root, MOUNT)
-            layout = bids.BIDSLayout(bids_root)
+            layout = bids.BIDSLayout(bids_root,validate=False)
             # how to make this faster, it takes too long...
             eegs = layout.get(**file_filter)
             end_time = time.time()

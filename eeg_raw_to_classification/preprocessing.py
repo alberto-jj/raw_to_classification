@@ -123,12 +123,12 @@ def prepare(filename, line_noise, keep_chans=None, epoch_length = 2,
         print('AMPLITUDE NORMALIZATION DONE')
 
     # Filter the data
-    raw.filter(l_freq=1, h_freq=None) # bandpassing 1 Hz
+    raw = raw.filter(l_freq=1, h_freq=None) # bandpassing 1 Hz
 
     # Extract epochs
     print('EPOCH SEGMENTATION')
     epochs = mne.make_fixed_length_epochs(raw, duration = epoch_length, preload=True)
-    epochs.resample(downsample)
+    epochs = epochs.resample(downsample)
 
     if not skip_reject:
         # Automated epoch rejection

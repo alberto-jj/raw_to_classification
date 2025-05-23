@@ -1,0 +1,32 @@
+EPILEPSY:
+  url: Null
+  dataset_label : epilepsy
+  skip : False
+  
+  # Participants 
+  participants_file : 
+    local: 'Y:/datasets/epilepsy/bids/participants.csv'
+  reader : 
+    function : "pd.read_csv"
+    args :
+      delimiter: ","
+
+  cleaned_participants : 
+    local: "Y:/datasets/epilepsy/bids/participants.csv" # created whether transforms or not were applied
+
+  # Files to be included in the study
+  raw_layout:
+    extension: ".mat"
+    suffix : 'iEEG'
+    return_type : 'filename'
+
+  # Processing
+  example_file: 
+    local: "Y:/datasets/epilepsy/bids/*.mat"
+  # ch_names are channels to keep
+  ch_names: null
+  PowerLineFrequency : null
+
+# BIDS
+  bids_root :
+    local: "Y:/datasets/epilepsy/bids/"
