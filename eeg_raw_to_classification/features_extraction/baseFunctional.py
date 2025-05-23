@@ -59,6 +59,7 @@ class FunctionalFeatureMetadata:
     -----
     For non-array functional features such as inspectors or summaries, populate metadata fields as follows:
     TODO: Add mne.report or other types as needed
+        https://mne.tools/stable/auto_tutorials/intro/70_report.html#sphx-glr-auto-tutorials-intro-70-report-py
         Field           What to populate
         -------------   ----------------------------------------------------------
         label           A unique name for this instance (e.g., 'spectrum_plot_summary')
