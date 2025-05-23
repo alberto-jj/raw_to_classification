@@ -11,6 +11,8 @@ print(epochs)
 from eeg_raw_to_classification.features_extraction.spectralFunctionals import functional_spectrum_feature
 
 output = functional_spectrum_feature(epochs, method='welch', mne_kwargs={'n_fft': 256, 'n_overlap': 128, 'average': 'mean'}, label='test')
+
+
 epochs.get_data().shape
 output.values.shape
 output.metadata.axes

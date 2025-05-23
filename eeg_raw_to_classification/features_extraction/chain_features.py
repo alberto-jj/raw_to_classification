@@ -16,6 +16,7 @@ SpectrumMultitaper = ChainFeatureStructure(
             function='functional_spectrum_feature',
             args=dict(
                 method='multitaper',
+                label='SpectrumMultitaper',
                 mne_kwargs=dict(
                     adaptive=False,
                     low_bias=True,
@@ -38,6 +39,7 @@ SpectrumMultitaperAverage = ChainFeatureStructure(
         dict(
             function='functional_aggregate_feature',
             args=dict(
+                label='SpectrumMultitaperAverage',
                 fun=np.mean,
                 axisname='epochs',
                 max_numitem=None
