@@ -34,6 +34,36 @@ def functional_spectrum_feature(input: Union[Epochs,Raw],*, label: Optional[str]
 
     Returns:
         FeatureOutput: Contains power spectral density and metadata.
+
+    Note:
+        if you want to use a pure array, you can use the mne.io.RawArray or mne.EpochsArray
+        to create a Raw or Epochs object from a numpy array. This is useful for testing purposes.
+
+    Example:
+        times = np.linspace(0, 1, sampling_freq, endpoint=False)
+        sine = np.sin(20 * np.pi * times)
+        cosine = np.cos(10 * np.pi * times)
+        shape = (n_channels, n_samples)
+        data = np.array([sine, cosine])
+
+        info = mne.create_info(
+            ch_names=["10 Hz sine", "5 Hz cosine"], ch_types=["eeg"] * 2, sfreq=sampling_freq
+        )
+
+        simulated_raw = mne.io.RawArray(data, info)
+
+        shape =(n_epochs, n_channels, n_samples)
+        data = np.array(
+            [
+                [0.2 * sine, 1.0 * cosine],
+                [0.4 * sine, 0.8 * cosine],
+                [0.6 * sine, 0.6 * cosine],
+                [0.8 * sine, 0.4 * cosine],
+                [1.0 * sine, 0.2 * cosine],
+            ]
+        )
+
+        simulated_epochs = mne.EpochsArray(data, info)
     """
 
     # In general for all features, validate the input array dimensions (number and order or set of dimensions)
