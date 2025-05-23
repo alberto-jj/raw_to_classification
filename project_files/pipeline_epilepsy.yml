@@ -1,17 +1,23 @@
-project: 'r2c'
-datasets_file: 'datasets_r2c.yml'
+project: 'epilepsy'
+datasets_file: 'project_files/datasets_epilepsy.yml'
+mount: local
 inspect:
   path : './data/%PROJECT%/inspect'
 preprocess:
   prep_cfg:
     defaultprep: # This is the name of the preprocessing pipeline
+      redefine_prepare:
+        from_this: project_files.redefinitions_epilepsy
+        import_that: prepare
       prepare:
-        epoch_length : 5
-        downsample : 500
-        ica_method : 'fastica'
-        skip_prep : False
-        skip_reject : True
+        epoch_config:
+          duration: 1
+          overlap: 0.5
+        downsample : 256
         normalization : True
+        filter_args:
+          l_freq : 0.5
+          h_freq : 150
       overwrite : False
   prep_list :
     - defaultprep
@@ -117,7 +123,7 @@ features:
     RelativeBandPower1:
       overwrite : False
       chain :
-        - feature : PowerSpectrumAverage # this will save PowerSpectrum if not already saved
+        - feature : PowerSpectrumAverage
         - function: relative_bandpower
           args :
             bands:

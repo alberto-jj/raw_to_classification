@@ -1,5 +1,5 @@
 project: 'saint'
-datasets_file: 'datasets_saint.yml'
+datasets_file: 'project_files/datasets_saint.yml'
 mount: narval
 inspect:
   path : 
