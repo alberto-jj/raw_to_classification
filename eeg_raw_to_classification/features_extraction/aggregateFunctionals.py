@@ -40,6 +40,7 @@ def functional_aggregate_feature(input, label: Optional[str] = None, fun: Union[
     if max_numitem is not None:
         if output['values'].shape[axis] >= max_numitem:
             # if we have more than max_numitem, we take the first max_numitem
+            #TODO: also in theory we could give indexing array, then if we pass a single int use range, otherwise use the array of indices
             output['values'] = np.take(output['values'], indices=range(max_numitem), axis=axis)
         else:
             print(f"Warning: {output['values'].shape[axis]} items in axis {axisname} are less than max_numitem {max_numitem}.")
