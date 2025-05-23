@@ -22,7 +22,7 @@ def foo(eeg_file, DOWNSAMPLE, keep_channels, featurepipelineCFG, FEATURE_CFG, fe
     from mne.datasets.eegbci import standardize
     import mne
     import os
-    from eeg_raw_to_classification import features as feat
+    from eeg_raw_to_classification import features2 as feat
     from eeg_raw_to_classification.utils import load_yaml, save_dict_to_json,get_path
     import traceback
 

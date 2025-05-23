@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import glob
 import mne
-from eeg_raw_to_classification import features as feat
+from eeg_raw_to_classification import features2 as feat
 from eeg_raw_to_classification.utils import load_yaml, get_path
 import traceback
 import pandas as pd
