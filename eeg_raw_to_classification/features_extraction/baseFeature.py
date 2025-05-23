@@ -15,7 +15,7 @@ class FeatureStructure:
     overwrite: bool
         If True, the output will overwrite any existing data. If False, the output will be saved with a new name.
     _type: str
-        The type of the feature. This is used to determine how the feature should saved. E.g. "array"
+        The _type of the feature. This is used to determine how the feature should saved. E.g. "array"
     chain: list
         A list of dictionaries or strings representing the chain of features or functions to be applied.
 

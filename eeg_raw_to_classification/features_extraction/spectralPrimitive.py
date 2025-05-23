@@ -88,7 +88,7 @@ def primitive_spectrum_feature(input: Union[Epochs,Raw],*, label: Optional[str] 
     metadata = PrimitiveFeatureMetadata(
         label = label,
         kind = 'spectrum',
-        type = 'array',
+        _type = 'array',
         axes = output_axes,
         order = output_order,
         extra_metadata = extra_metadata,

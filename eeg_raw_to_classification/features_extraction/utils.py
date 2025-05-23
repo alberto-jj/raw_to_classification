@@ -9,17 +9,17 @@ import pickle
 from mne.io import read_raw
 from mne import read_epochs
 def primitive_feature_to_format(this_type:str):
-    """Convert a feature type to a standardized format.
+    """Convert a feature _type to a standardized format.
 
     Parameters
     ----------
     this_type : str
-        The input feature type.
+        The input feature _type.
 
     Returns
     -------
     str
-        The converted feature type in a standardized format.
+        The converted feature _type in a standardized format.
     """
     if this_type == 'array':
         return 'npy'
@@ -30,7 +30,7 @@ def primitive_feature_to_format(this_type:str):
     elif this_type == 'pickle':
         return 'pickle'
     else:
-        raise ValueError(f"Unknown feature type: {this_type}")
+        raise ValueError(f"Unknown feature _type: {this_type}")
 
 def primitive_save(output, outputfile, output_format):
     """Save the output in the specified format.

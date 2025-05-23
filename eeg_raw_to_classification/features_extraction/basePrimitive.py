@@ -27,7 +27,7 @@ class PrimitiveFeatureMetadata:
             The name of the feature family or conceptual category this primitive feature belongs to.
             Example values: "spectrum", "specparam", "complexity".
 
-        type (str):
+        _type (str):
             A descriptor of the output format. This informs how the `values` should be interpreted and handled.
             Common values include:
               - "array" → for standard `np.ndarray` outputs
@@ -62,7 +62,7 @@ class PrimitiveFeatureMetadata:
         -------------   ----------------------------------------------------------
         label           A unique name for this instance (e.g., 'spectrum_plot_summary')
         kind            The category of the source feature (e.g., 'spectrum')
-        type            Set to 'html' for visual output, 'dict' for summaries, etc.
+        _type            Set to 'html' for visual output, 'dict' for summaries, etc.
         axes            Include only if relevant to the structure of the representation; otherwise use {}
         order           Use () if output is not a structured array
         extra_metadata  Describe the output format and context (e.g., {'rendered_as': 'html'})
@@ -70,7 +70,7 @@ class PrimitiveFeatureMetadata:
     """
     label: str
     kind: str
-    type: str
+    _type: str
     axes: Dict[str, Any]
     order: Tuple[str, ...]
     extra_metadata: Optional[Dict[str, Any]] = None
@@ -88,7 +88,7 @@ class PrimitiveFeatureStructure:
 
     Attributes:
         values (Union[np.ndarray, str, Dict, Any]):
-            The main result of the primitive feature computation. Its type depends on the nature of the primitive feature:
+            The main result of the primitive feature computation. Its _type depends on the nature of the primitive feature:
             
             - np.ndarray: typical for core primitive features (e.g., spectral power, entropy)
             - str: for visual or HTML-based inspectors
@@ -97,7 +97,7 @@ class PrimitiveFeatureStructure:
 
         metadata (PrimitiveFeatureMetadata):
             Metadata describing the axes, dimensions, and parameters associated with the computation.
-            For inspector features or non-array outputs, `axes` and `order` can be empty, but `type`,
+            For inspector features or non-array outputs, `axes` and `order` can be empty, but `_type`,
             `kwargs`, and `extra_metadata` should still describe the context of the result.
     """
     values: Union[np.ndarray, str, Dict, Any]
@@ -115,5 +115,5 @@ def inspect_example(input: Optional[PrimitiveFeatureStructure] = None) -> str:
     Returns:
         str: HTML-formatted inspection report.
     """
-    return f"<p><b>{input.metadata.type}</b>: no custom inspect defined.</p>"
+    return f"<p><b>{input.metadata._type}</b>: no custom inspect defined.</p>"
 
