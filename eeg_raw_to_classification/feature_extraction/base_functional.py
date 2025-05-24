@@ -1,8 +1,14 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, Callable
+
 import numpy as np
-import os
-#import pandas as pd
+import json
+import pickle
+
+from mne.io import Raw
+from mne import Epochs
+from mne.io import read_raw
+from mne import read_epochs
 
 # ---------------------------
 # Data Structures
@@ -106,6 +112,32 @@ class FunctionalFeatureStructure:
     metadata: FunctionalFeatureMetadata
 
 
+class FunctionalFeatureRegistry:
+    """
+    Holds named FunctionalFeatureStructure (callable features).
+    Unlike ChainFeatureRegistry, which is for chains.
+    """
+    _functional_features: Dict[str, Callable] = {}
+    _functional_types: Dict[str, str] = {}
+
+    @classmethod
+    def register(cls, name: str, functional_type: str, func: Callable):
+        cls._functional_features[name] = func
+        cls._functional_types[name] = functional_type
+
+    @classmethod
+    def get(cls, name: str) -> Callable:
+        return cls._functional_features[name]
+    
+    @classmethod
+    def get_type(cls, name: str) -> str:
+        return cls._functional_types[name]
+    
+    @classmethod
+    def list(cls) -> List[str]:
+        return list(cls._functional_features.keys())
+
+
 def inspect_example(input: Optional[FunctionalFeatureStructure] = None) -> str:
     """
     Generate an HTML string with a visual summary of the feature output.
@@ -118,4 +150,96 @@ def inspect_example(input: Optional[FunctionalFeatureStructure] = None) -> str:
         str: HTML-formatted inspection report.
     """
     return f"<p><b>{input.metadata.type_}</b>: no custom inspect defined.</p>"
+
+
+
+def functional_feature_to_format(this_type:str):
+    """Convert a feature type_ to a standardized format.
+
+    Parameters
+    ----------
+    this_type : str
+        The input feature type_.
+
+    Returns
+    -------
+    str
+        The converted feature type_ in a standardized format.
+    """
+    if this_type == 'array':
+        return 'npy'
+    elif this_type == 'html':
+        return 'html'
+    elif this_type == 'dict':
+        return 'json'
+    elif this_type == 'pickle':
+        return 'pickle'
+    else:
+        raise ValueError(f"Unknown feature type_: {this_type}")
+
+def functional_save(object_to_save, outputfile, output_format):
+    """Save the object_to_save in the specified format.
+
+    Parameters
+    ----------
+    object_to_save : any
+        The output to save.
+    outputfile : str
+        The filename to save the output to.
+    output_format : str
+        The format to save the output in.
+    """
+    if output_format == 'fif':
+        if isinstance(object_to_save, Raw) or isinstance(object_to_save, Epochs):
+            object_to_save.save(outputfile, overwrite=True)
+        else:
+            raise ValueError(f"Unknown MNE object type: {type(object_to_save)}")
+    if output_format == 'npy':
+        np.save(outputfile,object_to_save,allow_pickle=True)
+    elif output_format == 'json':
+        with open(outputfile, 'w') as f:
+            json.dump(object_to_save, f, indent=4)
+    elif output_format == 'html':
+        with open(outputfile, 'w') as f:
+            f.write(object_to_save)
+    elif output_format == 'pickle':
+        with open(outputfile, 'wb') as f:
+            pickle.dump(object_to_save, f, protocol=pickle.HIGHEST_PROTOCOL)
+    else:
+        raise ValueError(f"Unknown format: {output_format}")
+
+def functional_load(outputfile, output_format):
+    """Load the output from the specified format.
+
+    Parameters
+    ----------
+    outputfile : str
+        The filename to load the output from.
+    output_format : str
+        The format to load the output in.
+
+    Returns
+    -------
+    any
+        The loaded output.
+    """
+    if output_format == 'fif':
+        try:
+            return read_raw(outputfile, preload=True)
+        except:
+            return read_epochs(outputfile, preload=True)
+
+    if output_format == 'npy':
+        return np.load(outputfile,allow_pickle=True).item()
+    elif output_format == 'json':
+        with open(outputfile, 'r') as f:
+            return json.load(f)
+    elif output_format == 'html':
+        with open(outputfile, 'r') as f:
+            return f.read()
+    elif output_format == 'pickle':
+        with open(outputfile, 'rb') as f:
+            return pickle.load(f)
+    else:
+        raise ValueError(f"Unknown format: {output_format}")
 

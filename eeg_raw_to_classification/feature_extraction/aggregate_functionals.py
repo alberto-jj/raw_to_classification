@@ -1,14 +1,12 @@
 
-from copy import deepcopy
-from mne.io import Raw
-from mne import Epochs
 import numpy as np
 from copy import deepcopy
-from .registry import FunctionalFeatureRegistry
+from .decorators import functional_feature
+from .base_functional import FunctionalFeatureStructure
 from typing import Optional, Dict, Any, Union,Callable
-from .base_functional import FunctionalFeatureMetadata, FunctionalFeatureStructure
 from .utils import snake_to_camel
 
+@functional_feature('functional_aggregate_feature', 'array')
 def functional_aggregate_feature(input, label: Optional[str] = None, fun: Union[Callable, str] = np.mean, axisname: str ='epochs', max_numitem: Optional[int]=None) -> FunctionalFeatureStructure:
     """
     Aggregate the input data using a specified function along a specified axis.
@@ -56,5 +54,3 @@ def functional_aggregate_feature(input, label: Optional[str] = None, fun: Union[
     elif isinstance(output.metadata.label,str):
         output.metadata.label = output.metadata.label + snake_to_camel(axisname) + snake_to_camel(fun.__name__) + str(max_numitem) if max_numitem is not None else ''
     return output
-
-FunctionalFeatureRegistry.register(functional_aggregate_feature.__name__, 'array', functional_aggregate_feature)

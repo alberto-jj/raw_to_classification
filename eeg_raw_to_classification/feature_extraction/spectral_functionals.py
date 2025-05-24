@@ -6,13 +6,15 @@ from copy import deepcopy
 from mne.io import Raw
 from mne import Epochs
 
+
 # Custom Imports
-from .base_functional import FunctionalFeatureMetadata, FunctionalFeatureStructure
-from .registry import FunctionalFeatureRegistry
+from .base_functional import FunctionalFeatureMetadata, FunctionalFeatureStructure, FunctionalFeatureRegistry
+from .decorators import functional_feature
 from .utils import get_mne_metadata
 
 # Feature Imports
 from mne.time_frequency import psd_array_multitaper, psd_array_welch
+from scipy.integrate import simpson as simps
 
 # Extra Imports
 import matplotlib.pyplot as plt
@@ -21,6 +23,7 @@ from io import BytesIO
 
 
 # enforce keyword only with *
+@functional_feature('functional_spectrum_feature', 'array')
 def functional_spectrum_feature(input: Union[Epochs,Raw],*, label: Optional[str] = None, method: str = "multitaper", mne_kwargs: Optional[Dict[str, Any]] = None) -> FunctionalFeatureStructure:
     """
     Compute the power spectrum from time-domain EEG data using MNE's multitaper method.
@@ -135,8 +138,6 @@ def functional_spectrum_feature(input: Union[Epochs,Raw],*, label: Optional[str]
     )
 
     return feature_structure
-
-FunctionalFeatureRegistry.register(functional_spectrum_feature.__name__, "array", functional_spectrum_feature)
 
 # from ssqueezepy.experimental import scale_to_freq
 # from ssqueezepy import Wavelet

@@ -1,0 +1,26 @@
+SpectrumMultitaper:
+    label: SpectrumMultitaper
+    overwrite: False
+    type_: array
+    chain:
+        - function: functional_spectrum_feature
+          args:
+            method: multitaper
+            label: SpectrumMultitaper
+            mne_kwargs:
+                adaptive: False
+                low_bias: True
+                normalization: full
+                verbose: 0
+SpectrumMultitaperAverage:
+    label: SpectrumMultitaperAverage
+    overwrite: False
+    type_: array
+    chain:
+        - feature: SpectrumMultitaper
+        - function: functional_aggregate_feature
+          args:
+            label: SpectrumMultitaperAverage
+            fun: np.mean
+            axisname: epochs
+            max_numitem: null
