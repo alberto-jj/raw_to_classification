@@ -71,3 +71,23 @@ class ChainFeatureRegistry:
         return list(cls._chains.keys())
 
 
+def chain_dict_to_chain_structure(chain_dict: Dict[str, Any]) -> ChainFeatureStructure:
+    """Convert a chain dictionary to a chain structure.
+
+    Parameters
+    ----------
+    chain_dict : dict
+        The chain dictionary to convert.
+
+    Returns
+    -------
+    ChainFeatureStructure
+        The converted chain structure.
+    """
+    chain_structure = ChainFeatureStructure(
+        label=chain_dict['label'],
+        overwrite=chain_dict['overwrite'],
+        type_=chain_dict['type_'],
+        chain=chain_dict['chain']
+    )
+    return chain_structure

@@ -1,0 +1,16 @@
+BasicPrep:
+  label: BasicPrep
+  overwrite: False
+  type_: mne
+  chain:
+    - function: functional_make_fixed_length_epochs_feature
+      args:
+        label: Epochs30sOverlap20s
+        mne_kwargs:
+          duration: 30.0
+          overlap: 20.0
+    - function: functional_resample_feature
+      args:
+        label: ResampleTo512
+        mne_kwargs:
+          sfreq: 512

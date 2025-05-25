@@ -2,6 +2,7 @@ from typing import Any, Dict, Optional
 from .base_functional import FunctionalFeatureRegistry, functional_feature_to_format
 from .base_functional import functional_load, functional_save
 from .base_chain import ChainFeatureStructure, ChainFeatureRegistry
+from .utils import is_bids_like_filename
 from copy import deepcopy
 
 import os
@@ -25,6 +26,12 @@ def run_feature(input: Any,
     else:
         output = None
     inspect_only_output = {}
+
+    if file_bidspath is not None:
+        # check file is bids-like key-value_key-value_suffix.extension
+        basename = os.path.basename(file_bidspath)
+        if not is_bids_like_filename(basename):
+            raise ValueError(f'File {file_bidspath} is not BIDS compliant. Please provide a BIDS compliant file name.')
 
     for i_f,stage in enumerate(featdict.chain):
         input_data = output
@@ -87,7 +94,8 @@ def run_feature(input: Any,
                     output = fun(input_data,**inner_featdict['args'])
 
                     if outputfile is not None:
-                        os.makedirs(os.path.dirname(outputfile),exist_ok=True)
+                        if os.path.dirname(outputfile):
+                            os.makedirs(os.path.dirname(outputfile),exist_ok=True)
                         functional_save(output, outputfile, output_format)
                     
                 else:
@@ -99,8 +107,7 @@ def run_feature(input: Any,
             else:
                 if inspect_only:
                     continue
-                innerfun=eval(f"inner_featdict['function']")
-                innerfun=eval(innerfun)
+                innerfun=functional_feature_registry.get(inner_featdict['function'])
                 output = innerfun(input_data,**inner_featdict['args'])
         input_data = output
     if inspect_only:

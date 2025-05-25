@@ -9,7 +9,7 @@ from mne.io import Raw
 from mne import Epochs
 from mne.io import read_raw
 from mne import read_epochs
-
+import os
 # ---------------------------
 # Data Structures
 # ---------------------------
@@ -53,9 +53,7 @@ class FunctionalFeatureMetadata:
         extra_metadata (Optional[Dict[str, Any]]):
             Additional contextual information about the functional feature output. This may include rendering hints,
             source dependencies, or visualization-specific attributes. Example entries:
-              - "rendered_as": "html"
-              - "source_feature": "spectrum"
-              - "plot_type": "channels"
+                - "provenance": list of sources
 
         kwargs (Dict[str, Any]):
             The parameters used to compute the functional feature. These are retained for reproducibility and
@@ -174,6 +172,8 @@ def functional_feature_to_format(this_type:str):
         return 'json'
     elif this_type == 'pickle':
         return 'pickle'
+    elif this_type == 'mne':
+        return 'mne'
     else:
         raise ValueError(f"Unknown feature type_: {this_type}")
 
@@ -189,12 +189,20 @@ def functional_save(object_to_save, outputfile, output_format):
     output_format : str
         The format to save the output in.
     """
-    if output_format == 'fif':
-        if isinstance(object_to_save, Raw) or isinstance(object_to_save, Epochs):
-            object_to_save.save(outputfile, overwrite=True)
-        else:
-            raise ValueError(f"Unknown MNE object type: {type(object_to_save)}")
-    if output_format == 'npy':
+    if output_format == 'mne':
+        mne_object = object_to_save.values
+        metadata = object_to_save.metadata
+        basename = os.path.basename(outputfile)
+        name = os.path.splitext(basename)[0]
+        extension = os.path.splitext(basename)[1]
+        if extension != '.fif':
+            outputfile = os.path.join(os.path.dirname(outputfile), name + '.fif')
+        mne_object.save(outputfile, overwrite=True)
+        object_to_save.values = outputfile
+        full_path = os.path.join(os.path.dirname(outputfile), name + '.mne')
+        with open(full_path, 'wb') as f:
+            pickle.dump(object_to_save, f, protocol=pickle.HIGHEST_PROTOCOL)
+    elif output_format == 'npy':
         np.save(outputfile,object_to_save,allow_pickle=True)
     elif output_format == 'json':
         with open(outputfile, 'w') as f:
@@ -223,12 +231,32 @@ def functional_load(outputfile, output_format):
     any
         The loaded output.
     """
-    if output_format == 'fif':
-        try:
-            return read_raw(outputfile, preload=True)
-        except:
-            return read_epochs(outputfile, preload=True)
+    if output_format == 'mne':
+        if not os.path.exists(outputfile):
+            raise ValueError(f"File not found: {outputfile}")
+        
+        basedir = os.path.dirname(outputfile)
+        basename = os.path.basename(outputfile)
+        name = os.path.splitext(basename)[0]
+        extension = os.path.splitext(basename)[1]
+        if extension == '.fif':
+            fif_file = os.path.join(basedir, name + '.fif')
+            meta_file = os.path.join(basedir, name + '.mne')
+        elif extension == '.mne':
+            meta_file = os.path.join(basedir, name + '.mne')
+            fif_file = os.path.join(basedir, name + '.fif')
+        else:
+            raise ValueError(f"Failed to load MNE object from {outputfile}. File must end with .fif or .mne")
 
+        try:
+            mne_object = read_raw(fif_file, preload=True)
+        except:
+            print(f"Could not load raw from {fif_file}. Trying to load epochs.")
+            mne_object = read_epochs(fif_file, preload=True)
+        with open(meta_file, 'rb') as f:
+            object_to_load = pickle.load(f)
+        object_to_load.values = mne_object
+        return object_to_load
     if output_format == 'npy':
         return np.load(outputfile,allow_pickle=True).item()
     elif output_format == 'json':

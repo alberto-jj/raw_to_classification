@@ -11,6 +11,7 @@ from mne import Epochs
 from .base_functional import FunctionalFeatureMetadata, FunctionalFeatureStructure, FunctionalFeatureRegistry
 from .decorators import functional_feature
 from .utils import get_mne_metadata
+from .utils import get_replaced_axes_order_values, get_sliced_index_combinations
 
 # Feature Imports
 from mne.time_frequency import psd_array_multitaper, psd_array_welch
@@ -69,6 +70,11 @@ def functional_spectrum_feature(input: Union[Epochs,Raw],*, label: Optional[str]
         simulated_epochs = mne.EpochsArray(data, info)
     """
 
+    # Check if input is already a FunctionalFeatureStructure
+    if isinstance(input, FunctionalFeatureStructure):
+        # If it is, extract the values and metadata
+        input = input.values
+
     # In general for all features, validate the input array dimensions (number and order or set of dimensions)
     assert input.get_data().ndim in [2,3], "Input data must be 2D or 3D (e.g., mne.io.Raw or mne.Epochs)."
     # Get metadata from the input data
@@ -123,7 +129,7 @@ def functional_spectrum_feature(input: Union[Epochs,Raw],*, label: Optional[str]
     
     metadata = FunctionalFeatureMetadata(
         label = label,
-        kind = 'spectrum',
+        kind = 'Spectrum',
         type_ = 'array',
         axes = output_axes,
         order = output_order,
@@ -137,6 +143,103 @@ def functional_spectrum_feature(input: Union[Epochs,Raw],*, label: Optional[str]
         metadata = metadata
     )
 
+    return feature_structure
+
+
+def single_band_power(psd, freqs, band, relative=False):
+    band = np.asarray(band)
+    low, high = band
+    if high is None:
+        high = freqs[-1]  # Use the last frequency if no upper limit is specified
+    if low is None:
+        low = freqs[0]
+
+    # Frequency resolution
+    freq_res = freqs[1] - freqs[0]
+
+    # Find index of band in frequency vector
+    idx_band = np.logical_and(freqs >= low, freqs <= high)
+
+    # Integral approximation of the spectrum using parabola (Simpson's rule)
+    # note, the way to aggregate the power could be different, e.g. passed as a parameter
+    # but for now, we will use simpson
+    bp = simps(psd[idx_band], dx=freq_res)
+
+    if relative:
+        bp /= simps(psd, dx=freq_res)
+    return bp
+
+@functional_feature('functional_bandspectrum_feature', 'array')
+def functional_bandspectrum_feature(input: FunctionalFeatureStructure, *, bands: Dict[str, Tuple[float, float]], relative: bool = False, label: Optional[str]) -> FunctionalFeatureStructure:
+    """
+    Compute the band power spectrum from Spectral data (e.g. frequencies is one of the axes).
+
+    Parameters:
+        input (FunctionalFeatureStructure): The input data to compute the band power spectrum from. 'frequencies' must be one of the axes.
+        bands_dict (Dict[str, Tuple[float, float]]): A dictionary of frequency bands to compute the band power for.
+        relative (bool): If True, return relative band power. Default is False.
+        label (Optional[str]): A unique name for this instance. Default is None.
+
+    Returns:
+        FunctionalFeatureStructure: Contains band power spectral density and metadata.
+    """
+
+    BANDS = bands
+
+    spectrum = input.values
+    frequencies = input.metadata.axes['frequencies']
+
+    axes = input.metadata.axes
+    order = input.metadata.order
+
+    sliced_axis = 'frequencies'
+
+    new_order, new_axes,new_values = get_replaced_axes_order_values(axes, order, sliced_axis, 'bands', BANDS.keys())
+
+    new_values.shape
+
+    index_combinations = get_sliced_index_combinations(axes, order, sliced_axis)
+
+    for band in BANDS.keys():
+        for this_idx in index_combinations:
+            items = [item[0] for item in this_idx]
+            idx = [item[1] for item in this_idx]
+
+            this_spectrum = spectrum[tuple(idx)]
+            assert this_spectrum.shape == (len(frequencies),)  # should be a 1D array of frequencies
+            band_power = single_band_power(this_spectrum, frequencies, BANDS[band], relative=relative)
+
+            new_idx = list(idx)
+            band_idx = list(BANDS.keys()).index(band)
+            new_idx[order.index(sliced_axis)] = band_idx
+            new_idx = tuple(new_idx)
+            new_values[new_idx] = band_power
+
+    for ax,items in new_axes.items():
+        ax_index = new_order.index(ax)
+        assert len(items) == new_values.shape[ax_index], f"Shape mismatch for axis {ax}: {len(items)} != {new_values.shape[ax_index]}"
+
+    extra_metadata = {}
+    extra_metadata['provenance'] = deepcopy(input.metadata)
+
+
+    # Create the FunctionalFeatureMetadata object
+    kwargs = dict(label=label, bands_dict=BANDS, relative=relative)
+    metadata = FunctionalFeatureMetadata(
+        label = label,
+        kind = 'BandSpectrum',
+        type_ = 'array',
+        axes = new_axes,
+        order = new_order,
+        extra_metadata = extra_metadata,
+        kwargs = kwargs
+    )
+
+    # Create the FunctionalFeatureStructure object
+    feature_structure = FunctionalFeatureStructure(
+        values = new_values,
+        metadata = metadata
+    )
     return feature_structure
 
 # from ssqueezepy.experimental import scale_to_freq

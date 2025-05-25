@@ -24,3 +24,18 @@ SpectrumMultitaperAverage:
             fun: np.mean
             axisname: epochs
             max_numitem: null
+AbsBandPower:
+    label: AbsBandPower
+    overwrite: False
+    type_: array
+    chain:
+        - feature: SpectrumMultitaper
+        - function: functional_bandspectrum_feature
+          args:
+            bands:
+                delta: [0.5, 4]
+                theta: [4, 8]
+                alpha: [8, 12]
+                beta: [12, 30]
+                gamma: [30, 45]
+            relative : False
