@@ -9,7 +9,7 @@ class ChainFeatureStructure:
     chain: List[Union[Dict[str, Any], str]]
     """
     label: str
-        A unique name for this instance. This is useful for distinguishing between multiple variants of the same feature.
+        A unique name for this instance assigned by the user. This is useful for distinguishing between multiple variants of the same feature.
         Example: "SpecparamNoKnee". Labels are camel case formatted.
 
     overwrite: bool
@@ -37,7 +37,7 @@ class ChainFeatureStructure:
 
         If you use a feature, the output will be saved.
         If you use a function, the output will not be saved unless it is the last item in the chain.
-        The input of the chain is assumed to be MNE object (Raw or Epochs) unless the first item is directly a feature.
+        The input of the chain is assumed to be MNE object (BaseRaw or BaseEpochs) unless the first item is directly a feature.
 
     Example:
     ThisFeature:

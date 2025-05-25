@@ -11,15 +11,49 @@ sample_data_raw_file = sample_data_folder / "MEG" / "sample" / "sample_audvis_ra
 path = sample_data_raw_file.as_posix()
 raw = mne.io.read_raw_fif(sample_data_raw_file, verbose=False, preload=True).crop(tmax=60)
 
+raw = mne.io.read_raw_fif(sample_data_raw_file, verbose=False, preload=True).crop(tmax=10)
+events = mne.find_events(raw, stim_channel="STI 014")
+raw.pick_types(eeg=True, exclude="bads")
+epochs = mne.Epochs(raw, events, tmin=-0.5,tmax=0.5,preload=True, verbose=False)
+
+bandspectrum = fe.run_feature(epochs, fe.AbsBandPowerEpochsAverage,inspect_only=False)
+bandspectrum.metadata.order
+
+ratiobandspectrum = fe.run_feature(epochs, fe.BandPowerRatiosEpochsAverage,inspect_only=False)
+
+
+internal_kwargs = {
+    "FOOOF": {
+        "peak_threshold": 2.0,
+        "max_n_peaks": 6
+    },
+    "fit": {
+        "freq_range": [1, 45]
+    }
+}
+
+raw.pick_types(eeg=True, exclude="bads")
+spectrum = fe.run_feature(raw, fe.SpectrumMultitaper,inspect_only=False)
+fooof = fe.functional_fooof_feature(spectrum, internal_kwargs=internal_kwargs)
+
+oscspectrum = fe.functional_fooof_component_feature(fooof,component='oscillatory')
+
+oscspectrum.metadata
+spectrum.values.shape
+spectrum.metadata.order
+spectrum.metadata.axes
+
 #fe.run_feature(raw, fe.BasicPrep, inspect_only=True)
 raw2=fe.run_feature(raw, fe.BasicPrep, inspect_only=False,file_bidspath='sub-sample_eeg.fif')
 
+epochs._data.shape
 
-events = mne.find_events(raw, stim_channel="STI 014")
-epochs = mne.Epochs(raw, events, tmin=-0.3, tmax=0.7,preload=True, verbose=False)
+spectrum = fe.run_feature(epochs, fe.SpectrumMultitaper,inspect_only=False)
+fooof = fe.functional_fooof_feature(spectrum, internal_kwargs=internal_kwargs)
+oscspectrum = fe.functional_fooof_component_feature(fooof,component='oscillatory')
 
-
-
+fooof.metadata.order
+fooof.metadata.axes
 mne_kwargs={'sfreq':512}
 resampled =fe.functional_resample_feature(epochs, mne_kwargs=mne_kwargs)
 

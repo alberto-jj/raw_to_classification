@@ -71,7 +71,7 @@ def main(pipeline_file):
                 dfepochs.to_csv(outputfile)
 
                 dfepochs.describe().to_csv(os.path.join(outputpath, 'epochs_info_summary.csv'))
-                print('Epochs info saved to:', outputpath)
+                print('BaseEpochs info saved to:', outputpath)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run the EEG preprocessing inspection.')

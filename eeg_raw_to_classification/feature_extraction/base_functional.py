@@ -5,7 +5,7 @@ import numpy as np
 import json
 import pickle
 
-from mne.io import Raw
+from mne.io import BaseRaw
 from mne import Epochs
 from mne.io import read_raw
 from mne import read_epochs
@@ -27,11 +27,12 @@ class FunctionalFeatureMetadata:
         label (str):
             A user-defined identifier for the specific functional feature instance. This is useful for distinguishing
             between multiple variants of the same functional feature family (e.g., different parameterizations of
-            'specparam'). Example: "SpecparamNoKnee". Labels are camel case formatted.
+            'Specparam'). Example: "SpecparamNoKnee". Labels are camel case formatted.
 
         kind (str):
-            The name of the feature family or conceptual category this functional feature belongs to.
-            Example values: "spectrum", "specparam", "complexity".
+            The name of the feature family or conceptual category this functional feature belongs to. Handled in the code.
+            Example values: "Spectrum", "Specparam", "Complexity".
+            Should be auto populated from the function name using utils.get_kind_from_snake(inspect.currentframe().f_code.co_name)
 
         type_ (str):
             A descriptor of the output format. This informs how the `values` should be interpreted and handled.
@@ -52,12 +53,16 @@ class FunctionalFeatureMetadata:
 
         extra_metadata (Optional[Dict[str, Any]]):
             Additional contextual information about the functional feature output. This may include rendering hints,
-            source dependencies, or visualization-specific attributes. Example entries:
-                - "provenance": list of sources
+            source dependencies, or visualization-specific attributes.
 
         kwargs (Dict[str, Any]):
             The parameters used to compute the functional feature. These are retained for reproducibility and
             interpretability. Example: {"method": "multitaper", "adaptive": True}
+
+        provenance (Optional[List[Any]]):
+            A list of provenance information, which may include references to the original data or processing steps.
+            If a functional feature is derived from another, append the input metadata (without its provenance) here as the last item.
+
 
     Notes
     -----
@@ -67,13 +72,14 @@ class FunctionalFeatureMetadata:
         Field           What to populate
         -------------   ----------------------------------------------------------
         label           A unique name for this instance (e.g., 'spectrum_plot_summary')
-        kind            The category of the source feature (e.g., 'spectrum')
+        kind            The category of the source feature. Example: 'Spectrum'.
         type_            Set to 'html' for visual output, 'dict' for summaries, etc.
         axes            Include only if relevant to the structure of the representation; otherwise use {}
         order           Use () if output is not a structured array
         extra_metadata  Describe the output format and context (e.g., {'rendered_as': 'html'})
         kwargs          Include any parameters used to configure the inspector or summarizer
-    """
+        provenance      Include the input metadata (without its provenance) as the last item
+        """
     label: str
     kind: str
     type_: str
@@ -81,6 +87,7 @@ class FunctionalFeatureMetadata:
     order: Tuple[str, ...]
     extra_metadata: Optional[Dict[str, Any]] = field(default_factory=dict)
     kwargs: Dict[str, Any] = field(default_factory=dict)
+    provenance: Optional[List[Any]] = field(default_factory=list)
 
 
 @dataclass
@@ -109,6 +116,21 @@ class FunctionalFeatureStructure:
     values: Union[np.ndarray, str, Dict, Any]
     metadata: FunctionalFeatureMetadata
 
+    def inspect(self):
+        shape = None
+        try:
+            shape = self.values.shape
+        except AttributeError:
+            try:
+                shape = self.values._data.shape
+            except AttributeError:
+                pass
+        print('values shape:', shape)
+        print('kind:', self.metadata.kind)
+        print('label:', self.metadata.label)
+        print('order:', self.metadata.order)
+        print('axes:', list(self.metadata.axes.keys()))
+        print('provenance:', self.metadata.provenance)
 
 class FunctionalFeatureRegistry:
     """

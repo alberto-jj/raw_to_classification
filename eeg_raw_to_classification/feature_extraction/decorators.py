@@ -2,7 +2,7 @@ from .base_functional import FunctionalFeatureRegistry
 from .base_chain import ChainFeatureRegistry
 from .base_chain import ChainFeatureStructure
 
-def functional_feature(name: str, functional_type: str):
+def functional_feature_decorator(name: str, functional_type: str):
     def decorator(func):
         FunctionalFeatureRegistry.register(name, functional_type, func)
         return func

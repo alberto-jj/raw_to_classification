@@ -12,15 +12,15 @@ SpectrumMultitaper:
                 low_bias: True
                 normalization: full
                 verbose: 0
-SpectrumMultitaperAverage:
-    label: SpectrumMultitaperAverage
+SpectrumMultitaperEpochsAverage:
+    label: SpectrumMultitaperEpochsAverage
     overwrite: False
     type_: array
     chain:
         - feature: SpectrumMultitaper
         - function: functional_aggregate_feature
           args:
-            label: SpectrumMultitaperAverage
+            label: SpectrumMultitaperEpochsAverage
             fun: np.mean
             axisname: epochs
             max_numitem: null
@@ -39,3 +39,40 @@ AbsBandPower:
                 beta: [12, 30]
                 gamma: [30, 45]
             relative : False
+AbsBandPowerEpochsAverage:
+    label: AbsBandPower
+    overwrite: False
+    type_: array
+    chain:
+        - feature: SpectrumMultitaper
+        - function: functional_bandspectrum_feature
+          args:
+            bands:
+                delta: [0.5, 4]
+                theta: [4, 8]
+                alpha: [8, 12]
+                beta: [12, 30]
+                gamma: [30, 45]
+            relative : False
+FooofFromEpochsAverage:
+  label: FooofFromEpochsAverage
+  overwrite : False
+  type_ : array
+  chain:
+    - feature : SpectrumMultitaperEpochsAverage
+    - function : functional_fooof_feature
+      args :
+        internal_kwargs:
+          FOOOF:
+            aperiodic_mode : knee
+          fit:
+            freq_range : [1,90]
+BandPowerRatiosEpochsAverage:
+  label: BandPowerRatiosEpochsAverage
+  overwrite: False
+  type_: array
+  chain:
+    - feature: AbsBandPowerEpochsAverage
+    - function: functional_ratio_feature
+      args:
+        ratio_axis: bands

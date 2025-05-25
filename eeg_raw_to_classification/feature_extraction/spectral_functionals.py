@@ -3,34 +3,36 @@
 import numpy as np
 from typing import Any, Dict, List, Optional, Tuple,Union
 from copy import deepcopy
-from mne.io import Raw
-from mne import Epochs
-
+from mne.io import BaseRaw
+from mne import BaseEpochs
+from inspect import currentframe
 
 # Custom Imports
 from .base_functional import FunctionalFeatureMetadata, FunctionalFeatureStructure, FunctionalFeatureRegistry
-from .decorators import functional_feature
+from .prep_functionals import functional_cast_to_structure_feature
+from .decorators import functional_feature_decorator
 from .utils import get_mne_metadata
-from .utils import get_replaced_axes_order_values, get_sliced_index_combinations
-
+from .utils import get_replaced_axes_order_values, get_sliced_index_combinations, get_reduced_axes_order_values
+from .utils import get_kind_from_snake, update_provenance
 # Feature Imports
 from mne.time_frequency import psd_array_multitaper, psd_array_welch
 from scipy.integrate import simpson as simps
+from fooof import FOOOF
 
-# Extra Imports
-import matplotlib.pyplot as plt
-import base64
-from io import BytesIO
+# Extra Imports, maybe useful once we implement feature inspection/visualization
+# import matplotlib.pyplot as plt
+# import base64
+# from io import BytesIO
 
 
 # enforce keyword only with *
-@functional_feature('functional_spectrum_feature', 'array')
-def functional_spectrum_feature(input: Union[Epochs,Raw],*, label: Optional[str] = None, method: str = "multitaper", mne_kwargs: Optional[Dict[str, Any]] = None) -> FunctionalFeatureStructure:
+@functional_feature_decorator('functional_spectrum_feature', 'array')
+def functional_spectrum_feature(input: Union[BaseEpochs,BaseRaw],*, label: Optional[str] = None, method: str = "multitaper", mne_kwargs: Optional[Dict[str, Any]] = None) -> FunctionalFeatureStructure:
     """
     Compute the power spectrum from time-domain EEG data using MNE's multitaper method.
 
     Parameters:
-        input (Union[Epochs, Raw]): The input data to compute the power spectrum from.
+        input (Union[BaseEpochs, BaseRaw]): The input data to compute the power spectrum from.
         label (Optional[str]): A unique name for this instance. Default is None.
         method (str): The method to use for computing the power spectrum. Options are 'multitaper' or 'welch'.
                       Default is 'multitaper'.
@@ -41,7 +43,7 @@ def functional_spectrum_feature(input: Union[Epochs,Raw],*, label: Optional[str]
 
     Note:
         if you want to use a pure array, you can use the mne.io.RawArray or mne.EpochsArray
-        to create a Raw or Epochs object from a numpy array. This is useful for testing purposes.
+        to create a BaseRaw or BaseEpochs object from a numpy array. This is useful for testing purposes.
 
     Example:
         times = np.linspace(0, 1, sampling_freq, endpoint=False)
@@ -70,15 +72,17 @@ def functional_spectrum_feature(input: Union[Epochs,Raw],*, label: Optional[str]
         simulated_epochs = mne.EpochsArray(data, info)
     """
 
-    # Check if input is already a FunctionalFeatureStructure
-    if isinstance(input, FunctionalFeatureStructure):
-        # If it is, extract the values and metadata
-        input = input.values
+    input = functional_cast_to_structure_feature(input, label=label)
+    kind = get_kind_from_snake(currentframe().f_code.co_name)
+    kind = input.metadata.kind + kind if input.metadata.kind else kind
+
+    # Get metadata
+    input_order, input_axes, extra_metadata, provenance = get_mne_metadata(input)
+
 
     # In general for all features, validate the input array dimensions (number and order or set of dimensions)
-    assert input.get_data().ndim in [2,3], "Input data must be 2D or 3D (e.g., mne.io.Raw or mne.Epochs)."
-    # Get metadata from the input data
-    input_order, input_axes, extra_metadata = get_mne_metadata(input)
+    assert input.values.get_data().ndim in [2,3], "Input data must be 2D or 3D (e.g., mne.io.BaseRaw or mne.BaseEpochs)."
+
 
     # This is because both functions return the same axes and order but replaces time dimension at the end
     # I will use the fact that in python 3.7+ dicts are ordered
@@ -97,11 +101,11 @@ def functional_spectrum_feature(input: Union[Epochs,Raw],*, label: Optional[str]
     if method == "multitaper":
         output_kind = mne_kwargs.get('output', 'power') # default is power
         if output_kind == 'power':
-            psds, freqs = psd_array_multitaper(input.get_data(), sfreq=input.info['sfreq'], **(mne_kwargs or {}))
+            psds, freqs = psd_array_multitaper(input.values.get_data(), sfreq=input.values.info['sfreq'], **(mne_kwargs or {}))
             output_order = output_order + ('frequencies',)
             output_axes['frequencies'] = freqs
         elif output_kind == 'complex':
-            psds, freqs, weights = psd_array_multitaper(input.get_data(), sfreq=input.info['sfreq'], **(mne_kwargs or {}))
+            psds, freqs, weights = psd_array_multitaper(input.values.get_data(), sfreq=input.values.info['sfreq'], **(mne_kwargs or {}))
             output_order = output_order + ('tapers', 'frequencies', )
             output_axes['tapers'] = list(range(weights.shape[0]))
             output_axes['frequencies'] = freqs
@@ -110,7 +114,7 @@ def functional_spectrum_feature(input: Union[Epochs,Raw],*, label: Optional[str]
 
     elif method == "welch":
         average_kind = mne_kwargs.get('average', 'mean') # default is mean
-        psds, freqs = psd_array_welch(input.get_data(), sfreq=input.info['sfreq'], **(mne_kwargs or {}))
+        psds, freqs = psd_array_welch(input.values.get_data(), sfreq=input.values.info['sfreq'], **(mne_kwargs or {}))
 
         if average_kind in ['mean', 'median']:
             output_order = output_order + ('frequencies',)
@@ -129,7 +133,7 @@ def functional_spectrum_feature(input: Union[Epochs,Raw],*, label: Optional[str]
     
     metadata = FunctionalFeatureMetadata(
         label = label,
-        kind = 'Spectrum',
+        kind = kind,
         type_ = 'array',
         axes = output_axes,
         order = output_order,
@@ -142,6 +146,9 @@ def functional_spectrum_feature(input: Union[Epochs,Raw],*, label: Optional[str]
         values = psds,
         metadata = metadata
     )
+
+    # Update provenance
+    feature_structure = update_provenance(input, feature_structure)
 
     return feature_structure
 
@@ -169,8 +176,8 @@ def single_band_power(psd, freqs, band, relative=False):
         bp /= simps(psd, dx=freq_res)
     return bp
 
-@functional_feature('functional_bandspectrum_feature', 'array')
-def functional_bandspectrum_feature(input: FunctionalFeatureStructure, *, bands: Dict[str, Tuple[float, float]], relative: bool = False, label: Optional[str]) -> FunctionalFeatureStructure:
+@functional_feature_decorator('functional_bandspectrum_feature', 'array')
+def functional_bandspectrum_feature(input: FunctionalFeatureStructure, *, bands: Dict[str, Tuple[float, float]], relative: bool = False, label: Optional[str] = None) -> FunctionalFeatureStructure:
     """
     Compute the band power spectrum from Spectral data (e.g. frequencies is one of the axes).
 
@@ -193,8 +200,8 @@ def functional_bandspectrum_feature(input: FunctionalFeatureStructure, *, bands:
     order = input.metadata.order
 
     sliced_axis = 'frequencies'
-
-    new_order, new_axes,new_values = get_replaced_axes_order_values(axes, order, sliced_axis, 'bands', BANDS.keys())
+    band_list = list(BANDS.keys()) # important , if you do only .keys() it wont be pickable 
+    new_order, new_axes,new_values = get_replaced_axes_order_values(axes, order, sliced_axis, 'bands', band_list)
 
     new_values.shape
 
@@ -220,14 +227,16 @@ def functional_bandspectrum_feature(input: FunctionalFeatureStructure, *, bands:
         assert len(items) == new_values.shape[ax_index], f"Shape mismatch for axis {ax}: {len(items)} != {new_values.shape[ax_index]}"
 
     extra_metadata = {}
-    extra_metadata['provenance'] = deepcopy(input.metadata)
+
+    kind = get_kind_from_snake(currentframe().f_code.co_name)
+    kind = input.metadata.kind + kind if input.metadata.kind else kind
 
 
     # Create the FunctionalFeatureMetadata object
     kwargs = dict(label=label, bands_dict=BANDS, relative=relative)
     metadata = FunctionalFeatureMetadata(
         label = label,
-        kind = 'BandSpectrum',
+        kind = kind,
         type_ = 'array',
         axes = new_axes,
         order = new_order,
@@ -240,8 +249,185 @@ def functional_bandspectrum_feature(input: FunctionalFeatureStructure, *, bands:
         values = new_values,
         metadata = metadata
     )
+
+
+    # Update provenance
+    feature_structure = update_provenance(input, feature_structure)
+
+
     return feature_structure
 
+def single_fooof(freqs, psds, internal_kwargs: Dict[str, Dict[str, Any]]) -> FOOOF:
+    """Fit a single FOOOF model with evaluated kwargs if needed."""
+    kwargs = deepcopy(internal_kwargs)
+    for section in kwargs:
+        for key, value in kwargs[section].items():
+            if isinstance(value, str) and 'eval%' in value:
+                expression = value.replace('eval%', '')
+                kwargs[section][key] = eval(expression)
+
+    fm = FOOOF(verbose=False, **kwargs.get('FOOOF', {}))
+    fm.fit(freqs, psds, **kwargs.get('fit', {}))
+    return fm
+
+
+@functional_feature_decorator('functional_fooof_feature', 'object')
+def functional_fooof_feature(
+    input: FunctionalFeatureStructure,
+    *,
+    internal_kwargs: Dict[str, Dict[str, Any]],
+    label: Optional[str] = None
+) -> FunctionalFeatureStructure:
+    """
+    Apply FOOOF to each 1D spectrum in the input FunctionalFeatureStructure.
+
+    Parameters:
+        input: FunctionalFeatureStructure with a 'frequencies' axis.
+        internal_kwargs: Dictionary of kwargs to pass to FOOOF and its `fit` method.
+        label: Optional label for metadata.
+
+    Returns:
+        FunctionalFeatureStructure containing FOOOF model objects.
+    """
+    assert 'frequencies' in input.metadata.axes, "'frequencies' must be in axes to apply FOOOF"
+    freqs = input.metadata.axes['frequencies']
+    spectrum = input.values
+
+    axes = input.metadata.axes
+    order = input.metadata.order
+    sliced_axis = 'frequencies'
+
+    # 👇 Use reduced axis logic instead of replaced
+    new_order, new_axes, new_values = get_reduced_axes_order_values(axes, order, removed_axis=sliced_axis)
+
+    # Determine index combinations that slice across all axes except 'frequencies'
+    index_combinations = get_sliced_index_combinations(axes, order, sliced_axis)
+
+    for this_idx in index_combinations:
+        idx = [item[1] for item in this_idx]
+        this_spectrum = spectrum[tuple(idx)]
+        assert this_spectrum.shape == (len(freqs),), "Expected 1D spectrum for each slice."
+
+        model = single_fooof(freqs, this_spectrum, internal_kwargs)
+
+        # Drop frequency axis index — slice returns 1 model per slice
+        new_idx = tuple(idx[i] for i, k in enumerate(order) if k != sliced_axis)
+        new_values[new_idx] = model
+
+    # Validate consistency
+    for ax, items in new_axes.items():
+        ax_index = new_order.index(ax)
+        assert len(items) == new_values.shape[ax_index], \
+            f"Shape mismatch for axis {ax}: {len(items)} != {new_values.shape[ax_index]}"
+
+    extra_metadata = {
+        'freqs': freqs,
+        'removed_axis': sliced_axis,
+        'fit_strategy': 'per-slice',
+    }
+
+    kind = get_kind_from_snake(currentframe().f_code.co_name)
+    kind = input.metadata.kind + kind if input.metadata.kind else kind
+
+    metadata = FunctionalFeatureMetadata(
+        label=label,
+        kind=kind,
+        type_='array',
+        axes=new_axes,
+        order=new_order,
+        extra_metadata=extra_metadata,
+        kwargs=dict(label=label, internal_kwargs=internal_kwargs)
+    )
+
+
+    feature_structure = FunctionalFeatureStructure(
+        values=new_values,
+        metadata=metadata
+    )
+    # Update provenance
+    feature_structure = update_provenance(input, feature_structure)
+    return feature_structure
+
+
+@functional_feature_decorator('functional_fooof_component_feature', 'array')
+def functional_fooof_component_feature(
+    input: FunctionalFeatureStructure,
+    *,
+    component: str = "oscillatory",  # "original", "aperiodic", or "oscillatory"
+    label: Optional[str] = None
+) -> FunctionalFeatureStructure:
+    """
+    Extract specific spectral component from FOOOF models on a linear scale.
+
+    Parameters:
+        input: FunctionalFeatureStructure containing FOOOF model objects.
+        component: Which part to extract:
+            - "original": 10^FOOOF power_spectrum
+            - "aperiodic": 10^FOOOF._ap_fit
+            - "oscillatory": difference of the above
+        label: Optional label for the output.
+
+    Returns:
+        FunctionalFeatureStructure of the selected spectrum (type='array'), with 'frequencies' axis added.
+    """
+    assert isinstance(input.values.flat[0], FOOOF), "Input values must contain FOOOF models"
+    assert component in {"original", "aperiodic", "oscillatory"}, \
+        f"Invalid component '{component}', must be one of: original, aperiodic, oscillatory"
+
+    axes = deepcopy(input.metadata.axes)
+    order = input.metadata.order
+    sliced_axis = 'frequencies'
+
+    # Recover frequency axis from the first FOOOF model
+    sample_fooof: FOOOF = input.values.flat[0]
+    freqs = sample_fooof.freqs
+    axes[sliced_axis] = freqs
+    new_order = list(order) + [sliced_axis]
+
+    # Allocate output array
+    shape = [len(axes[k]) for k in new_order]
+    new_values = np.empty(shape, dtype=np.float32)
+
+    # Iterate using structured slicing
+    index_combinations = get_sliced_index_combinations(axes=input.metadata.axes, order=order, sliced_axis=sliced_axis)
+
+    for combo in index_combinations:
+        _, idx_nums = zip(*combo)
+        fm: FOOOF = input.values[idx_nums]
+
+        if component == "original":
+            out = np.power(10, fm.power_spectrum)
+        elif component == "aperiodic":
+            out = np.power(10, fm._ap_fit)
+        elif component == "oscillatory":
+            out = np.power(10, fm.power_spectrum) - np.power(10, fm._ap_fit)
+
+        new_idx = tuple(idx_nums) + (slice(None),)
+        new_values[new_idx] = out
+
+    kind = component
+    kind = input.metadata.kind + kind if input.metadata.kind else kind
+
+    metadata = FunctionalFeatureMetadata(
+        label=label,
+        kind=kind,
+        type_='array',
+        axes=axes,
+        order=tuple(new_order),
+        extra_metadata={
+            'retrieved_freqs': freqs.tolist(),
+            'component': component
+        },
+        kwargs=dict(label=label, component=component)
+    )
+
+    feature_structure = FunctionalFeatureStructure(
+        values=new_values,
+        metadata=metadata
+    )
+    # Update provenance
+    feature_structure = update_provenance(input, feature_structure)
+    return feature_structure
 # from ssqueezepy.experimental import scale_to_freq
 # from ssqueezepy import Wavelet
 
