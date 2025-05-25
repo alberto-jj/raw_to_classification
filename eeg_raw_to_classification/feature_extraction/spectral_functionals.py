@@ -271,7 +271,7 @@ def single_fooof(freqs, psds, internal_kwargs: Dict[str, Dict[str, Any]]) -> FOO
     return fm
 
 
-@functional_feature_decorator('functional_fooof_feature', 'object')
+@functional_feature_decorator('functional_fooof_feature', 'array')
 def functional_fooof_feature(
     input: FunctionalFeatureStructure,
     *,

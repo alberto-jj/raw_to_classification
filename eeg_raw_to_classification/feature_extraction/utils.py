@@ -125,7 +125,7 @@ def get_mne_metadata(
     input_order : tuple
         Axis order.
     input_axes : dict
-        Axis name → values.
+        Axis name values.
     extra_metadata : dict
         Includes input type and optionally a no-data copy.
     provenance : list

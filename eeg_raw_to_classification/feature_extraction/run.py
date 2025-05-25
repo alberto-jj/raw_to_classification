@@ -61,7 +61,10 @@ def run_feature(input: Any,
                                         chain_feature_registry=chain_feature_registry,
                                         functional_feature_registry=functional_feature_registry)
                 if outputfile is not None:
-                    os.makedirs(os.path.dirname(outputfile),exist_ok=True)
+
+                    if os.path.dirname(outputfile):
+                        os.makedirs(os.path.dirname(outputfile),exist_ok=True)
+
                     functional_save(output, outputfile, output_format)
             else:
                 if inspect_only:
