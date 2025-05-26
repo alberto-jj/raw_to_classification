@@ -21,12 +21,20 @@
 ## sbatch --export=STEP=3 array_prepfeat_narval.sh
 ## sbatch --export=STEP=4 array_prepfeat_narval.sh
 
+
+## You can use this job as an example of how to run in on a interactive session.
+## remind that you need to have installed the virtual environment before running this script.
+## use the second one with the raw_to_classification_env virtual environment
 module purge
 ##module load StdEnv/2020
 module load StdEnv/2023
 module load python/3.11.5
 
 cd /home/yorguin/envs
+
+## You can use this job as an example of how to run in on a interactive session.
+## remind that you need to have installed the virtual environment before running this script.
+## use the second one with the raw_to_classification_env virtual environment
 
 ##virtualenv --no-download $SLURM_TMPDIR/env
 ##virtualenv --no-download raw_to_classification_env
