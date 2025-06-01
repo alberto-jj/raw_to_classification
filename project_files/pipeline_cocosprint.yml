@@ -1,0 +1,830 @@
+project: 'epilepsy'
+datasets_file: 'project_files/datasets_cocosprint.yml'
+mount: computecanada
+inspect:
+  path : './data/%PROJECT%/inspect'
+preprocess:
+  prep_cfg:
+    prepDur30Ov20: # This is the name of the preprocessing pipeline
+      redefine_prepare:
+        from_this: project_files.redefinitions_cocosprint
+        import_that: prepare
+      prepare:
+        epoch_config:
+          duration: 30
+          overlap: 20
+        downsample : null # all should be 1200 by default
+        normalization : False
+        filter_args: null
+      overwrite : False
+    prepDur20Ov10: # This is the name of the preprocessing pipeline
+      redefine_prepare:
+        from_this: project_files.redefinitions_cocosprint
+        import_that: prepare
+      prepare:
+        epoch_config:
+          duration: 20
+          overlap: 10
+        downsample : null # all should be 1200 by default
+        normalization : False
+        filter_args: null
+      overwrite : False
+    prepDur10Ov5: # This is the name of the preprocessing pipeline
+      redefine_prepare:
+        from_this: project_files.redefinitions_cocosprint
+        import_that: prepare
+      prepare:
+        epoch_config:
+          duration: 10
+          overlap: 5
+        downsample : null # all should be 1200 by default
+        normalization : False
+        filter_args: null
+      overwrite : False
+  prep_list :
+    - prepDur30Ov20
+    - prepDur20Ov10
+    - prepDur10Ov5
+prep_inspection:
+  path : './data/%PROJECT%/prep_inspection'
+  overwrite : False
+  checks:
+    - 'epochs'
+  prep_list :
+    - prepDur30Ov20
+    - prepDur20Ov10
+    - prepDur10Ov5
+
+features:
+  feature_pipeline_cfg:
+    features@prepDur30Ov20: #you set the name of the feature pipeline with the key
+      prep_pipeline : 'prepDur30Ov20' # This is the name of the preprocessing pipeline previously defined (must exist in derivatives)
+      downsample : null
+      prefilter : null
+      keep_channels : False
+      standardize_epochs : False
+      feature_list: # To say which features actually compute rather than configure
+        - PowerSpectrum
+        - PowerSpectrumAverage
+        - RelativeBandPowerFromAverageSpectrum
+        - FooofFromAverage
+        - RelativeBandPowerFromAverageFooof
+        - detrendedFluctuation
+        - lzivComplexityMeanEpochs
+        - sampleEntropyMeanEpochs
+        - spectralEntropyMeanEpochs
+        - appEntropyMeanEpochs
+        - hjorthParams
+        - hjorthMobilityMeanEpochs
+        - hjorthComplexityMeanEpochs
+        - numZerocrossMeanEpochs
+        - permEntropyMeanEpochs
+        - svdEntropyMeanEpochs
+        - higuchiFdMeanEpochs
+        - higuchiFdVarEpochs
+        - katzFdMeanEpochs
+        - katzFdSDEpochs
+        - petrosianFdMeanEpochs
+        - entropyMultiscaleMeanEpochs
+    features@prepDur20Ov10: #you set the name of the feature pipeline with the key
+      prep_pipeline : 'prepDur20Ov10' # This is the name of the preprocessing pipeline previously defined (must exist in derivatives)
+      downsample : null
+      prefilter : null
+      keep_channels : False
+      standardize_epochs : False
+      feature_list: # To say which features actually compute rather than configure
+        - PowerSpectrum
+        - PowerSpectrumAverage
+        - RelativeBandPowerFromAverageSpectrum
+        - FooofFromAverage
+        - RelativeBandPowerFromAverageFooof
+        - detrendedFluctuation
+        - lzivComplexityMeanEpochs
+        - sampleEntropyMeanEpochs
+        - spectralEntropyMeanEpochs
+        - appEntropyMeanEpochs
+        - hjorthParams
+        - hjorthMobilityMeanEpochs
+        - hjorthComplexityMeanEpochs
+        - numZerocrossMeanEpochs
+        - permEntropyMeanEpochs
+        - svdEntropyMeanEpochs
+        - higuchiFdMeanEpochs
+        - higuchiFdVarEpochs
+        - katzFdMeanEpochs
+        - katzFdSDEpochs
+        - petrosianFdMeanEpochs
+        - entropyMultiscaleMeanEpochs
+    features@prepDur10Ov5: #you set the name of the feature pipeline with the key
+      prep_pipeline : 'prepDur10Ov5' # This is the name of the preprocessing pipeline previously defined (must exist in derivatives)
+      downsample : null
+      prefilter : null
+      keep_channels : False
+      standardize_epochs : False
+      feature_list: # To say which features actually compute rather than configure
+        - PowerSpectrum
+        - PowerSpectrumAverage
+        - RelativeBandPowerFromAverageSpectrum
+        - FooofFromAverage
+        - RelativeBandPowerFromAverageFooof
+        - detrendedFluctuation
+        - lzivComplexityMeanEpochs
+        - sampleEntropyMeanEpochs
+        - spectralEntropyMeanEpochs
+        - appEntropyMeanEpochs
+        - hjorthParams
+        - hjorthMobilityMeanEpochs
+        - hjorthComplexityMeanEpochs
+        - numZerocrossMeanEpochs
+        - permEntropyMeanEpochs
+        - svdEntropyMeanEpochs
+        - higuchiFdMeanEpochs
+        - higuchiFdVarEpochs
+        - katzFdMeanEpochs
+        - katzFdSDEpochs
+        - petrosianFdMeanEpochs
+        - entropyMultiscaleMeanEpochs
+
+  feature_pipeline_list: #which feature pipelines to run
+    - features@prepDur30Ov20
+    #- features@prepDur20Ov10
+    #- features@prepDur10Ov5
+  feature_cfg: # You can configure different features for the same function but different args
+    # The suffix will be the higher hierarchy name you put here
+    PowerSpectrum:
+      overwrite : False
+      chain: # Chain is a list of either dict of defined functions (outputs not saved) or dict of defined features (output saved)
+      # input of chain is assumed to be mne epochs unless it first item is directly a feature
+      - function : spectrum_multitaper
+        args:
+          multitaper:
+            adaptive : False
+            low_bias : True
+            normalization : 'full'
+            verbose : 0
+    PowerSpectrumAverage:
+      overwrite : False
+      chain:
+        - feature : PowerSpectrum
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: null
+            axisname: 'epochs'
+    FooofFromAverage:
+      overwrite : False
+      chain:
+        - feature : PowerSpectrumAverage
+        - function : fooof_from_average
+          args :
+            internal_kwargs:
+              FOOOF:
+                aperiodic_mode : knee
+              fit:
+                freq_range : [1,90]
+    RelativeBandPowerFromAverageSpectrum:
+      overwrite : False
+      chain :
+        - feature : PowerSpectrumAverage # this will save PowerSpectrum if not already saved
+        - function: relative_bandpower
+          args :
+            bands:
+              delta : [1,4]
+              theta : [4,8]
+              alpha : [8,13]
+              beta  : [13,30]
+              gamma : [30,90]
+    RelativeBandPowerFromAverageFooof:
+      overwrite : False
+      chain:
+        - feature : FooofFromAverage
+        - function: relative_bandpower_from_fooof
+          args :
+            bands:
+              delta : [1,4]
+              theta : [4,8]
+              alpha : [8,13]
+              beta  : [13,30]
+              gamma : [30,90]
+    detrendedFluctuation:
+      overwrite: False
+      chain:
+        - function: compute_detrendedFluctuation
+          args:
+            internal_kwargs:
+              detrended_fluctuation : {}
+    detrendedFluctuationMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: detrendedFluctuation
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: null
+            axisname: 'epochs'
+
+    lzivComplexity:
+      overwrite: False
+      chain:
+        - function: compute_lzivComplexity
+          args:
+            prefoo : "eval%lambda x: (x > np.median(x)).astype(int)"
+            internal_kwargs:
+              lziv_complexity :
+                normalize: True
+    lzivComplexityMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: lzivComplexity
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: null
+            axisname: 'epochs'
+
+    sampleEntropy:
+      overwrite: False
+      chain:
+        - function: compute_sampleEntropy
+          args:
+            internal_kwargs:
+              sample_entropy :
+                order : 2
+                metric : chebyshev
+    sampleEntropyMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: sampleEntropy
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: null
+            axisname: 'epochs'
+    spectralEntropy:
+      overwrite: False
+      chain:
+        - function: compute_spectralEntropy
+          args:
+            internal_kwargs:
+              spectral_entropy :
+                sf : eval%eeg.info['sfreq']
+                method : 'welch'
+                nperseg : eval%int(np.round(eeg.info['sfreq']/1))
+                normalize : True
+    spectralEntropyMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: spectralEntropy
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: null
+            axisname: 'epochs'
+
+    appEntropy:
+      overwrite: False
+      chain:
+        - function: compute_appEntropy
+          args:
+            internal_kwargs:
+              app_entropy :
+                order : 2
+                metric : chebyshev
+
+    appEntropyMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: appEntropy
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: null
+            axisname: 'epochs'
+
+    hjorthParams:
+      overwrite: False
+      chain:
+        - function: compute_hjorthParams
+          args:
+            internal_kwargs:
+              hjorth_params: {}
+
+    hjorthMobility:
+      overwrite: False
+      chain:
+        - feature: hjorthParams
+        - function: extract_item
+          args:
+            fun: "eval%lambda x: x[0]"
+            newtype: hjorthMobility
+
+    hjorthMobilityMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: hjorthMobility
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: null # 20min at 5sec per epoch
+            axisname: 'epochs'
+    hjorthComplexity:
+      overwrite: False
+      chain:
+        - feature: hjorthParams
+        - function: extract_item
+          args:
+            fun: "eval%lambda x: x[1]"
+            newtype: hjorthComplexity
+
+    hjorthComplexityMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: hjorthComplexity
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: null # 20min at 5sec per epoch
+            axisname: 'epochs'
+    numZerocross:
+      overwrite: False
+      chain:
+        - function: compute_numZerocross
+          args:
+            internal_kwargs:
+              num_zerocross:
+                normalize: True
+
+    numZerocrossMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: numZerocross
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: null # 20min at 5sec per epoch
+            axisname: 'epochs'
+    permEntropy:
+      overwrite: False
+      chain:
+        - function: compute_permEntropy
+          args:
+            internal_kwargs:
+              perm_entropy:
+                order: 3
+                delay: 1
+                normalize: True
+
+    permEntropyMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: permEntropy
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: null # 20min at 5sec per epoch
+            axisname: 'epochs'
+    svdEntropy:
+      overwrite: False
+      chain:
+        - function: compute_svdEntropy
+          args:
+            internal_kwargs:
+              svd_entropy:
+                order: 3
+                delay: 1
+                normalize: True
+    svdEntropyMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: svdEntropy
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: null # 20min at 5sec per epoch
+            axisname: 'epochs'
+
+    higuchiFd:
+      overwrite: False
+      chain:
+        - function: compute_higuchiFd
+          args:
+            internal_kwargs:
+              higuchi_fd:
+                kmax: 10
+    higuchiFdMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: higuchiFd
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: null # 20min at 5sec per epoch
+            axisname: 'epochs'
+    higuchiFdVarEpochs:
+      overwrite: False
+      chain:
+        - feature: higuchiFd
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.var
+            max_numitem: null # 20min at 5sec per epoch
+            axisname: 'epochs'
+    katzFd:
+      overwrite: False
+      chain:
+        - function: compute_katzFd
+          args:
+            internal_kwargs:
+              katz_fd: {}
+    katzFdSDEpochs:
+      overwrite: False
+      chain:
+        - feature: katzFd
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.std
+            max_numitem: null # 20min at 5sec per epoch
+            axisname: 'epochs'
+    katzFdMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: katzFd
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: null # 20min at 5sec per epoch
+            axisname: 'epochs'
+    petrosianFd:
+      overwrite: False
+      chain:
+        - function: compute_petrosianFd
+          args:
+            internal_kwargs:
+              petrosian_fd: {}
+    petrosianFdMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: petrosianFd
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: null # 20min at 5sec per epoch
+            axisname: 'epochs'
+
+    entropyMultiscale: #TODO: i think the aggregation wont work here because multiscale return a complex datatype, check this
+      overwrite: False
+      chain:
+        - function: compute_entropyMultiscale
+          args:
+            internal_kwargs:
+              entropy_multiscale:
+                scale : "default"
+                dimension : 3
+                tolerance : "sd"
+                method : "MSEn"
+                show : False
+
+    entropyMultiscaleSingle: #TODO: i think the aggregation wont work here because multiscale return a complex datatype, check this
+      overwrite: False
+      chain:
+        - feature: entropyMultiscale
+        - function: extract_item
+          args:
+            fun: "eval%lambda x: x[0]"
+            newtype: null
+
+    entropyMultiscaleMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: entropyMultiscaleSingle
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: null # 20min at 5sec per epoch
+            axisname: 'epochs'
+
+
+aggregate:
+  path : 
+    computecanada: '/home/yorguin/scratch/%PROJECT%/aggregate/' #
+  filename : 'aggregate'
+  id_splitter : '/'
+  feature_return:
+    BandRatiosFromAverageFooof: # Could be the original name or a post-processed name
+      return_function : "eval%lambda x: x"
+      file_suffix : BandRatiosFromAverageFooof
+    BandRatiosFromAverageSpectrum: # Could be the original name or a post-processed name
+      return_function : "eval%lambda x: x"
+      file_suffix : BandRatiosFromAverageSpectrum
+    fooofExponent:
+      return_function : "eval%lambda x: x.aperiodic_params_[-1]"
+      file_suffix : FooofFromAverage
+    foofOffset:
+      return_function : "eval%lambda x: x.aperiodic_params_[0]"
+      file_suffix : FooofFromAverage
+    RelativeBandPowerFromAverageFooof:
+      return_function : "eval%lambda x: x"
+      file_suffix : RelativeBandPowerFromAverageFooof
+    RelativeBandPowerFromAverageSpectrum:
+      return_function : "eval%lambda x: x"
+      file_suffix : RelativeBandPowerFromAverageSpectrum
+    appEntropyMeanEpochs: 
+      return_function : "eval%lambda x: x"
+      file_suffix : appEntropyMeanEpochs
+    entropyMultiscaleMeanEpochs:
+      return_function: "eval%lambda x: x"
+      file_suffix : entropyMultiscaleMeanEpochs
+    higuchiFdMeanEpochs:
+      return_function : "eval%lambda x: x"
+      file_suffix : higuchiFdMeanEpochs
+    higuchiFdVarEpochs:
+      return_function : "eval%lambda x: x"
+      file_suffix : higuchiFdVarEpochs
+    hjorthMobilityMeanEpochs: 
+      return_function : "eval%lambda x: x"
+      file_suffix : hjorthMobilityMeanEpochs
+    hjorthComplexityMeanEpochs:
+      return_function : "eval%lambda x: x"
+      file_suffix : hjorthComplexityMeanEpochs
+    katzFdMeanEpochs: 
+      return_function : "eval%lambda x: x"
+      file_suffix : katzFdMeanEpochs
+    katzFdSDEpochs: 
+      return_function : "eval%lambda x: x"
+      file_suffix : katzFdSDEpochs
+    lzivComplexityMeanEpochs: 
+      return_function : "eval%lambda x: x"
+      file_suffix : lzivComplexityMeanEpochs
+    numZerocrossMeanEpochs: 
+      return_function : "eval%lambda x: x"
+      file_suffix : numZerocrossMeanEpochs
+    detrendedFluctuationMeanEpochs: # no text
+      return_function : "eval%lambda x: x" # this uses the first 2 epochs of the 10min epoch
+      file_suffix : detrendedFluctuationMeanEpochs
+    sampleEntropyMeanEpochs:
+      return_function : "eval%lambda x: x"
+      file_suffix : sampleEntropyMeanEpochs
+    spectralEntropyMeanEpochs:
+      return_function : "eval%lambda x: x"
+      file_suffix : spectralEntropyMeanEpochs
+    permEntropyMeanEpochs:
+      return_function : "eval%lambda x: x"
+      file_suffix : permEntropyMeanEpochs
+    svdEntropyMeanEpochs:
+      return_function : "eval%lambda x: x"
+      file_suffix : svdEntropyMeanEpochs
+    petrosianFdMeanEpochs : 
+      return_function : "eval%lambda x: x"
+      file_suffix : petrosianFdMeanEpochs
+  feature_aggregate_list:
+    - MeanEpochs@prepDur30Ov20
+    #- MeanEpochs@prepDur20Ov10
+    #- MeanEpochs@prepDur10Ov5
+  aggregate_cfgs:
+    MeanEpochs@prepDur30Ov20:
+      feature_folder : 'features@prepDur30Ov20' # what if we have multiple feature folders?
+      feature_list: # CHOOSE FEATURES WITH SAME DIMENSIONS, OTHERWISE THE DATAFRAME CANT BE MADE
+        - appEntropyMeanEpochs
+        - entropyMultiscaleMeanEpochs
+        - higuchiFdMeanEpochs
+        - higuchiFdVarEpochs
+        - hjorthMobilityMeanEpochs
+        - hjorthComplexityMeanEpochs
+        - katzFdMeanEpochs
+        - katzFdSDEpochs
+        - lzivComplexityMeanEpochs
+        - numZerocrossMeanEpochs
+        - detrendedFluctuationMeanEpochs
+        - sampleEntropyMeanEpochs
+        - spectralEntropyMeanEpochs
+        - permEntropyMeanEpochs
+        - svdEntropyMeanEpochs
+        - petrosianFdMeanEpochs
+        - fooofExponent
+        - foofOffset
+        - RelativeBandPowerFromAverageFooof
+        - RelativeBandPowerFromAverageSpectrum
+    MeanEpochs@prepDur20Ov10:
+      feature_folder : 'features@prepDur20Ov10' # what if we have multiple feature folders?
+      feature_list: # CHOOSE FEATURES WITH SAME DIMENSIONS, OTHERWISE THE DATAFRAME CANT BE MADE
+        - appEntropyMeanEpochs
+        - entropyMultiscaleMeanEpochs
+        - higuchiFdMeanEpochs
+        - higuchiFdVarEpochs
+        - hjorthMobilityMeanEpochs
+        - hjorthComplexityMeanEpochs
+        - katzFdMeanEpochs
+        - katzFdSDEpochs
+        - lzivComplexityMeanEpochs
+        - numZerocrossMeanEpochs
+        - detrendedFluctuationMeanEpochs
+        - sampleEntropyMeanEpochs
+        - spectralEntropyMeanEpochs
+        - permEntropyMeanEpochs
+        - svdEntropyMeanEpochs
+        - petrosianFdMeanEpochs
+        - fooofExponent
+        - foofOffset
+        - RelativeBandPowerFromAverageFooof
+        - RelativeBandPowerFromAverageSpectrum
+
+    MeanEpochs@prepDur10Ov5:
+      feature_folder : 'features@prepDur10Ov5' # what if we have multiple feature folders?
+      feature_list: # CHOOSE FEATURES WITH SAME DIMENSIONS, OTHERWISE THE DATAFRAME CANT BE MADE
+        - appEntropyMeanEpochs
+        - entropyMultiscaleMeanEpochs
+        - higuchiFdMeanEpochs
+        - higuchiFdVarEpochs
+        - hjorthMobilityMeanEpochs
+        - hjorthComplexityMeanEpochs
+        - katzFdMeanEpochs
+        - katzFdSDEpochs
+        - lzivComplexityMeanEpochs
+        - numZerocrossMeanEpochs
+        - detrendedFluctuationMeanEpochs
+        - sampleEntropyMeanEpochs
+        - spectralEntropyMeanEpochs
+        - permEntropyMeanEpochs
+        - svdEntropyMeanEpochs
+        - petrosianFdMeanEpochs
+        - fooofExponent
+        - foofOffset
+        - RelativeBandPowerFromAverageFooof
+        - RelativeBandPowerFromAverageSpectrum
+
+
+scalingAndFolding:
+  aggregate_folders:
+    - 'FeaturesROI@30@prep-defaultprep'
+  #  - 'FeaturesChannels@30@prep-defaultprep'
+  MAX_FEATURES: null
+  path : './data/%PROJECT%/scalingAndFolding'
+  random_state : 0
+  targets :
+    - 'age'
+  dropsToOnlyFeatures: # the targets will be appended to this in the script
+    - id
+    - sex
+    - group
+    - dataset
+    - subject
+    - task
+  stratifiedvars :
+    - dataset
+    #- group make it easier to balance for test purposes
+    #- sex
+  scalings : # dont use _ - in the name (bids-like)
+    scalingCombat : # name of this particular scaling config
+        method : 'reCombat'
+        init:
+          parametric : True
+          model : 'elastic_net'
+          config : 
+            alpha : 0.00001
+          n_jobs : 7
+          verbose : True
+        covars :
+          - dataset
+          - sex
+          - age
+          #- group # seems we are missing data in testing conditions
+        batch : dataset # which should be the one we drop from covars for the design matrix X in combat
+        rename : # sync to covars, otherwise design matrix inconsistencies will throw an error
+          age : age_numerical
+        categorical : # sync to covars, otherwise design matrix inconsistencies will throw an error
+          - dataset
+          #- group
+          - sex
+    scalingStandard:
+      method : 'StandardScaler'
+    # we should implement a none scaling...
+    noScaling:
+      method: 'noScaling'
+  splits : # dont use _ - in the name (bids-like)
+    folding:
+      method : 'StratifiedKFold'
+      num_folds: 5 # stratified by combination by default
+    trainTestSplit:
+      method : 'train_test_split'
+      test_ratio : 0.3
+      stratify : True # Based on combination, see script for meaning...
+    all :
+      method : 'all'
+  visualizations:
+    PCAviz:
+      method : 'PCA'
+      n_components : 2
+      color_by : dataset
+      colormap : 'viridis'
+  featurewiz:
+    init:
+      corr_limit : 0.75
+      feature_engg : ''
+      category_encoders : ''
+      dask_xgboost_flag : False
+      nrows : null # Dont use None here
+      verbose : 0
+
+ml:
+  path: './data/%PROJECT%/ml'
+  models:
+    automljar :
+      method : AutoMLjar
+      init :
+        algorithms :
+          - 'Baseline'
+          - 'Linear'
+          - 'Decision Tree'
+          # - 'Random Forest'
+          # - 'Extra Trees'
+          - 'LightGBM'
+          - 'Xgboost'
+          - 'CatBoost'
+          # - 'Neural Network'
+          # - 'Nearest Neighbors'
+        explain_level : 1
+        ml_task : 'auto'
+        mode : Explain
+        eval_metric : 'rmse'
+        validation_strategy : 
+          validation_type : custom
+        model_time_limit : 3600
+        n_jobs : 1
+
+    autogluon:
+      method: AutoGluon
+      init:
+        problem_type: 'regression'
+        eval_metric: 'root_mean_squared_error'
+        verbosity: 2
+        log_to_file: True
+        sample_weight: null
+        groups: null
+      fit :
+        tuning_data : null
+        time_limit : null
+        presets : null
+        hyperparameters : null
+        feature_metadata : 'infer'
+        infer_limit : null 
+        infer_limit_batch_size : null
+        fit_weighted_ensemble : True
+        fit_full_last_level_weighted_ensemble : True
+        full_weighted_ensemble_additionally  : False
+        dynamic_stacking : False
+        calibrate_decision_threshold : False
+        num_cpus : 10
+        num_gpus : auto
+        num_bag_folds : 0
+
+eda:
+  path: './data/%PROJECT%/eda'
+  
+  # ols
+  category_vars:
+    - dataset
+    - sex
+  desired_threshold: 0.05
+  formula: "{feature} ~ C(group, Treatment(reference='HC')) + age + sex"
+
+  # plot based on feature type (1st level)
+  # define functions (or a map-dictionary)
+  feature_categories:
+      by_band :
+        category_name : byband
+        category_mapping: |
+          def category_mapping(x):
+            for b in ['pre_alpha','alpha','beta','gamma','delta','slow_theta','theta']:
+                if b in x:
+                    return b
+            else:
+                return 'NoBand'
+        input_column_mapping : Feature
+        color_map:
+          pre_alpha : blue
+          alpha : green
+          beta : yellow
+          gamma : orange
+          delta : red
+          slow_theta : magenta
+          theta : brown
+          NoBand : black
+      by_ROI :
+        category_name : band
+        category_mapping: |
+          def category_mapping(x):
+            for b in ['pre_alpha','alpha','beta','gamma','delta','slow_theta','theta']:
+                if b in x:
+                    return b
+            else:
+                return 'NoBand'
+        input_column_mapping : Feature
+        color_map:
+          pre_alpha : blue
+          alpha : green
+          beta : yellow
+          gamma : orange
+          delta : red
+          slow_theta : magenta
+          theta : brown
+          NoBand : black
