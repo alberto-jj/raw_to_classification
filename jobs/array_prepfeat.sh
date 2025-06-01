@@ -4,7 +4,9 @@
 #SBATCH --mem=16G
 #SBATCH --time=0-02:00:00
 #SBATCH --array=0-977
-## 0-977, you need to get the index range using the command below:
+## 0-977 for saint
+## 0-331 for cocosprint
+## you need to get the index range using the command below:
 ## sbatch --export=STEP=index,PIPELINE_YML=project_files/pipeline_saint.yml --array=0 array_prepfeat.sh
 #SBATCH --job-name=prepfeat
 #SBATCH --output=%A_%a-prepfeat.out
