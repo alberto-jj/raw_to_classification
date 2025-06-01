@@ -43,8 +43,8 @@ preprocess:
       overwrite : False
   prep_list :
     - prepDur30Ov20
-    - prepDur20Ov10
-    - prepDur10Ov5
+    # - prepDur20Ov10
+    # - prepDur10Ov5
 prep_inspection:
   path : './data/%PROJECT%/prep_inspection'
   overwrite : False
