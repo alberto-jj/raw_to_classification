@@ -18,7 +18,7 @@ def get_dependencies(feature, FEATURE_CFG):
     dependencies += depends_on + list(itertools.chain(*[get_dependencies(f, FEATURE_CFG) for f in depends_on]))
     return dependencies
 
-def foo(eeg_file, DOWNSAMPLE, keep_channels, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, DEBUG=False,retry_errors=False):
+def foo(eeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, DEBUG=False,retry_errors=False):
     from mne.datasets.eegbci import standardize
     import mne
     import os
@@ -43,10 +43,12 @@ def foo(eeg_file, DOWNSAMPLE, keep_channels, featurepipelineCFG, FEATURE_CFG, fe
         return
     try:
         epochs = mne.read_epochs(eeg_file, preload=True)
-        standardize(epochs)
+        if standardize_epochs:
+            standardize(epochs)
         if featurepipelineCFG.get('prefilter', None) is not None:
             epochs = epochs.filter(**featurepipelineCFG['prefilter'])
-        epochs = epochs.resample(DOWNSAMPLE)
+        if DOWNSAMPLE is not None:
+            epochs = epochs.resample(DOWNSAMPLE)
         if keep_channels:
                         # We picked the common channels between datasets for simplicity
             epochs = epochs.reorder_channels(keep_channels)
@@ -102,6 +104,7 @@ def main(pipeline_file, external_jobs, debug, parallelize, retry_errors, single_
 
         DOWNSAMPLE = featurepipelineCFG['downsample']
         keep_channels = featurepipelineCFG['keep_channels']
+        standardize_epochs = featurepipelineCFG.get('standardize_epochs', True)
 
 
         all_EEGS = []
@@ -157,12 +160,12 @@ def main(pipeline_file, external_jobs, debug, parallelize, retry_errors, single_
             all_EEGS = [all_EEGS[single_index]]
         if parallelize:
             for level in levels:
-                Parallel(n_jobs=external_jobs)(delayed(foo)(eeg_file, DOWNSAMPLE, keep_channels, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, debug, retry_errors ) for eeg_file in all_EEGS for feature in level)
+                Parallel(n_jobs=external_jobs)(delayed(foo)(eeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, debug,retry_errors ) for eeg_file in all_EEGS for feature in level)
         else:
             for count,eeg_file in enumerate(all_EEGS):
                 for level in levels:
                     for feature in level:
-                        foo(eeg_file, DOWNSAMPLE, keep_channels, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, debug, retry_errors)
+                        foo(eeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, debug, retry_errors)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run EEG feature extraction pipeline.')
