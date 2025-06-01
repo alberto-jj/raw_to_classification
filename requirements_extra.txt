@@ -15,4 +15,5 @@ kaleido
 fooof
 cmasher
 antropy
+PyWavelets
 neurokit2
