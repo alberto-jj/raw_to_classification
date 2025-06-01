@@ -219,3 +219,33 @@ Besides, Dataset 2 was collected in 38 subjects (19 Parkinson Disease Patients; 
 - [x] add aggregation per roi ---> should be trivial now with custom aggregation functions
 - [-] find fold N for nvars stratify ---> deprecated
 - [ ] solve TODOs: ROIS, different configs, etc
+
+
+## TODO
+
+Maybe add a dataset dependent clause here. Or keep them on datasets.yml. Though in that case the signature of the prepare function is more rigid. With this proporsal,
+the signature just depends on filename and the dataset + kwargs that are populated from the pipeline.yml file instead of the datasets.yml file.
+```yaml
+prep_cfg:
+    prepDur30Ov20: # This is the name of the preprocessing pipeline
+      redefine_prepare:
+        from_this: project_files.redefinitions_cocosprint
+        import_that: prepare
+      prepare:
+        epoch_config:
+          duration: 30
+          overlap: 20
+        downsample : null # all should be 1200 by default
+        normalization : False
+        filter_args: null
+        dataset_dependent: # this would overwrite the arguments of the function dependent on the dataset...
+          dataset1: # This is the name of the dataset
+            filter_args:
+              l_freq: 0.5
+              h_freq: 40
+          dataset2:
+            filter_args:
+              l_freq: 0.5
+              h_freq: 30
+      overwrite : False
+```
