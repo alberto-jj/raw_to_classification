@@ -41,6 +41,9 @@ cd /home/yorguin/envs
 
 ##source $SLURM_TMPDIR/env/bin/activate
 source raw_to_classification_env/bin/activate
+## pip install --no-index -r requirements_cc_noindex.txt
+## pip install -r requirements_extra.txt
+
 
 ##pip install --no-index --upgrade pip
 cd /home/yorguin/raw_to_classification
