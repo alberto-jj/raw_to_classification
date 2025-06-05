@@ -128,9 +128,17 @@ def get_output_dict(eeg_file,FORMAT='WIDE',dataset_label='',feature_suffix='', a
     # Assume python > 3.7, dictionaries retain order
     axes = list(output['metadata']['axes'].values())
     keys =list(output['metadata']['axes'].keys())
+    filenosuffix = eeg_file.split('_')
+    filenosuffix = '_'.join(filenosuffix[:-1])  # remove suffix
     
+    ## COCOSPRINT ONLY TEMPORAL FIX
+    for i,ax in enumerate(axes):
+        for j,axitem in enumerate(ax):
+            if '-' in axitem:
+                axes[i][j] = axitem.split('-')[0]
+    ##############
     dict_list = []
-    d = {'dataset':dataset,'subject':subject,'task':task}
+    d = {'dataset':dataset,'subject':subject,'task':task, 'filepath':filenosuffix}
     if showinfo:
         print(eeg_file)
         print('axes:',axes)
