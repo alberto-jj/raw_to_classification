@@ -32,8 +32,8 @@ def main(config_file):
                 continue
 
             perfeature = []
-            participants_file = DATASET['cleaned_participants']
-            participants_file = get_path(participants_file, MOUNT)
+            # participants_file = DATASET['cleaned_participants']
+            # participants_file = get_path(participants_file, MOUNT)
             # participants = pd.read_csv(participants_file)
 
             # def parfun(query, field):
@@ -54,15 +54,14 @@ def main(config_file):
                 featfolder = agg_cfg['feature_folder']
                 foodict = cfg['aggregate']['feature_return'][feature]
                 filesuffix = foodict['file_suffix']
-                bids_root = DATASET.get('bids_root', None)
-                bids_root = get_path(bids_root, MOUNT)
 
                 derivatives_root = DATASET.get('derivatives_root', None)
                 
                 if derivatives_root is not None:
                     derivatives_root = get_path(derivatives_root, MOUNT)
-
                 else:
+                    bids_root = DATASET.get('bids_root', None)
+                    bids_root = get_path(bids_root, MOUNT)
                     derivatives_root = os.path.join(bids_root, f'derivatives/')
                 pattern = os.path.join(derivatives_root, featfolder, f'**/*_{filesuffix}.npy')
 
@@ -77,8 +76,6 @@ def main(config_file):
                     suffix = os.path.basename(eeg_file).split('_')[-1].split('.')[0] + '.'
                     desired_label = feature + '.'  # dot is important for combination format
                     this_dict=get_output_dict(eeg_file, 'WIDE', DATASET['dataset_label'], desired_label, agg_fun=foo, keyvalformat=True,showinfo=showinfo)
-                    for this in this_dict:
-                        this['eeg_file'] = eeg_file
                     dict_list += this_dict
                     showinfo = False
                 if len(dict_list) == 0:
@@ -102,10 +99,26 @@ def main(config_file):
             if len(perfeature) == 0:
                 print(f'No features found for {dslabel}')
                 continue
+            
+
+            # Using dicts:
+            # perfeature2 = [perfeature[x].set_index('filepath', inplace=False).to_dict(orient='index') for x in range(len(perfeature))]
+            
+            # base_dict = perfeature2[0]
+            # for i in range(1, len(perfeature2)):
+            #     for key, value in perfeature2[i].items():
+            #         if key in base_dict:
+            #             pass # should only happen for identity columns, so we can ignore it
+            #             #base_dict[key].update(value)
+            #         else:
+            #             base_dict[key] = value
+
+            # Using dataframes:
             df = perfeature[0]
+            on = [x for x in df.columns if 'feature-' not in x]
             for a in perfeature[1:]:
                 #df = pd.merge(df, a, on="id", validate='1:1', suffixes=(None, '_y'))
-                df = pd.merge(df, a, on="eeg_file", validate='1:1', suffixes=(None, '_y'))
+                df = pd.merge(df, a, how='inner', on=on, validate='1:1', suffixes=(None, '_y')) # inner --> only keep rows that are present in both dataframes, outer --> keep all rows (nan where not present)
                 overlapping_cols = [col for col in df.columns if col.endswith('_y')]
                 for col in overlapping_cols:
                     col_name = col[:-2]

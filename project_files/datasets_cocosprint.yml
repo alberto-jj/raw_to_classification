@@ -27,6 +27,7 @@ lsd:
     computecanada: "/home/yorguin/scratch/data/MEG_LSDV2/meg_data_BIDS/"
   derivatives_root : 
     computecanada: "/home/yorguin/scratch/data/MEG_LSDV2/derivatives/"
+    local: "Y:/computecanada/cocosprint/home/yorguin/scratch/data/MEG_LSDV2/derivatives"
 
 
 ketamine:
@@ -58,6 +59,7 @@ ketamine:
     computecanada: "/home/yorguin/scratch/data/MEG_ketamine/meg_data_BIDS/"
   derivatives_root : 
     computecanada: "/home/yorguin/scratch/data/MEG_ketamine/derivatives"
+    local: "Y:/computecanada/cocosprint/home/yorguin/scratch/data/MEG_ketamine/derivatives"
 
 perampanel:
   dataset_label : perampanel
@@ -88,6 +90,7 @@ perampanel:
     computecanada: "/home/yorguin/scratch/data/MEG_perampanel/meg_data_BIDS/"
   derivatives_root : 
     computecanada: "/home/yorguin/scratch/data/MEG_perampanel/derivatives/"
+    local: Y:/computecanada/cocosprint/home/yorguin/scratch/data/MEG_perampanel/derivatives
 
 tiagabine:
   dataset_label : tiagabine
@@ -118,3 +121,4 @@ tiagabine:
     computecanada: "/home/yorguin/scratch/data/MEG_tiagabine/meg_data_BIDS/"
   derivatives_root : 
     computecanada: "/home/yorguin/scratch/data/MEG_tiagabine/derivatives/"
+    local: Y:/computecanada/cocosprint/home/yorguin/scratch/data/MEG_tiagabine/derivatives

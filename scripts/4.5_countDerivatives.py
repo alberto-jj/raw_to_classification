@@ -2,6 +2,8 @@ import glob
 
 pattern = "/home/yorguin/scratch/data/*/derivatives/features@prepDur30Ov20/**/*.npy"
 
+pattern = "Y:/computecanada/cocosprint/home/yorguin/scratch/data/*/derivatives/features@prepDur30Ov20/**/*.npy"
+
 files = glob.glob(pattern, recursive=True)
 
 import pandas as pd

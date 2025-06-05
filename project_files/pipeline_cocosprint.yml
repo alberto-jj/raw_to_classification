@@ -1,6 +1,6 @@
-project: 'epilepsy'
+project: 'cocosprint'
 datasets_file: 'project_files/datasets_cocosprint.yml'
-mount: computecanada
+mount: local
 inspect:
   path : './data/%PROJECT%/inspect'
 preprocess:
@@ -506,6 +506,7 @@ features:
 aggregate:
   path : 
     computecanada: '/home/yorguin/scratch/%PROJECT%/aggregate/' #
+    local: './data/%PROJECT%/aggregate/'
   filename : 'aggregate'
   id_splitter : '/'
   feature_return:
