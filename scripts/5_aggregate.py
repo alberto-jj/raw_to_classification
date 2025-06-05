@@ -1,15 +1,12 @@
 import os
-import matplotlib.pyplot as plt
 import numpy as np
 import glob
 from eeg_raw_to_classification.utils import parse_bids, load_yaml, get_output_dict, save_dict_to_json, get_path,agg_numpy,extract_item
 import itertools
 import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler
 import argparse
 import pathlib
-
+#config_file = 'project_files/pipeline_cocosprint.yml'
 def main(config_file):
     cfg = load_yaml(config_file)
     MOUNT = cfg.get('mount', None)
@@ -21,7 +18,7 @@ def main(config_file):
     csvfilename = cfg['aggregate']['filename']
     id_splitter = cfg['aggregate']['id_splitter']
     os.makedirs(OUTPUTBASE, exist_ok=True)
-
+    #agg_cfg_label = cfg['aggregate']['feature_aggregate_list'][0]
     for agg_cfg_label in cfg['aggregate']['feature_aggregate_list']:
         agg_cfg = cfg['aggregate']['aggregate_cfgs'][agg_cfg_label]
         OUTPUT = os.path.join(OUTPUTBASE, agg_cfg_label)
@@ -30,6 +27,7 @@ def main(config_file):
         COMMON_FEATURES = []
 
         for dslabel, DATASET in datasets.items():
+            # dslabel, DATASET = list(datasets.items())[0]
             if DATASET.get('skip', False):
                 continue
 
@@ -51,6 +49,7 @@ def main(config_file):
             #     return idx[field].item()
 
             for feature in agg_cfg['feature_list']:
+                #feature = agg_cfg['feature_list'][0]
                 print(f'Processing {feature} in {dslabel}')
                 featfolder = agg_cfg['feature_folder']
                 foodict = cfg['aggregate']['feature_return'][feature]
@@ -77,7 +76,10 @@ def main(config_file):
                 for eeg_file in eegs:
                     suffix = os.path.basename(eeg_file).split('_')[-1].split('.')[0] + '.'
                     desired_label = feature + '.'  # dot is important for combination format
-                    dict_list += get_output_dict(eeg_file, 'WIDE', DATASET['dataset_label'], desired_label, agg_fun=foo, keyvalformat=True,showinfo=showinfo)
+                    this_dict=get_output_dict(eeg_file, 'WIDE', DATASET['dataset_label'], desired_label, agg_fun=foo, keyvalformat=True,showinfo=showinfo)
+                    for this in this_dict:
+                        this['eeg_file'] = eeg_file
+                    dict_list += this_dict
                     showinfo = False
                 if len(dict_list) == 0:
                     print(f'No files found for {feature} in {dslabel}')
@@ -86,7 +88,9 @@ def main(config_file):
                 metafeature = np.load(eeg_file, allow_pickle=True).item()['metadata']
                 idx_space = metafeature['order'].index('spaces') + 1  # increase 1 because col name includes feature type at start
 
+                #df.insert(loc=0, column='id', value=df['dataset'] + id_splitter + df['subject'] + id_splitter + df['task'])
                 df.insert(loc=0, column='id', value=df['dataset'] + id_splitter + df['subject'] + id_splitter + df['task'])
+
                 # for field in ['group', 'age', 'sex']:  # TODO: maybe this should be configured from outside
                 #     auxdf = df['subject'].apply(lambda x: parfun(x, field))
                 #     df.insert(loc=1, column=field, value=auxdf)
@@ -100,19 +104,20 @@ def main(config_file):
                 continue
             df = perfeature[0]
             for a in perfeature[1:]:
-                df = pd.merge(df, a, on="id", validate='1:1', suffixes=(None, '_y'))
+                #df = pd.merge(df, a, on="id", validate='1:1', suffixes=(None, '_y'))
+                df = pd.merge(df, a, on="eeg_file", validate='1:1', suffixes=(None, '_y'))
                 overlapping_cols = [col for col in df.columns if col.endswith('_y')]
                 for col in overlapping_cols:
                     col_name = col[:-2]
                     if df[col_name].equals(df[col]):
                         df = df.drop(col, axis=1, inplace=False)
-
             ALL_INHOMOGENEUS.append(df)
-
+        #len(ALL_INHOMOGENEUS)
         column_sets = [x.columns for x in ALL_INHOMOGENEUS]
         common = set(column_sets[0])
         for feature_set in column_sets[1:]:
             common = common.intersection(set(feature_set))
+        union = set(itertools.chain.from_iterable(column_sets))
 
         ALL = []
         for df, this_set in zip(ALL_INHOMOGENEUS, column_sets):

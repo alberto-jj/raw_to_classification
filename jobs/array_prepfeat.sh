@@ -1,11 +1,11 @@
 #!/bin/bash
 #SBATCH --account=def-kjerbi
 #SBATCH --cpus-per-task=1
-#SBATCH --mem=16G
-#SBATCH --time=0-02:00:00
-#SBATCH --array=0-977
+#SBATCH --mem=64G
+#SBATCH --time=0-04:00:00
+#SBATCH --array=0-331
 ## 0-977 for saint
-## 0-331 for cocosprint
+## 0-488 for cocosprint
 ## you need to get the index range using the command below:
 ## sbatch --export=STEP=index,PIPELINE_YML=project_files/pipeline_saint.yml --array=0 array_prepfeat.sh
 #SBATCH --job-name=prepfeat
@@ -65,7 +65,9 @@ PIPELINE_YML=${PIPELINE_YML:-project_files/pipeline_saint.yml}
 if [ ! -f "$PIPELINE_YML" ]; then
     echo "Warning: YAML file '$PIPELINE_YML' does not exist!"
 fi
-
+## python -u scripts/4_features.py project_files/pipeline_cocosprint.yml --index 0 --retry_errors
+## python -u scripts/3_preprocess.py project_files/pipeline_cocosprint.yml --only_total
+## python -u scripts/4_features.py project_files/pipeline_cocosprint.yml --retry_errors --only_total
 # Decide which step to run based on $STEP
 if [ "$STEP" == "3" ]; then
     python -u scripts/3_preprocess.py "$PIPELINE_YML" --index $SLURM_ARRAY_TASK_ID --external_jobs 1 --internal_jobs 1 --retry_errors

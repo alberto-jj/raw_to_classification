@@ -64,28 +64,27 @@ features:
       keep_channels : False
       standardize_epochs : False
       feature_list: # To say which features actually compute rather than configure
-        - PowerSpectrum
-        - PowerSpectrumAverage
-        - RelativeBandPowerFromAverageSpectrum
-        - FooofFromAverage
-        - RelativeBandPowerFromAverageFooof
-        - detrendedFluctuation
-        - lzivComplexityMeanEpochs
-        - sampleEntropyMeanEpochs
-        - spectralEntropyMeanEpochs
-        - appEntropyMeanEpochs
-        - hjorthParams
+        # #- PowerSpectrum
+        # #- PowerSpectrumAverage
+        # #- RelativeBandPowerFromAverageSpectrum
+        # #- FooofFromAverage
+        # #- RelativeBandPowerFromAverageFooof
+        - detrendedFluctuationMeanEpochs
+        # - hjorthParams
         - hjorthMobilityMeanEpochs
         - hjorthComplexityMeanEpochs
         - numZerocrossMeanEpochs
-        - permEntropyMeanEpochs
         - svdEntropyMeanEpochs
         - higuchiFdMeanEpochs
         - higuchiFdVarEpochs
         - katzFdMeanEpochs
         - katzFdSDEpochs
         - petrosianFdMeanEpochs
-        - entropyMultiscaleMeanEpochs
+        # # - entropyMultiscaleMeanEpochs
+        # #- sampleEntropyMeanEpochs
+        - spectralEntropyMeanEpochs
+        - lzivComplexityMeanEpochs
+        # # - appEntropyMeanEpochs
     features@prepDur20Ov10: #you set the name of the feature pipeline with the key
       prep_pipeline : 'prepDur20Ov10' # This is the name of the preprocessing pipeline previously defined (must exist in derivatives)
       downsample : null
@@ -584,8 +583,8 @@ aggregate:
     MeanEpochs@prepDur30Ov20:
       feature_folder : 'features@prepDur30Ov20' # what if we have multiple feature folders?
       feature_list: # CHOOSE FEATURES WITH SAME DIMENSIONS, OTHERWISE THE DATAFRAME CANT BE MADE
-        - appEntropyMeanEpochs
-        - entropyMultiscaleMeanEpochs
+        # - appEntropyMeanEpochs
+        # - entropyMultiscaleMeanEpochs
         - higuchiFdMeanEpochs
         - higuchiFdVarEpochs
         - hjorthMobilityMeanEpochs
@@ -595,15 +594,15 @@ aggregate:
         - lzivComplexityMeanEpochs
         - numZerocrossMeanEpochs
         - detrendedFluctuationMeanEpochs
-        - sampleEntropyMeanEpochs
+        # - sampleEntropyMeanEpochs
         - spectralEntropyMeanEpochs
-        - permEntropyMeanEpochs
+        # - permEntropyMeanEpochs
         - svdEntropyMeanEpochs
         - petrosianFdMeanEpochs
-        - fooofExponent
-        - foofOffset
-        - RelativeBandPowerFromAverageFooof
-        - RelativeBandPowerFromAverageSpectrum
+        # - fooofExponent
+        # - foofOffset
+        # - RelativeBandPowerFromAverageFooof
+        # - RelativeBandPowerFromAverageSpectrum
     MeanEpochs@prepDur20Ov10:
       feature_folder : 'features@prepDur20Ov10' # what if we have multiple feature folders?
       feature_list: # CHOOSE FEATURES WITH SAME DIMENSIONS, OTHERWISE THE DATAFRAME CANT BE MADE

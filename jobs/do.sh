@@ -13,3 +13,7 @@ python -u scripts/6b_aggregateInspection.py > 6b_aggregateInspectionPOLANDHenry.
 
 python -u scripts/3_preprocess.py pipeline_saint.yml --external_jobs 1 --only_total
 python -u scripts/4_features.py pipeline_saint.yml --only_total
+
+
+
+python -u scripts/5_aggregate.py project_files/pipeline_cocosprint.yml > 5_aggregate_cocosprint.log
