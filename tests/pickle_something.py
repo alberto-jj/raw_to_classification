@@ -40,9 +40,17 @@ import pathlib
 
 path = r"Y:\datasets\saint-justine\bids\all\derivatives\features@prep-prep10min\sub-137\ses-01\eeg\sub-137_ses-01_task-RESTING_run-01_desc-reject_detrendedFluctuation.npy"
 
+path = r"Y:\computecanada\cocosprint\home\yorguin\scratch\data\MEG_LSDV2\derivatives\features@prepDur30Ov20\sub-S7MT\ses-lsd\meg\sub-S7MT_ses-lsd_task-Closed1_desc-None_katzFdMeanEpochs.npy"
+path = r"Y:\datasets\ds004504-download\derivatives\features-epochs\sub-018\eeg\sub-018_task-eyesclosed_desc-reject_PowerSpectrum.npy"
 output = np.load(path,allow_pickle=True)
 
 output.item()['values'].shape
+output.item()['metadata']['axes'].keys()
+output.item()['metadata']['order']
+
+from pprint import pprint
+
+pprint(output.item()['metadata']['axes'])
 
 path=r'Y:\datasets\epilepsy\rawdata'
 path=pathlib.Path(path).as_posix()
