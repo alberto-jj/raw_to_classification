@@ -7,3 +7,13 @@ rsync -r -h --copy-links --no-perms --progress yorguin@narval.computecanada.ca:/
 
 ssh yorguin@cedar.computecanada.ca     "find /home/yorguin/scratch/data/MEG_*/derivatives/features@prepDur30Ov20/ -type f -name '*.npy'" > files.txt
 rsync -h --copy-links --no-perms --progress --files-from=files.txt     --relative yorguin@cedar.computecanada.ca:/ /media/Y/computecanada/cocosprint
+
+ssh yorguin@cedar.computecanada.ca     "find /home/yorguin/scratch/data/MEG_*/derivatives/features@prepDur30Ov20/ -type f -name '*.npy'" > files.txt
+rsync -h --copy-links --no-perms --progress --files-from=files.txt     --relative yorguin@cedar.computecanada.ca:/ /media/Y/computecanada/cocosprint
+
+ssh yorguin@cedar.computecanada.ca "find /home/yorguin/scratch/data/MEG_*/derivatives/features@prepDur30Ov20/ -type f -name '*.npy' ! -name '*_PowerSpectrum.npy'" > files.txt
+
+
+
+ssh yorguin@cedar.computecanada.ca "find /home/yorguin/scratch/data/MEG_*/" > files.txt
+rsync -h --copy-links --no-perms --progress --files-from=files.txt --relative yorguin@cedar.computecanada.ca:/home/yorguin/scratch/data /home/yorguin/scratch/data/
