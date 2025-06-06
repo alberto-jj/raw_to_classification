@@ -18,7 +18,7 @@ def get_dependencies(feature, FEATURE_CFG):
     dependencies += depends_on + list(itertools.chain(*[get_dependencies(f, FEATURE_CFG) for f in depends_on]))
     return dependencies
 
-def foo(eeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, DEBUG=False,retry_errors=False):
+def foo(eeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, DEBUG=False,retry_errors=False, inspect_only=False):
     from mne.datasets.eegbci import standardize
     import mne
     import os
@@ -31,7 +31,8 @@ def foo(eeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipeline
     derifile = eeg_file.replace(prep_pipeline, pipeline_name)
     errorfile = os.path.join(dirname, f'file-{finame}_feature-{feature}_featureError.txt')
         # inspect first if the file is already processed
-    inspect_vector = feat.process_feature(None, derifile, FEATURE_CFG, feature, pipeline_name, inspect_only=True)
+    inspect_dict = feat.process_feature(None, derifile, FEATURE_CFG, feature, pipeline_name, inspect_only=True)
+    inspect_vector = list(inspect_dict.values())
     inspect_ = np.all(inspect_vector)
     inspect_error = os.path.isfile(errorfile)
 
@@ -41,6 +42,10 @@ def foo(eeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipeline
     if inspect_error and not retry_errors:
         print(f'{feature} had an error, skipping according to retry_errors={retry_errors}')
         return
+
+    if inspect_only:
+        return inspect_dict
+    
     try:
         epochs = mne.read_epochs(eeg_file, preload=True)
         if standardize_epochs:
@@ -67,7 +72,7 @@ def foo(eeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipeline
         else:
             save_dict_to_json(os.path.join(dirname, f'file-{finame}_feature-{feature}_featureError.txt'), {'error': traceback.format_exc()})
 
-def main(pipeline_file, external_jobs, debug, parallelize, retry_errors, single_index=None, only_total=False):
+def main(pipeline_file, external_jobs, debug, parallelize, retry_errors, single_index=None, only_total=False, inspect_only=False):
     PIPELINE = load_yaml(pipeline_file)
     MOUNT = PIPELINE.get('mount', None)
     datasets = load_yaml(get_path(PIPELINE['datasets_file'], MOUNT))
@@ -158,15 +163,19 @@ def main(pipeline_file, external_jobs, debug, parallelize, retry_errors, single_
         if single_index is not None:
             print(len(all_EEGS), single_index)
             all_EEGS = [all_EEGS[single_index]]
+        
+        inspect_list = []
         if parallelize:
             for level in levels:
-                Parallel(n_jobs=external_jobs)(delayed(foo)(eeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, debug,retry_errors ) for eeg_file in all_EEGS for feature in level)
+                x = Parallel(n_jobs=external_jobs)(delayed(foo)(eeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, debug,retry_errors ) for eeg_file in all_EEGS for feature in level)
+                inspect_list += x
         else:
             for count,eeg_file in enumerate(all_EEGS):
                 for level in levels:
                     for feature in level:
-                        foo(eeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, debug, retry_errors)
-
+                        x = foo(eeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, debug, retry_errors)
+                        inspect_list.append(x)
+    return inspect_list
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run EEG feature extraction pipeline.')
     parser.add_argument('pipeline_file', type=str, help='Path to the pipeline YAML file.')
@@ -175,6 +184,11 @@ if __name__ == "__main__":
     parser.add_argument('--retry_errors', action='store_true', help='Retry files that had errors.')
     parser.add_argument('--index', type=int, default=None, help='Index of the file to process. Total index taking into account the dataset outer loop.')
     parser.add_argument('--only_total', action='store_true', help='Just get the total number of files.')
+    parser.add_argument('--inspect_only', action='store_true', help='Just get the status of the features for each file.')
 
     args = parser.parse_args()
-    main(args.pipeline_file, args.external_jobs, args.raise_on_error, args.external_jobs > 1, args.retry_errors, args.index, args.only_total)
+    inspect_list = main(args.pipeline_file, args.external_jobs, args.raise_on_error, args.external_jobs > 1, args.retry_errors, args.index, args.only_total, args.inspect_only)
+
+    if args.inspect_only and not args.index:
+        np.save('inspect_list.npy', inspect_list)
+
