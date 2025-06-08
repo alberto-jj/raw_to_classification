@@ -14,10 +14,10 @@ def main(pipeline_file, max_files=None):
     PROJECT = cfg['project']
     datasets = load_yaml(get_path(cfg['datasets_file'],MOUNT))
     #load_yaml(cfg['datasets_file'])
-    inspect_path = get_path(cfg['inspect']['path'],MOUNT).replace('%PROJECT%', PROJECT)
+    inspect_path = get_path(cfg['0_inspect']['path'],MOUNT).replace('%PROJECT%', PROJECT)
     inspect_path = pathlib.Path(inspect_path).expanduser().as_posix()  # Ensure path is expanded and in POSIX format
     os.makedirs(inspect_path, exist_ok=True)
-    this_inspect = cfg['inspect']
+    this_inspect = cfg['0_inspect']
 
     if 'redefine_loader' in this_inspect:
         import_dict = this_inspect['redefine_loader']
@@ -57,7 +57,7 @@ def main(pipeline_file, max_files=None):
             try:
 
                 
-                meeg = load_meeg(meeg_file, kwargs={'preload': True, 'verbose': 'error'})
+                meeg = load_meeg(meeg_file, DATASET, kwargs={'preload': True, 'verbose': 'error'})
 
                 try:
                     report = mne.Report(title=f'Inspect {dslabel} {rel_path}', verbose='error')
@@ -69,9 +69,13 @@ def main(pipeline_file, max_files=None):
 
                     ## add spectrum to report
                     report.add_figure(meeg.plot_psd(show=False), title=f'{dslabel} {rel_path} Spectrum')
-                    report.add_figure(meeg.plot_psd(show=False, fmax=200), title=f'{dslabel} {rel_path} Spectrum')
+                    fmax = meeg.info['sfreq'] / 2
+                    if fmax > 200:
+                        fmax = 200
+                    report.add_figure(meeg.plot_psd(show=False, fmax=fmax), title=f'{dslabel} {rel_path} Spectrum')
 
                     report.save(output_base + '_report.html', overwrite=True, verbose='error')
+                    del report
                 except Exception as e:
                     print(f"Error adding to report: {e}")
                     save_dict_to_json(output_base + '_problemReport.txt', {'problem': str(e)})
