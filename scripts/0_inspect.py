@@ -38,6 +38,9 @@ def main(pipeline_file, max_files=None):
         MONTAGES = []
         TIMES = []
         MEEGs = []
+        SHAPES = []
+        SFREQS = []
+        INFOS = []
 
         minimal_root = find_minimal_unique_root(meegs)
         print(f"[{dslabel}] Minimal root for unique paths: {minimal_root}")
@@ -84,6 +87,10 @@ def main(pipeline_file, max_files=None):
                 ch_names = meeg.ch_names
                 MONTAGES.append(ch_names)
                 MEEGs.append(meeg_file)
+                SHAPES.append(meeg.get_data().shape)
+                SFREQS.append(meeg.info['sfreq'])
+                INFOS.append(meeg.info.__str__())
+                
                 if True: #i == 0:
                     fig = meeg.plot_psd(show=False)
                     save_figs_in_html(output_base + '_spectrum.html', [fig])
@@ -104,11 +111,15 @@ def main(pipeline_file, max_files=None):
         save_dict_to_json(os.path.join(inspect_path, dslabel, 'times.txt'), {'times': TIMES})
         save_dict_to_json(os.path.join(inspect_path, dslabel, 'times_stats.txt'), {'mean': np.mean(TIMES), 'max': np.max(TIMES), 'min': np.min(TIMES), 'median': np.median(TIMES), 'std': np.std(TIMES)})
         
+        save_dict_to_json(os.path.join(inspect_path, dslabel, 'shapes.txt'), {'shapes': SHAPES})
+        save_dict_to_json(os.path.join(inspect_path, dslabel, 'sfreqs.txt'), {'sfreqs': SFREQS})
+        save_dict_to_json(os.path.join(inspect_path, dslabel, 'infos.txt'), {'infos': INFOS})
+
         counts_dict = dict(zip(*np.unique(TIMES, return_counts=True)))
         counts_dict = {int(k): int(v) for k, v in counts_dict.items()}  # Convert keys and values to Python int
         save_dict_to_json(os.path.join(inspect_path, dslabel, 'times_counts.txt'), {'counts': counts_dict})
 
-        df = pd.DataFrame({'EEG': MEEGs, 'montage': MONTAGES, 'times': TIMES})
+        df = pd.DataFrame({'EEG': MEEGs, 'montage': MONTAGES, 'times': TIMES, 'shape': SHAPES, 'sfreq': SFREQS, 'info': INFOS})
         df.to_csv(os.path.join(inspect_path, dslabel, f'{dslabel}_inspect.csv'))
         print(df)
 

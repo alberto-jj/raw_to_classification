@@ -16,23 +16,38 @@ mount: local
 
 3_preprocess:
   prep_cfg:
-    prepDur30Ov20: # This is the name of the preprocessing pipeline
+    prep1to45: # This is the name of the preprocessing pipeline
       redefine_prepare:
         from_this: project_files.redefinitions_test
         import_that: prepare
       prepare:
         epoch_config:
-          duration: 30
-          overlap: 20
-        downsample : null # all should be 1200 by default
+          duration: 5
+          overlap: 1
+        downsample : 150
         normalization : False
-        filter_args: null
+        filter_args:
+          l_freq: 1
+          h_freq: 45
       overwrite : False
+    prep1to150: # This is the name of the preprocessing pipeline
+      redefine_prepare:
+        from_this: project_files.redefinitions_test
+        import_that: prepare
+      prepare:
+        epoch_config:
+          duration: 5
+          overlap: 1
+        downsample : 150
+        normalization : False
+        filter_args:
+          l_freq: 1
+          h_freq: 150
+      overwrite : False
+
   prep_list :
-    - prepDur30Ov20
-    # - prepDur20Ov10
-    # - prepDur10Ov5
-    # - prepDur30Ov15
+    - prep1to45
+    #- prep1to150
 prep_inspection:
   path : './data/%PROJECT%/prep_inspection'
   overwrite : False
