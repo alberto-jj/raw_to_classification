@@ -26,8 +26,8 @@ def parse_bids(bidsname):
         d[a]=b
     return d
 
-# signature prepare(filename=raw_file, keep_chans=DATASET['ch_names'], line_noise=line_noise, njobs=njobs, **this_prep['prepare'])
-def prepare(filename, line_noise=None, keep_chans=None, downsample = 500, normalization = False, filter_args=None,njobs=1, epoch_config={}):
+# signature prepare(filename=raw_file, dataset_cfg, njobs=njobs, **this_prep['prepare'])
+def prepare(filename, dataset=None, njobs=1, downsample = 500, normalization = False, filter_args=None, epoch_config={}):
     """
     keep_chans: is ignored, only used to keep the same signature as the original function
     line_noise: is ignored, only used to keep the same signature as the original function
@@ -37,8 +37,7 @@ def prepare(filename, line_noise=None, keep_chans=None, downsample = 500, normal
     figures = []
 
     info['filename'] = filename
-    info['line_noise'] = line_noise
-    info['keep_chans'] = keep_chans
+    info['dataset_cfg'] = dataset
     info['downsample'] = downsample
     info['normalization'] = normalization
     info['filter_args'] = filter_args
@@ -48,8 +47,8 @@ def prepare(filename, line_noise=None, keep_chans=None, downsample = 500, normal
     eegpath = filename
     print('PREPARE FUNCTION OVERRIDENED')
 
-    if '.fif' in eegpath:
-        raw = mne.io.read_raw(eegpath,verbose=False,preload=True)
+
+    raw = mne.io.read_raw(eegpath,verbose=False,preload=True)
 
     if normalization:
         # It is debatable where to normalize the data. Here we do it after PyPREP.
@@ -71,4 +70,4 @@ def prepare(filename, line_noise=None, keep_chans=None, downsample = 500, normal
         epochs = epochs.resample(downsample)
 
 
-    return epochs,info,figures
+    return epochs,info,figures, None

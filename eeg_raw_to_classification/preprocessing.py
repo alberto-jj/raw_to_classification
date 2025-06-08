@@ -12,6 +12,7 @@ from mne_icalabel import label_components
 from pyprep.prep_pipeline import PrepPipeline
 import logging
 import matplotlib
+from eeg_raw_to_classification.utils import load_meeg
 matplotlib.use('Agg') # saves ram https://stackoverflow.com/questions/31156578/matplotlib-doesnt-release-memory-after-savefig-and-close
 
 
@@ -27,8 +28,8 @@ def rejlog2dict(rejlog):
     d['labels']=rejlog.labels.tolist()
     return d
 
-def prepare(filename, line_noise, keep_chans=None, epoch_length = 2,
-              downsample = 500, normalization = False, ica_method='infomax',skip_prep=False,njobs=1,skip_reject=False,):
+def prepare(filename, dataset_cfg=None, njobs=1, standardize_names=True,epoch_length = 2,
+              downsample = 500, normalization = False, ica_method='infomax',skip_prep=False,skip_reject=False,):
     """
     Run PREPARE pipeline for resting-state EEG signal preprocessing.
     Returns the preprocessed mne object in BIDS derivatives path. 
@@ -37,12 +38,15 @@ def prepare(filename, line_noise, keep_chans=None, epoch_length = 2,
     ----------
     filename : str
         Full path of raw file and extension.
-    line_noise : float
-        The line noise frequency (in Hz) to be removed using PyPREP or notch.
-        if skip_prep is True, this will be used for notch filtering if not None
-        if skip_prep is False, this will be used for line noise removal in PyPREP unless None
-    keep_chans : list
-        Channel names to keep. Can be defined in dataset['ch_names'].
+    dataset_cfg : dict, which contains the dataset configuration:
+        line_noise : float
+            The line noise frequency (in Hz) to be removed using PyPREP or notch.
+            if skip_prep is True, this will be used for notch filtering if not None
+            if skip_prep is False, this will be used for line noise removal in PyPREP unless None
+        ch_names : list
+            Channel names to keep. Can be defined in dataset['ch_names'].
+    standardize_names : bool
+        Whether to standardize channel names to MNE standard names.
     epoch_length : float
         The epoch length in seconds.
     downsample : float
@@ -58,14 +62,17 @@ def prepare(filename, line_noise, keep_chans=None, epoch_length = 2,
     #setup_logging(log_file)
 
     # Import EEG raw recording + channel standarization
-    if isinstance(filename, str):
-        raw = mne.io.read_raw(filename,preload=True)
-    else:
-        raw = filename # assume we are receiving a raw object
+    raw = load_meeg(filename)
     # Remove channels which are not needed
+
+    keep_chans = dataset_cfg.get('ch_names', None)
+    line_noise = dataset_cfg.get('line_noise', None)
+
     if keep_chans is not None:
         raw.reorder_channels(keep_chans)
-    standardize(raw) #standardize ch_names
+    
+    if standardize_names:
+        standardize(raw) #standardize ch_names
 
     eeg_index = mne.pick_types(raw.info, eeg=True, eog=False, meg=False)
     ch_names = raw.info["ch_names"]
@@ -182,4 +189,25 @@ def prepare(filename, line_noise, keep_chans=None, epoch_length = 2,
         info = {}
         figures = []
         epochs_ar = epochs.copy()
-    return epochs_ar,info,figures
+
+
+    try:
+        meeg = epochs_ar
+        report = mne.Report(title=f'Preprocessing report', verbose='error')
+
+        if isinstance(meeg, mne.io.BaseRaw):
+            report.add_raw(meeg, title=f'Raw data')
+        elif isinstance(meeg, mne.BaseEpochs):
+            report.add_epochs(meeg, title=f'Epochs')
+
+        ## add spectrum to report
+        report.add_figure(meeg.plot_psd(show=False), title=f'Spectrum')
+        fmax = meeg.info['sfreq'] / 2
+        if fmax > 200:
+            fmax = 200
+        report.add_figure(meeg.plot_psd(show=False, fmax=fmax), title=f'Spectrum (fmax={fmax})')
+    except Exception as e:
+        print(f"Error creating report: {e}")
+        report = None
+
+    return epochs_ar,info,figures, report

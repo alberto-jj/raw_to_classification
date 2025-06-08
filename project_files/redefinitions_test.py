@@ -1,5 +1,9 @@
 from mne.io import read_raw
 from mne import read_epochs
+import mne
+import numpy as np
+import scipy
+
 def hello(name='World'):
     return f"Hello, {name}!"
 
@@ -86,3 +90,48 @@ def bidsify(source_path, bids_path, DATASET_CFG):
 
 
     print(f"BIDS conversion complete. Data saved at {bids_path}")
+
+
+def prepare(filename, dataset=None, njobs=1, downsample = 500, normalization = False, filter_args=None, epoch_config={}):
+    """
+    njobs: For the moment ignored, only used to keep the same signature as the original function
+    """
+    info = {}
+    figures = []
+
+    info['filename'] = filename
+    info['dataset_cfg'] = dataset
+    info['downsample'] = downsample
+    info['normalization'] = normalization
+    info['filter_args'] = filter_args
+    info['njobs'] = njobs
+    info['epoch_config'] = epoch_config
+
+    eegpath = filename
+    print('PREPARE FUNCTION OVERRIDENED')
+
+
+    raw = mne.io.read_raw(eegpath,verbose=False,preload=True)
+
+    if normalization:
+        # It is debatable where to normalize the data. Here we do it after PyPREP.
+        # Sanity check, the argmin of the zscored data should be the same as the argmin of the raw data
+        assert np.argmin(raw.get_data()[0,:])==np.argmin(scipy.stats.zscore(raw.get_data(),axis=1)[0,:])
+        raw._data = scipy.stats.zscore(raw.get_data(),axis=1)
+        print('AMPLITUDE NORMALIZATION DONE')
+
+    # Filter the data
+    if filter_args is not None:
+        raw = raw.filter(**filter_args,verbose=False)
+        print('FILTERED',end=' ')
+
+    # Extract epochs
+    print('EPOCH SEGMENTATION')
+    epochs = mne.make_fixed_length_epochs(raw,preload=True,**epoch_config)
+
+    if downsample is not None:
+        epochs = epochs.resample(downsample)
+
+    report =  None
+    # If you want to generate a MNE report, you can add it here
+    return epochs,info,figures, report

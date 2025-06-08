@@ -12,11 +12,6 @@ lsd:
 
     cleaned_participants : 
       computecanada: "/home/yorguin/scratch/data/MEG_LSDV2/meg_data_BIDS/participants.tsv"
-  # Files to be included in the study
-  raw_layout:
-    extension: ".fif"
-    suffix : 'meg'
-    return_type : 'filename'
 
   # Processing
   example_file: 
@@ -29,6 +24,12 @@ lsd:
   derivatives_root : 
     computecanada: "/home/yorguin/scratch/data/MEG_LSDV2/derivatives/"
     local: "Y:/computecanada/cocosprint/home/yorguin/scratch/data/MEG_LSDV2/derivatives"
+
+  # Files to be included in the study
+  bids_layout:
+    extension: ".fif"
+    suffix : 'meg'
+    return_type : 'filename'
 
 
 ketamine:
@@ -49,12 +50,6 @@ ketamine:
     cleaned_participants : 
       computecanada: "/home/yorguin/scratch/data/MEG_ketamine/meg_data_BIDS/participants.tsv"
 
-  # Files to be included in the study
-  raw_layout:
-    extension: ".fif"
-    suffix : 'meg'
-    return_type : 'filename'
-
   # Processing
   example_file: 
     computecanada: "/home/yorguin/scratch/data/MEG_ketamine/meg_data_BIDS/sub-*/ses-*/meg/sub-*_ses-*_task-*_meg.fif"
@@ -66,6 +61,12 @@ ketamine:
   derivatives_root : 
     computecanada: "/home/yorguin/scratch/data/MEG_ketamine/derivatives"
     local: "Y:/computecanada/cocosprint/home/yorguin/scratch/data/MEG_ketamine/derivatives"
+
+  # Files to be included in the study
+  bids_layout:
+    extension: ".fif"
+    suffix : 'meg'
+    return_type : 'filename'
 
 perampanel:
   dataset_label : perampanel
@@ -83,11 +84,6 @@ perampanel:
 
     cleaned_participants : 
       computecanada: "/home/yorguin/scratch/data/MEG_perampanel/meg_data_BIDS/participants.tsv"
-  # Files to be included in the study
-  raw_layout:
-    extension: ".fif"
-    suffix : 'meg'
-    return_type : 'filename'
 
   # Processing
   example_file: 
@@ -100,6 +96,12 @@ perampanel:
   derivatives_root : 
     computecanada: "/home/yorguin/scratch/data/MEG_perampanel/derivatives/"
     local: Y:/computecanada/cocosprint/home/yorguin/scratch/data/MEG_perampanel/derivatives
+
+  # Files to be included in the study
+  bids_layout:
+    extension: ".fif"
+    suffix : 'meg'
+    return_type : 'filename'
 
 tiagabine:
   dataset_label : tiagabine
@@ -117,11 +119,6 @@ tiagabine:
 
     cleaned_participants : 
       computecanada: "/home/yorguin/scratch/data/MEG_tiagabine/meg_data_BIDS/participants.tsv"
-  # Files to be included in the study
-  raw_layout:
-    extension: ".fif"
-    suffix : 'meg'
-    return_type : 'filename'
 
   # Processing
   example_file: 
@@ -134,3 +131,9 @@ tiagabine:
   derivatives_root : 
     computecanada: "/home/yorguin/scratch/data/MEG_tiagabine/derivatives/"
     local: Y:/computecanada/cocosprint/home/yorguin/scratch/data/MEG_tiagabine/derivatives
+
+  # Files to be included in the study
+  bids_layout:
+    extension: ".fif"
+    suffix : 'meg'
+    return_type : 'filename'

@@ -18,12 +18,6 @@ saint:
       local: "Y:/datasets/saint-justine/bids/all/participants.csv"
       narval: "/home/yorguin/projects/rrg-shahabkb/cocolab_data/EEG_ADHD_epilepsy_psychostimulants/BIDS/participants.csv"
 
-  # Files to be included in the study
-  raw_layout:
-    extension: ".vhdr"
-    suffix : 'eeg'
-    return_type : 'filename'
-    task : 'RESTING'
 
   # Processing
   example_file: 
@@ -45,3 +39,10 @@ saint:
     computecanada: "/home/yorguin/scratch/saint/BIDS/derivatives/"
     local: "Y:/datasets/saint-justine/bids/derivatives"
     narval: "/home/yorguin/scratch/saint/derivatives"
+
+  # Files to be included in the study
+  bids_layout:
+    extension: ".vhdr"
+    suffix : 'eeg'
+    return_type : 'filename'
+    task : 'RESTING'

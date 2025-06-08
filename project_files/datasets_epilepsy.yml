@@ -16,12 +16,6 @@ EPILEPSY:
     cleaned_participants : 
       local: "Y:/datasets/epilepsy/bids/participants.csv" # created whether transforms or not were applied
 
-  # Files to be included in the study
-  raw_layout:
-    extension: ".mat"
-    suffix : 'iEEG'
-    return_type : 'filename'
-
   # Processing
   example_file: 
     local: "Y:/datasets/epilepsy/bids/*.mat"
@@ -32,3 +26,9 @@ EPILEPSY:
 # BIDS
   bids_root :
     local: "Y:/datasets/epilepsy/bids/"
+
+  # Files to be included in the study
+  bids_layout:
+    extension: ".mat"
+    suffix : 'iEEG'
+    return_type : 'filename'

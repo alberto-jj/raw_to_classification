@@ -35,6 +35,17 @@
             "args": ["project_files/pipeline_test.yml"]
         },
 
+
+                {
+            "name": "test 3 preprocess",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/3_preprocess.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": ["project_files/pipeline_test.yml","--max_files","1","--external_jobs", "1", "--raise_on_error"] //"--only_total"
+        },
+
         {
             "name": "Python Debugger: Current File",
             "type": "debugpy",

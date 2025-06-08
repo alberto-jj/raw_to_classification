@@ -31,12 +31,6 @@ FINLAND:
         m : M
         f : F
 
-  # Files to be included in the study
-  raw_layout:
-    extension: ".vhdr"
-    suffix : 'eeg'
-    return_type : 'filename'
-    task : 'eyesClosed'
 
   # Processing
   example_file: 
@@ -50,6 +44,14 @@ FINLAND:
   bids_root : 
     local: "Y:/datasets/HenryRailo/bids/"
     narval: "/home/yorguin/scratch/datasets/HenryRailo/bids/"
+
+  # Files to be included in the study
+  bids_layout:
+    extension: ".vhdr"
+    suffix : 'eeg'
+    return_type : 'filename'
+    task : 'eyesClosed'
+
 
   bidsify:
     paths:
@@ -117,13 +119,6 @@ CALIFORNIA:
         m : M
         f : F
 
-  # Files to be included in the study
-  raw_layout:
-    extension: ".bdf"
-    suffix : 'eeg'
-    return_type : 'filename'
-    task : 'rest'
-    session : ['hc', 'on']
 
   # Processing
   example_file: "Y:/datasets/ds002778-download/sub-*/ses-*/eeg/sub-*_ses-*_task-*_eeg.bdf"
@@ -133,6 +128,14 @@ CALIFORNIA:
   bids_root : 
     local : "Y:/datasets/ds002778-download"
     narval : "/home/yorguin/scratch/datasets/ds002778/"
+
+  # Files to be included in the study
+  bids_layout:
+    extension: ".bdf"
+    suffix : 'eeg'
+    return_type : 'filename'
+    task : 'rest'
+    session : ['hc', 'on']
 
 GREECE:
   url : https://openneuro.org/datasets/ds004504/versions/
@@ -168,13 +171,6 @@ GREECE:
         F : FD
       subject : "lambda x: x.replace('sub-','')"
 
-  # Files to be included in the study
-  raw_layout:
-    extension: ".set"
-    suffix : 'eeg'
-    return_type : 'filename'
-    task : eyesclosed
-    #session : None
 
   # Processing
   example_file: 
@@ -186,6 +182,14 @@ GREECE:
   bids_root : 
     local : "Y:/datasets/ds004504-download/"
     narval : "/home/yorguin/scratch/datasets/ds004504/"
+
+  # Files to be included in the study
+  bids_layout:
+    extension: ".set"
+    suffix : 'eeg'
+    return_type : 'filename'
+    task : eyesclosed
+    #session : None
 
 
 OSLO:
@@ -221,13 +225,6 @@ OSLO:
         f : F
       subject : "lambda x: x.replace('sub-','')"
 
-  # Files to be included in the study
-  raw_layout:
-    extension: ".edf"
-    suffix : 'eeg'
-    return_type : 'filename'
-    task : 'resteyesc'
-    session : t1 # include t2?
 
   # Processing
   example_file: 
@@ -239,6 +236,14 @@ OSLO:
   bids_root : 
     local: "Y:/datasets/ds003775-download/"
     narval: "/home/yorguin/scratch/datasets/ds003775/"
+
+  # Files to be included in the study
+  bids_layout:
+    extension: ".edf"
+    suffix : 'eeg'
+    return_type : 'filename'
+    task : 'resteyesc'
+    session : t1 # include t2?
 
 
 IOWA:
@@ -271,12 +276,6 @@ IOWA:
       group:
         PD : PD
         Control : HC
-  # Files to be included in the study
-  raw_layout:
-    extension: ".vhdr"
-    suffix : 'eeg'
-    return_type : 'filename'
-    task : 'rest'
 
   # Processing
   example_file: "Y:/datasets/Iowa/Dataset/IowaDataset/Raw data/*.vhdr" #Y:/datasets/Iowa/Dataset/IowaDataset/bids/sub-Control1041/ses-01/eeg/sub-Control1041_ses-01_task-rest_eeg.vhdr
@@ -286,6 +285,13 @@ IOWA:
 
 # BIDS
   bids_root : "Y:/datasets/Iowa/Dataset/IowaDataset/bids"
+
+  # Files to be included in the study
+  bids_layout:
+    extension: ".vhdr"
+    suffix : 'eeg'
+    return_type : 'filename'
+    task : 'rest'
 
   bidsify:
 
@@ -356,17 +362,16 @@ POLAND:
         0 : M # according to the corresponding participants.json file
         1 : F
       subject : "lambda x: x.replace('sub-','')"
-
-  # Files to be included in the study
-  raw_layout:
-    extension: ".vhdr"
-    suffix : 'eeg'
-    return_type : 'filename'
-    task : 'rest'
-
   # Processing
   example_file: "Y:/datasets/ds004796-download/sub-*/eeg/sub-*_task-*_eeg.vhdr"
   ch_names: ["PO7", "F1", "FC6", "T7", "P1", "AFz", "PO3", "F6", "O1", "CP3", "Fp1", "TP8", "P2", "CP4", "F9", "F4", "Pz", "F2", "POz", "P8", "T8", "FC4", "CP6", "C4", "Oz", "P6", "C6", "FC1", "P3", "FC2", "P9", "FT9", "FT8", "F8", "TP7", "PO4", "CPz", "O2", "Cz", "F7", "C5", "Fp2", "P5", "TP9", "AF8", "AF7", "CP1", "AF3", "PO8", "FC3", "FT7", "C1", "Fz", "P7", "F5", "AF4", "C3", "F3", "C2", "P4", "CP2", "CP5", "PO9", "FC5"]
   PowerLineFrequency : 50
   # BIDS
   bids_root : "Y:/datasets/ds004796-download/"
+
+  # Files to be included in the study
+  bids_layout:
+    extension: ".vhdr"
+    suffix : 'eeg'
+    return_type : 'filename'
+    task : 'rest'

@@ -30,12 +30,6 @@ matchingpennies:
       remote: ""
       local: "Y:/datasets/eeg_matchingpennies/participants_clean.tsv"
 
-  # Files to be included in the study
-
-  raw_layout:
-    extension: ".vhdr"
-    suffix : 'eeg'
-    return_type : 'filename'
 
   # Processing
   example_file: 
@@ -52,6 +46,12 @@ matchingpennies:
   derivatives_root : 
     remote: ""
     local: "Y:/datasets/eeg_matchingpennies/derivatives"
+
+  # Files to be included in the study
+  bids_layout:
+    extension: ".vhdr"
+    suffix : 'eeg'
+    return_type : 'filename'
 
 
 eegbci:
@@ -95,12 +95,6 @@ eegbci:
       remote: ""
       local: "Y:/datasets/eegbci/participants_clean.tsv"
 
-  # Files to be included in the study
-
-  raw_layout:
-    extension: ".vhdr"
-    suffix : 'eeg'
-    return_type : 'filename'
 
   # Processing
   example_file: 
@@ -117,4 +111,10 @@ eegbci:
     remote: ""
     local: "Y:/datasets/eegbci/derivatives"
 
+  # Files to be included in the study
+
+  bids_layout:
+    extension: ".vhdr"
+    suffix : 'eeg'
+    return_type : 'filename'
 

@@ -36,7 +36,7 @@ def find_minimal_unique_root(filepaths):
     # Fallback — use full common path
     return common_prefix
 
-def load_meeg(meeg_file, dataset, kwargs={}):
+def load_meeg(meeg_file, dataset=None, kwargs={}):
     """Load a MEEG file using MNE-Python."""
     try:
         meeg = read_raw(meeg_file, **kwargs)

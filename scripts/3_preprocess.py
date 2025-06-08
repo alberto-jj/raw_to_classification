@@ -11,14 +11,14 @@ import pathlib
 import importlib
 
 
-def foo(eeg_file, this_prep, DATASET, preprocessed_path, DEBUG, internal_njobs=1, retry_errors=False):
+def foo(meeg_file, this_prep, DATASET, preprocessed_path, DEBUG, internal_njobs=1, retry_errors=False):
     # imports here to avoid problems with joblib
     import os
 
 
     njobs = internal_njobs #internal jobs #len(psutil.Process().cpu_affinity())
     print('Internal NJOBS:', njobs)
-    print(eeg_file)
+    print(meeg_file)
     fifname = os.path.basename(preprocessed_path)
     fifpath = os.path.dirname(preprocessed_path)
 
@@ -28,20 +28,8 @@ def foo(eeg_file, this_prep, DATASET, preprocessed_path, DEBUG, internal_njobs=1
             return
         import matplotlib.pyplot as plt
 
-        line_noise = DATASET['PowerLineFrequency']
         os.makedirs(fifpath, exist_ok=True)
         try:
-            if DATASET.get('precode', None):
-                print('Running precode')
-                scope = {}
-                scope['eeg_file'] = eeg_file
-                scope['DATASET'] = DATASET
-                scope['this_prep'] = this_prep
-                exec(DATASET['precode'], None, scope)
-                raw_file = scope['raw_file']
-            else:
-                raw_file = eeg_file
-
             from eeg_raw_to_classification.utils import save_figs_in_html, save_dict_to_json
 
             if 'redefine_prepare' in this_prep:
@@ -53,25 +41,24 @@ def foo(eeg_file, this_prep, DATASET, preprocessed_path, DEBUG, internal_njobs=1
             else:
                 from eeg_raw_to_classification.preprocessing import prepare
 
-            reject_eeg, info, figures = prepare(filename=raw_file, keep_chans=DATASET['ch_names'], line_noise=line_noise, njobs=njobs, **this_prep['prepare'])
-            figs_path = preprocessed_path.replace('reject_epo.fif', 'reject_figs.html')
-            info_path = preprocessed_path.replace('reject_epo.fif', 'reject_info.txt')
+            processed_meeg, info, figures, report = prepare(filename=meeg_file, dataset_cfg=DATASET, njobs=njobs, **this_prep['prepare'])
+            figs_path = preprocessed_path.replace('reject_epo.fif', '_prepareFigs.html')
+            info_path = preprocessed_path.replace('reject_epo.fif', '_prepareInfo.txt')
 
             save_figs_in_html(figs_path, figures)
             save_dict_to_json(info_path, info)
 
-            if DATASET.get('postcode', None):
-                print('Running postcode')
-                exec(DATASET['postcode'])
+            processed_meeg.save(fifpath + '/' + fifname, split_naming='bids', overwrite=True)
 
-            reject_eeg.save(fifpath + '/' + fifname, split_naming='bids', overwrite=True)
+            if report is not None:
+                report.save_as_html(preprocessed_path.replace('.fif', '_prepareReport.html'), overwrite=True)
             plt.close('all')
         except Exception:
             print(traceback.format_exc())
             if DEBUG:
                 raise
             else:
-                save_dict_to_json(preprocessed_path.replace('.fif', '_problem.txt'), {'file': eeg_file, 'problem': traceback.format_exc()})
+                save_dict_to_json(preprocessed_path.replace('.fif', '_problem.txt'), {'file': meeg_file, 'problem': traceback.format_exc()})
     else:
         print(f'Already Exists: {preprocessed_path} or overwrite is False')
 
@@ -108,7 +95,7 @@ def main():
 
     if (only_total or single_index) and external_njobs > 1:
         raise ValueError('Cannot get total number of files or process single file with external_jobs > 1')
-    ALL_EEGS = []
+    ALL_MEEGS = []
     for preplabel in cfg['preprocess']['prep_list']:
         overall_index = 0
         # you may try to do this loop outisde (with inner eeg loop) as in 4_features.py,
@@ -118,28 +105,28 @@ def main():
             if DATASET.get('skip', False):
                 continue
 
-            this_prep = cfg['preprocess']['prep_cfg'][preplabel]
+            this_prep = cfg['3_preprocess']['prep_cfg'][preplabel]
 
             print(f'PREPROCESSING {dslabel} with {preplabel} pipeline')
-            file_filter = DATASET.get('raw_layout', None)
+            file_filter = DATASET.get('bids_layout', None)
 
             start_time = time.time()
             bids_root = DATASET.get('bids_root', None)
             bids_root = get_path(bids_root, MOUNT)
             layout = bids.BIDSLayout(bids_root,validate=False)
             # how to make this faster, it takes too long...
-            eegs = layout.get(**file_filter)
+            meegs = layout.get(**file_filter)
             end_time = time.time()
             print(f'Time taken to get EEG files from layout: {end_time - start_time} seconds for dataset {dslabel}')
 
             if MAX_FILES:
-                if MAX_FILES > len(eegs):
-                    limit = len(eegs)
+                if MAX_FILES > len(meegs):
+                    limit = len(meegs)
                 else:
                     limit = MAX_FILES
-                eegs = eegs[:limit]
-            eegs = [pathlib.Path(x).as_posix() for x in eegs]
-            print(len(eegs), eegs)
+                meegs = meegs[:limit]
+            meegs = [pathlib.Path(x).as_posix() for x in meegs]
+            print(len(meegs), meegs)
             
 
             derivatives_root = DATASET.get('derivatives_root', None)
@@ -153,10 +140,10 @@ def main():
             get_derivative = lambda x: pathlib.Path(get_derivative_path(layout, x, 'None', 'epo', '.fif', bids_root, derivatives_root)).as_posix()
 
             if PARALLELIZE:
-                Parallel(n_jobs=external_njobs)(delayed(foo)(eeg_file, this_prep, DATASET, get_derivative(eeg_file), DEBUG,internal_njobs, args.retry_errors ) for eeg_file in eegs)
+                Parallel(n_jobs=external_njobs)(delayed(foo)(x, this_prep, DATASET, get_derivative(x), DEBUG,internal_njobs, args.retry_errors ) for x in meegs)
             else:
-                for eeg_file in eegs:
-                    ALL_EEGS.append(eeg_file)
+                for meeg_file in meegs:
+                    ALL_MEEGS.append(meeg_file)
 
                     if only_total:
                         overall_index+=1
@@ -164,13 +151,13 @@ def main():
                     if single_index is not None and overall_index != single_index:
                         overall_index+=1
                         continue
-                    foo(eeg_file, this_prep, DATASET, get_derivative(eeg_file), DEBUG, internal_njobs, args.retry_errors)
+                    foo(meeg_file, this_prep, DATASET, get_derivative(meeg_file), DEBUG, internal_njobs, args.retry_errors)
                     overall_index+=1
         if only_total:
-            print(f'Total number of files: {len(ALL_EEGS)}')
-            for count,eeg in enumerate(ALL_EEGS):
+            print(f'Total number of files: {len(ALL_MEEGS)}')
+            for count,eeg in enumerate(ALL_MEEGS):
                 print(count,eeg)
-            print(f'Total number of files: {len(ALL_EEGS)}')
-            return len(ALL_EEGS)
+            print(f'Total number of files: {len(ALL_MEEGS)}')
+            return len(ALL_MEEGS)
 if __name__ == '__main__':
     main()

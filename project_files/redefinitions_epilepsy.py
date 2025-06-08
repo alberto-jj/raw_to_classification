@@ -119,7 +119,7 @@ def get_suffix_from_path(x,suffixext):
 
 
 # signature prepare(filename=raw_file, keep_chans=DATASET['ch_names'], line_noise=line_noise, njobs=njobs, **this_prep['prepare'])
-def prepare(filename, line_noise=None, keep_chans=None, downsample = 500, normalization = False, filter_args=None,njobs=1, epoch_config={}):
+def prepare(filename, dataset=None, njobs=1, downsample = 500, normalization = False, filter_args=None, epoch_config={}):
     """
     keep_chans: is ignored, only used to keep the same signature as the original function
     line_noise: is ignored, only used to keep the same signature as the original function
@@ -171,4 +171,4 @@ def prepare(filename, line_noise=None, keep_chans=None, downsample = 500, normal
     epochs = epochs.resample(downsample)
 
 
-    return epochs,info,figures
+    return epochs,info,figures,None

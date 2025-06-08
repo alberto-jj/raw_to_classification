@@ -14,7 +14,7 @@ mount: local
     from_this: project_files.redefinitions_test
     import_that: bidsify
 
-preprocess:
+3_preprocess:
   prep_cfg:
     prepDur30Ov20: # This is the name of the preprocessing pipeline
       redefine_prepare:
