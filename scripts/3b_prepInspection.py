@@ -34,7 +34,6 @@ def main(pipeline_file):
                     print(f'Skipping {dslabel} because it is marked as skip')
                     continue
 
-                CFG = PIPELINE['features']
                 bids_root = DATASET.get('bids_root', None)
                 bids_root = get_path(bids_root, MOUNT)
 
@@ -48,12 +47,12 @@ def main(pipeline_file):
 
                 pattern = os.path.join(derivatives_root, '**/*_epo.fif')
                 pattern = pathlib.Path(pattern).as_posix()
-                eegs = glob.glob(pattern, recursive=True)
-                for eeg_file in eegs:
-                    print(eeg_file)
-                    epochs = mne.read_epochs(eeg_file, preload=True)
+                meegs = glob.glob(pattern, recursive=True)
+                for meeg_file in meegs:
+                    print(meeg_file)
+                    epochs = mne.read_epochs(meeg_file, preload=True)
                     DATASETS.append(dslabel)
-                    EEGS.append(eeg_file)
+                    EEGS.append(meeg_file)
                     SHAPES.append(epochs.get_data().shape[0])
             if len(SHAPES) == 0:
                 print('No epochs found')
