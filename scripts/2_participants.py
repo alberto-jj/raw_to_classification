@@ -12,10 +12,10 @@ def main(pipeline_file):
 
         if DATASET.get('skip', False):
             continue
-
-        datafile = DATASET['participants_file']
+        participants_cfg = DATASET.get('participants', {})
+        datafile = participants_cfg['participants_file']
         datafile = get_path(datafile, MOUNT)
-        outfile = DATASET['cleaned_participants']
+        outfile = participants_cfg['cleaned_participants']
         outfile = get_path(outfile, MOUNT)
 
         # create copy if datafile is the same as outfile
@@ -23,8 +23,8 @@ def main(pipeline_file):
             datafile2 = datafile + '.copy'
             shutil.copy(outfile, datafile2)
 
-        reader = eval(DATASET['reader']['function'])
-        reader_args = DATASET['reader']['args']
+        reader = eval(participants_cfg['reader']['function'])
+        reader_args = participants_cfg['reader']['args']
         df = reader(datafile, **reader_args)
         scope = {
             'df': df,
@@ -33,16 +33,16 @@ def main(pipeline_file):
             'outfile': outfile
         }
         # dataset specific
-        if 'df_transform' in DATASET:
-            exec(DATASET['df_transform'], None, scope)
+        if 'df_transform' in  participants_cfg:
+            exec(participants_cfg['df_transform'], None, scope)
             df = scope['df']
 
-        df = df.rename(columns=DATASET['columns'])
-        columns = list(DATASET['columns'].values())
+        df = df.rename(columns=participants_cfg['columns'])
+        columns = list(participants_cfg['columns'].values())
         df = df[columns]
 
-        if 'columns_mapping' in DATASET:
-            for key, val in DATASET['columns_mapping'].items():
+        if 'columns_mapping' in participants_cfg:
+            for key, val in participants_cfg['columns_mapping'].items():
                 if isinstance(val, dict):
                     foo = lambda x: val[x]
                 else:

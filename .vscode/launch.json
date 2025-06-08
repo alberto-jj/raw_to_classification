@@ -29,7 +29,7 @@
             "name": "test 2 participants",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/scripts/0_inspect.py",
+            "program": "${workspaceFolder}/scripts/2_participants.py",
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": ["project_files/pipeline_test.yml"]

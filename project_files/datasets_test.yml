@@ -86,9 +86,6 @@ eegbci:
       age : age
       sex : sex
     columns_mapping:
-      sex:
-        m : M
-        f : F
       subject : "lambda x: x.replace('sub-','')"
 
     cleaned_participants : 
