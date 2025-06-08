@@ -96,7 +96,7 @@ def main():
     if (only_total or single_index) and external_njobs > 1:
         raise ValueError('Cannot get total number of files or process single file with external_jobs > 1')
     ALL_MEEGS = []
-    for preplabel in cfg['preprocess']['prep_list']:
+    for preplabel in cfg['3_preprocess']['prep_list']:
         overall_index = 0
         # you may try to do this loop outisde (with inner eeg loop) as in 4_features.py,
         # but notice that foo depends on some loop-state variables,

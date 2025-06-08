@@ -30,7 +30,7 @@ mount: local
           l_freq: 1
           h_freq: 45
       overwrite : False
-    prep1to150: # This is the name of the preprocessing pipeline
+    prep1to70: # This is the name of the preprocessing pipeline
       redefine_prepare:
         from_this: project_files.redefinitions_test
         import_that: prepare
@@ -42,21 +42,20 @@ mount: local
         normalization : False
         filter_args:
           l_freq: 1
-          h_freq: 150
+          h_freq: 70
       overwrite : False
 
   prep_list :
     - prep1to45
-    #- prep1to150
+    - prep1to70
 prep_inspection:
   path : './data/%PROJECT%/prep_inspection'
   overwrite : False
   checks:
     - 'epochs'
   prep_list :
-    - prepDur30Ov20
-    - prepDur20Ov10
-    - prepDur10Ov5
+    - prep1to45
+    - prep1to70
 
 features:
   feature_pipeline_cfg:
