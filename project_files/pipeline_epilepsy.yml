@@ -1,7 +1,7 @@
 project: 'epilepsy'
 datasets_file: 'project_files/datasets_epilepsy.yml'
 mount: local
-inspect:
+0_inspect:
   path : './data/%PROJECT%/inspect'
 preprocess:
   prep_cfg:

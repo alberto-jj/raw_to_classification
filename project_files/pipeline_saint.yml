@@ -1,7 +1,7 @@
 project: 'saint'
 datasets_file: 'project_files/datasets_saint.yml'
 mount: narval
-inspect:
+0_inspect:
   path : 
     computecanada: '/home/yorguin/scratch/%PROJECT%/inspect/'
     local: './data/%PROJECT%/inspect/'

@@ -1,6 +1,6 @@
 project: 'r2c'
 datasets_file: 'project_files/datasets_r2c.yml'
-inspect:
+0_inspect:
   path : './data/%PROJECT%/inspect'
 preprocess:
   prep_cfg:

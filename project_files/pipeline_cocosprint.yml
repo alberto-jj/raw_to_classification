@@ -1,7 +1,7 @@
 project: 'cocosprint'
 datasets_file: 'project_files/datasets_cocosprint.yml'
 mount: computecanada
-inspect:
+0_inspect:
   path : './data/%PROJECT%/inspect'
 preprocess:
   prep_cfg:

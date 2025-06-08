@@ -1,12 +1,18 @@
 project: 'test_project'
 datasets_file: 'project_files/datasets_test.yml'
 mount: local
-inspect:
+
+0_inspect:
   path : './data/%PROJECT%/inspect'
   redefine_loader:
     from_this: project_files.redefinitions_test
     import_that: load_meeg
 
+1_dataset2bids:
+
+  redefine_bidsify:
+    from_this: project_files.redefinitions_test
+    import_that: bidsify
 
 preprocess:
   prep_cfg:
