@@ -5,6 +5,36 @@
     "version": "0.2.0",
     "configurations": [
 
+                {
+            "name": "test 0 inspect",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/0_inspect.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": ["project_files/pipeline_test.yml"]
+        },
+
+            {
+            "name": "test 1 dataset2bids",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/1_dataset2bids.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": ["project_files/pipeline_test.yml"]
+        },
+
+        {
+            "name": "test 2 participants",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/0_inspect.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": ["project_files/pipeline_test.yml"]
+        },
+
         {
             "name": "Python Debugger: Current File",
             "type": "debugpy",
@@ -60,15 +90,6 @@
             "args": ["project_files/pipeline_cocosprint.yml"]
         },
 
-        {
-            "name": "test inspect",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/scripts/0_inspect.py",
-            "console": "integratedTerminal",
-            "justMyCode": false,
-            "args": ["project_files/pipeline_test.yml"]
-        }
 
 
 
