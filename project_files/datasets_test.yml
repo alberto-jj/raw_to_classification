@@ -1,19 +1,35 @@
-test:
-  dataset_label : test
+matchingpennies:
+  dataset_label : matchingpennies
   skip : False
 
+  bidsify: null
   # Participants 
-  participants_file :
-    remote: ""
-    local: "Y:/datasets/eeg_matchingpennies/participants.tsv"
-  reader : 
-    function : "pd.read_csv"
-    args : 
-      delimiter: "\\t"
+  participants:
+    as_is : False # Do not change the participants file
+    participants_file :
+      remote: ""
+      local: "Y:/datasets/eeg_matchingpennies/participants.tsv"
+    reader : 
+      function : "pd.read_csv"
+      args : 
+        delimiter: "\\t"
+    df_transform : "group=df['participant_id'].apply(lambda x: 'HC');df['group'] = group;" # all are healthy
 
-  cleaned_participants : 
-    remote: ""
-    local: "Y:/datasets/eeg_matchingpennies/participants.tsv"
+    columns:
+      participant_id : subject
+      group : group
+      age : age
+      sex : sex
+    columns_mapping:
+      sex:
+        m : M
+        f : F
+      subject : "lambda x: x.replace('sub-','')"
+
+    cleaned_participants : 
+      remote: ""
+      local: "Y:/datasets/eeg_matchingpennies/participants_clean.tsv"
+
   # Files to be included in the study
 
   raw_layout:
@@ -36,3 +52,69 @@ test:
   derivatives_root : 
     remote: ""
     local: "Y:/datasets/eeg_matchingpennies/derivatives"
+
+
+eegbci:
+  dataset_label : eegbci
+  skip : False
+
+  bidsify:
+    paths:
+      source_path : 
+        local: "C:/Users/yjman/mne_data/MNE-eegbci-data/files/eegmmidb/1.0.0"
+        remote: ""
+      bids_path : 
+        local: "Y:/datasets/eegbci"
+        narval: ""
+    pattern : "%ignore%/S%subject%R%run%.edf"
+
+  # Participants 
+  participants:
+    as_is : False # Do not change the participants file
+    participants_file :
+      remote: ""
+      local: "Y:/datasets/eegbci/participants.tsv"
+    reader : 
+      function : "pd.read_csv"
+      args : 
+        delimiter: "\\t"
+    df_transform : "group=df['participant_id'].apply(lambda x: 'HC');df['group'] = group;" # all are healthy
+
+    columns:
+      participant_id : subject
+      group : group
+      age : age
+      sex : sex
+    columns_mapping:
+      sex:
+        m : M
+        f : F
+      subject : "lambda x: x.replace('sub-','')"
+
+    cleaned_participants : 
+      remote: ""
+      local: "Y:/datasets/eegbci/participants_clean.tsv"
+
+  # Files to be included in the study
+
+  raw_layout:
+    extension: ".vhdr"
+    suffix : 'eeg'
+    return_type : 'filename'
+
+  # Processing
+  example_file: 
+    remote: ""
+    local: "C:/Users/yjman/mne_data/MNE-eegbci-data/files/eegmmidb/1.0.0/*/*.edf"
+  ch_names: None
+  PowerLineFrequency : 60
+  # BIDS
+  bids_root :
+    remote: ""
+    local: "Y:/datasets/eegbci"
+
+  derivatives_root : 
+    remote: ""
+    local: "Y:/datasets/eegbci/derivatives"
+
+

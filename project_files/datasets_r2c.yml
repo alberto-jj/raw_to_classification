@@ -3,31 +3,33 @@ FINLAND:
   dataset_label : finland
   skip : False
   
-  # Participants 
-  participants_file : 
-    local: "Y:/datasets/HenryRailo/InfoAboutParticipants.xlsx"
-    narval: "Unavailable"
-  reader : 
-    function : "pd.read_excel"
-    args : {}
-  df_transform : "df=df.dropna(subset =['id']);" # exec function to be applied to the dataframe
+  participants:
 
-  cleaned_participants : 
-    local: "Y:/datasets/HenryRailo/participants.csv" # created whether transforms or not were applied
-    narval: "Unavailable"
-  columns:
-    id : subject
-    'PD group' : group
-    age : age
-    sex : sex
-  columns_mapping:
-    group:
-      0 : HC
-      1 : PD
-    subject : "lambda x: str(int(round(float(x)))).zfill(2)" # THIS HAS TO AGREE WITH PARTICIPANTS.CSV, otherwise errors will pop
-    sex:
-      m : M
-      f : F
+    # Participants 
+    participants_file : 
+      local: "Y:/datasets/HenryRailo/InfoAboutParticipants.xlsx"
+      narval: "Unavailable"
+    reader : 
+      function : "pd.read_excel"
+      args : {}
+    df_transform : "df=df.dropna(subset =['id']);" # exec function to be applied to the dataframe
+
+    cleaned_participants : 
+      local: "Y:/datasets/HenryRailo/participants.csv" # created whether transforms or not were applied
+      narval: "Unavailable"
+    columns:
+      id : subject
+      'PD group' : group
+      age : age
+      sex : sex
+    columns_mapping:
+      group:
+        0 : HC
+        1 : PD
+      subject : "lambda x: str(int(round(float(x)))).zfill(2)" # THIS HAS TO AGREE WITH PARTICIPANTS.CSV, otherwise errors will pop
+      sex:
+        m : M
+        f : F
 
   # Files to be included in the study
   raw_layout:
@@ -49,7 +51,7 @@ FINLAND:
     local: "Y:/datasets/HenryRailo/bids/"
     narval: "/home/yorguin/scratch/datasets/HenryRailo/bids/"
 
-  sovabids:
+  bidsify:
     paths:
       source_path : 
         local: "Y:/datasets/HenryRailo/data"
@@ -85,33 +87,35 @@ CALIFORNIA:
   dataset_label : california
   skip : False
 
-  # Participants 
-  participants_file : 
-    local: "Y:/datasets/ds002778-download/participants.tsv"
-    narval: "/home/yorguin/scratch/datasets/ds002778/participants.tsv"
-  reader : 
-    function : "pd.read_csv"
-    args : 
-      delimiter: "\\t"
+  participants:
 
-  cleaned_participants :
-    local: "Y:/datasets/ds002778-download/participants.csv"
-    narval: "/home/yorguin/scratch/datasets/ds002778/participants.csv"
+    # Participants 
+    participants_file : 
+      local: "Y:/datasets/ds002778-download/participants.tsv"
+      narval: "/home/yorguin/scratch/datasets/ds002778/participants.tsv"
+    reader : 
+      function : "pd.read_csv"
+      args : 
+        delimiter: "\\t"
 
-  df_transform : "group=df['participant_id'].apply(lambda x: x.replace('sub-',''));group=group.apply(lambda x: ''.join(i for i in x if i.isalpha()));df['group'] = group;"
-  columns:
-    participant_id : subject
-    group : group
-    age : age
-    gender : sex
-  columns_mapping:
-    group:
-      hc : HC
-      pd : PD
-    subject : "lambda x: x.replace('sub-','')" # for some reason this seems to be needed in many datasets
-    sex:
-      m : M
-      f : F
+    cleaned_participants :
+      local: "Y:/datasets/ds002778-download/participants.csv"
+      narval: "/home/yorguin/scratch/datasets/ds002778/participants.csv"
+
+    df_transform : "group=df['participant_id'].apply(lambda x: x.replace('sub-',''));group=group.apply(lambda x: ''.join(i for i in x if i.isalpha()));df['group'] = group;"
+    columns:
+      participant_id : subject
+      group : group
+      age : age
+      gender : sex
+    columns_mapping:
+      group:
+        hc : HC
+        pd : PD
+      subject : "lambda x: x.replace('sub-','')" # for some reason this seems to be needed in many datasets
+      sex:
+        m : M
+        f : F
 
   # Files to be included in the study
   raw_layout:
@@ -135,32 +139,34 @@ GREECE:
   dataset_label : greece
   skip : False
 
-  # Participants 
-  participants_file : 
-    local: "Y:/datasets/ds004504-download/participants.tsv"
-    narval: "/home/yorguin/scratch/datasets/ds004504/participants.tsv"
-  reader : 
-    function : "pd.read_csv"
-    args : 
-      delimiter: "\\t"
+  participants:
 
-  cleaned_participants : 
-    local : "Y:/datasets/ds004504-download/participants.csv"
-    narval: "/home/yorguin/scratch/datasets/ds004504/participants.csv"
+    # Participants 
+    participants_file : 
+      local: "Y:/datasets/ds004504-download/participants.tsv"
+      narval: "/home/yorguin/scratch/datasets/ds004504/participants.tsv"
+    reader : 
+      function : "pd.read_csv"
+      args : 
+        delimiter: "\\t"
 
-  df_transform : None
+    cleaned_participants : 
+      local : "Y:/datasets/ds004504-download/participants.csv"
+      narval: "/home/yorguin/scratch/datasets/ds004504/participants.csv"
 
-  columns:
-    participant_id : subject
-    Group : group
-    Age : age
-    Gender : sex
-  columns_mapping:
-    group:
-      C : HC
-      A : AD
-      F : FD
-    subject : "lambda x: x.replace('sub-','')"
+    df_transform : None
+
+    columns:
+      participant_id : subject
+      Group : group
+      Age : age
+      Gender : sex
+    columns_mapping:
+      group:
+        C : HC
+        A : AD
+        F : FD
+      subject : "lambda x: x.replace('sub-','')"
 
   # Files to be included in the study
   raw_layout:
@@ -188,30 +194,32 @@ OSLO:
   skip : False
 
   # Participants 
-  participants_file : 
-    local: "Y:/datasets/ds003775-download/participants.tsv"
-    narval: "/home/yorguin/scratch/datasets/ds003775/participants.tsv"
-  reader : 
-    function : "pd.read_csv"
-    args : 
-      delimiter: "\\t"
+  participants:
 
-  cleaned_participants : 
-    local: "Y:/datasets/ds003775-download/participants.csv"
-    narval: "/home/yorguin/scratch/datasets/ds003775/participants.csv"
+    participants_file : 
+      local: "Y:/datasets/ds003775-download/participants.tsv"
+      narval: "/home/yorguin/scratch/datasets/ds003775/participants.tsv"
+    reader : 
+      function : "pd.read_csv"
+      args : 
+        delimiter: "\\t"
 
-  df_transform : "group=df['participant_id'].apply(lambda x: 'HC');df['group'] = group;" # all are healthy
+    cleaned_participants : 
+      local: "Y:/datasets/ds003775-download/participants.csv"
+      narval: "/home/yorguin/scratch/datasets/ds003775/participants.csv"
 
-  columns:
-    participant_id : subject
-    group : group
-    age : age
-    sex : sex
-  columns_mapping:
-    sex:
-      m : M
-      f : F
-    subject : "lambda x: x.replace('sub-','')"
+    df_transform : "group=df['participant_id'].apply(lambda x: 'HC');df['group'] = group;" # all are healthy
+
+    columns:
+      participant_id : subject
+      group : group
+      age : age
+      sex : sex
+    columns_mapping:
+      sex:
+        m : M
+        f : F
+      subject : "lambda x: x.replace('sub-','')"
 
   # Files to be included in the study
   raw_layout:
@@ -238,30 +246,31 @@ IOWA:
   dataset_label : iowa
   skip : False
 
-  # Participants 
-  participants_file : 
-    local: "Y:/datasets/Iowa/Dataset/IowaDataset/DataIowa.xlsx"
-    narval: "Unavailable"
-  reader : 
-    function : "pd.read_excel"
-    args : {}
-  df_transform : "group=df['Rest'].apply(lambda x: ''.join(char for char in x if not char.isdigit()));df['group'] = group;" # exec function to be applied to the dataframe
+  participants:
+    # Participants 
+    participants_file : 
+      local: "Y:/datasets/Iowa/Dataset/IowaDataset/DataIowa.xlsx"
+      narval: "Unavailable"
+    reader : 
+      function : "pd.read_excel"
+      args : {}
+    df_transform : "group=df['Rest'].apply(lambda x: ''.join(char for char in x if not char.isdigit()));df['group'] = group;" # exec function to be applied to the dataframe
 
-  cleaned_participants : 
-    local: "Y:/datasets/Iowa/Dataset/IowaDataset/participants.csv" # created whether transforms or not were applied
-    narval: "Unavailable"
-  columns:
-    Rest : subject
-    group : group
-    Age : age
-    Gender : sex
-  columns_mapping:
-    sex:
-      0 : F # Check supplementary material of the corresponding paper
-      1 : M
-    group:
-      PD : PD
-      Control : HC
+    cleaned_participants : 
+      local: "Y:/datasets/Iowa/Dataset/IowaDataset/participants.csv" # created whether transforms or not were applied
+      narval: "Unavailable"
+    columns:
+      Rest : subject
+      group : group
+      Age : age
+      Gender : sex
+    columns_mapping:
+      sex:
+        0 : F # Check supplementary material of the corresponding paper
+        1 : M
+      group:
+        PD : PD
+        Control : HC
   # Files to be included in the study
   raw_layout:
     extension: ".vhdr"
@@ -278,7 +287,7 @@ IOWA:
 # BIDS
   bids_root : "Y:/datasets/Iowa/Dataset/IowaDataset/bids"
 
-  sovabids:
+  bidsify:
 
     paths:
       source_path : "Y:/datasets/Iowa/Dataset/IowaDataset/Raw data"
@@ -323,28 +332,30 @@ POLAND:
     stop=events[events['event_type']=="S 11"]['onset'].item()
     raw_file=mne.io.read_raw(eeg_file,preload=True).crop(tmin=start,tmax=stop)
     # corregir: si no termina en s4,s11 , tomar desde s11 -1, y si no termina en s11, desde el ultimo hasta el final del eeg
+  # Esto ahora iria en redefinitions del prepare y dado que el dataset cfg es parametro se puede hacer un flujo de control.
 
   # Participants 
-  participants_file : "Y:/datasets/ds004796-download/participants.tsv"
-  reader : 
-    function : "pd.read_csv"
-    args : 
-      delimiter: "\\t"
+  participants:
+    participants_file : "Y:/datasets/ds004796-download/participants.tsv"
+    reader : 
+      function : "pd.read_csv"
+      args : 
+        delimiter: "\\t"
 
-  cleaned_participants : "Y:/datasets/ds004796-download/participants.csv"
+    cleaned_participants : "Y:/datasets/ds004796-download/participants.csv"
 
-  df_transform : "group=df['participant_id'].apply(lambda x: 'HC');df['group'] = group;" # all are healthy
+    df_transform : "group=df['participant_id'].apply(lambda x: 'HC');df['group'] = group;" # all are healthy
 
-  columns:
-    participant_id : subject
-    group : group
-    age : age
-    sex : sex
-  columns_mapping:
-    sex :
-      0 : M # according to the corresponding participants.json file
-      1 : F
-    subject : "lambda x: x.replace('sub-','')"
+    columns:
+      participant_id : subject
+      group : group
+      age : age
+      sex : sex
+    columns_mapping:
+      sex :
+        0 : M # according to the corresponding participants.json file
+        1 : F
+      subject : "lambda x: x.replace('sub-','')"
 
   # Files to be included in the study
   raw_layout:

@@ -1,20 +1,22 @@
 saint:
   dataset_label : saint
   skip : False
-  # Participants 
-  participants_file : 
-    computecanada: "/home/yorguin/scratch/saint/BIDS/participants.tsv"
-    local: "Y:/datasets/saint-justine/bids/all/participants.tsv"
-    narval: "/home/yorguin/projects/rrg-shahabkb/cocolab_data/EEG_ADHD_epilepsy_psychostimulants/BIDS/participants.tsv"
-  reader : 
-    function : "pd.read_csv"
-    args : 
-      delimiter: "\\t"
 
-  cleaned_participants : 
-    computecanada: "/home/yorguin/scratch/saint/BIDS/participants.csv"
-    local: "Y:/datasets/saint-justine/bids/all/participants.csv"
-    narval: "/home/yorguin/projects/rrg-shahabkb/cocolab_data/EEG_ADHD_epilepsy_psychostimulants/BIDS/participants.csv"
+  participants:
+    # Participants 
+    participants_file : 
+      computecanada: "/home/yorguin/scratch/saint/BIDS/participants.tsv"
+      local: "Y:/datasets/saint-justine/bids/all/participants.tsv"
+      narval: "/home/yorguin/projects/rrg-shahabkb/cocolab_data/EEG_ADHD_epilepsy_psychostimulants/BIDS/participants.tsv"
+    reader : 
+      function : "pd.read_csv"
+      args : 
+        delimiter: "\\t"
+
+    cleaned_participants : 
+      computecanada: "/home/yorguin/scratch/saint/BIDS/participants.csv"
+      local: "Y:/datasets/saint-justine/bids/all/participants.csv"
+      narval: "/home/yorguin/projects/rrg-shahabkb/cocolab_data/EEG_ADHD_epilepsy_psychostimulants/BIDS/participants.csv"
 
   # Files to be included in the study
   raw_layout:

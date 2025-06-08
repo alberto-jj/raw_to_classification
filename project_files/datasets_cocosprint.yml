@@ -2,15 +2,16 @@ lsd:
   dataset_label : lsd
   skip : False
   # Participants 
-  participants_file : 
-    computecanada: "/home/yorguin/scratch/data/MEG_LSDV2/meg_data_BIDS/participants.tsv"
-  reader : 
-    function : "pd.read_csv"
-    args : 
-      delimiter: "\\t"
+  participants:
+    participants_file : 
+      computecanada: "/home/yorguin/scratch/data/MEG_LSDV2/meg_data_BIDS/participants.tsv"
+    reader : 
+      function : "pd.read_csv"
+      args : 
+        delimiter: "\\t"
 
-  cleaned_participants : 
-    computecanada: "/home/yorguin/scratch/data/MEG_LSDV2/meg_data_BIDS/participants.tsv"
+    cleaned_participants : 
+      computecanada: "/home/yorguin/scratch/data/MEG_LSDV2/meg_data_BIDS/participants.tsv"
   # Files to be included in the study
   raw_layout:
     extension: ".fif"
@@ -33,16 +34,21 @@ lsd:
 ketamine:
   dataset_label : ketamine
   skip : False
-  # Participants 
-  participants_file : 
-    computecanada: "/home/yorguin/scratch/data/MEG_ketamine/meg_data_BIDS/participants.tsv"
-  reader : 
-    function : "pd.read_csv"
-    args : 
-      delimiter: "\\t"
 
-  cleaned_participants : 
-    computecanada: "/home/yorguin/scratch/data/MEG_ketamine/meg_data_BIDS/participants.tsv"
+
+  # Participants 
+  participants:
+
+    participants_file : 
+      computecanada: "/home/yorguin/scratch/data/MEG_ketamine/meg_data_BIDS/participants.tsv"
+    reader : 
+      function : "pd.read_csv"
+      args : 
+        delimiter: "\\t"
+
+    cleaned_participants : 
+      computecanada: "/home/yorguin/scratch/data/MEG_ketamine/meg_data_BIDS/participants.tsv"
+
   # Files to be included in the study
   raw_layout:
     extension: ".fif"
@@ -64,16 +70,19 @@ ketamine:
 perampanel:
   dataset_label : perampanel
   skip : False
-  # Participants 
-  participants_file : 
-    computecanada: "/home/yorguin/scratch/data/MEG_perampanel/meg_data_BIDS/participants.tsv"
-  reader : 
-    function : "pd.read_csv"
-    args : 
-      delimiter: "\\t"
 
-  cleaned_participants : 
-    computecanada: "/home/yorguin/scratch/data/MEG_perampanel/meg_data_BIDS/participants.tsv"
+  participants:
+
+    # Participants 
+    participants_file : 
+      computecanada: "/home/yorguin/scratch/data/MEG_perampanel/meg_data_BIDS/participants.tsv"
+    reader : 
+      function : "pd.read_csv"
+      args : 
+        delimiter: "\\t"
+
+    cleaned_participants : 
+      computecanada: "/home/yorguin/scratch/data/MEG_perampanel/meg_data_BIDS/participants.tsv"
   # Files to be included in the study
   raw_layout:
     extension: ".fif"
@@ -95,16 +104,19 @@ perampanel:
 tiagabine:
   dataset_label : tiagabine
   skip : False
-  # Participants 
-  participants_file : 
-    computecanada: "/home/yorguin/scratch/data/MEG_tiagabine/meg_data_BIDS/participants.tsv"
-  reader : 
-    function : "pd.read_csv"
-    args : 
-      delimiter: "\\t"
 
-  cleaned_participants : 
-    computecanada: "/home/yorguin/scratch/data/MEG_tiagabine/meg_data_BIDS/participants.tsv"
+  participants:
+
+    # Participants 
+    participants_file : 
+      computecanada: "/home/yorguin/scratch/data/MEG_tiagabine/meg_data_BIDS/participants.tsv"
+    reader : 
+      function : "pd.read_csv"
+      args : 
+        delimiter: "\\t"
+
+    cleaned_participants : 
+      computecanada: "/home/yorguin/scratch/data/MEG_tiagabine/meg_data_BIDS/participants.tsv"
   # Files to be included in the study
   raw_layout:
     extension: ".fif"

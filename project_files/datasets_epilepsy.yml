@@ -3,16 +3,18 @@ EPILEPSY:
   dataset_label : epilepsy
   skip : False
   
-  # Participants 
-  participants_file : 
-    local: 'Y:/datasets/epilepsy/bids/participants.csv'
-  reader : 
-    function : "pd.read_csv"
-    args :
-      delimiter: ","
+  participants:
 
-  cleaned_participants : 
-    local: "Y:/datasets/epilepsy/bids/participants.csv" # created whether transforms or not were applied
+    # Participants 
+    participants_file : 
+      local: 'Y:/datasets/epilepsy/bids/participants.csv'
+    reader : 
+      function : "pd.read_csv"
+      args :
+        delimiter: ","
+
+    cleaned_participants : 
+      local: "Y:/datasets/epilepsy/bids/participants.csv" # created whether transforms or not were applied
 
   # Files to be included in the study
   raw_layout:
