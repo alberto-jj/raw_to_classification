@@ -57,7 +57,6 @@ def bidsify(source_path, bids_path, DATASET_CFG):
         for f in files:
             this_file = pathlib.Path(f).as_posix()
             entities = parse_from_placeholder(this_file, pattern=rule)
-            meeg = load_meeg(this_file, DATASET_CFG)
             # see https://mne.tools/stable/generated/mne.datasets.eegbci.load_data.html#mne.datasets.eegbci.load_data
             """
             1 Baseline, eyes open
@@ -86,8 +85,11 @@ def bidsify(source_path, bids_path, DATASET_CFG):
             run = entities.get('run', 'None')
 
             bidsTree = BIDSPath(subject=subject,task=task,run=run, root=bids_path)
-            write_raw_bids(meeg, bids_path=bidsTree, overwrite=True, format="BrainVision", allow_preload=True)
-
+            if not os.path.isfile(bidsTree.fpath):
+                meeg = load_meeg(this_file, DATASET_CFG)
+                write_raw_bids(meeg, bids_path=bidsTree, overwrite=False, format="BrainVision", allow_preload=True)
+            else:
+                print(f"File {bidsTree.fpath} already exists, skipping.")
 
     print(f"BIDS conversion complete. Data saved at {bids_path}")
 
