@@ -1,0 +1,38 @@
+test:
+  dataset_label : test
+  skip : False
+
+  # Participants 
+  participants_file :
+    remote: ""
+    local: "Y:/datasets/eeg_matchingpennies/participants.tsv"
+  reader : 
+    function : "pd.read_csv"
+    args : 
+      delimiter: "\\t"
+
+  cleaned_participants : 
+    remote: ""
+    local: "Y:/datasets/eeg_matchingpennies/participants.tsv"
+  # Files to be included in the study
+
+  raw_layout:
+    extension: ".vhdr"
+    suffix : 'eeg'
+    return_type : 'filename'
+
+  # Processing
+  example_file: 
+    computecanada: "/home/yorguin/scratch/data/MEG_LSDV2/meg_data_BIDS/sub-*/ses-*/meg/sub-*_ses-*_task-*_meg.fif"
+    remote: ""
+    local: "Y:/datasets/eeg_matchingpennies/sub-*/**/*_eeg.vhdr"
+  ch_names: None
+  PowerLineFrequency : 50
+  # BIDS
+  bids_root :
+    remote: ""
+    local: "Y:/datasets/eeg_matchingpennies"
+
+  derivatives_root : 
+    remote: ""
+    local: "Y:/datasets/eeg_matchingpennies/derivatives"

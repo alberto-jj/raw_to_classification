@@ -9,6 +9,45 @@ import itertools
 import pathlib
 import copy
 
+
+from mne.io import read_raw
+from mne import read_epochs
+
+
+def find_minimal_unique_root(filepaths):
+    """Find the minimal common root such that the relative paths from it are unique."""
+    # Split each path into components
+    split_paths = [pathlib.Path(p).parts for p in filepaths]
+    
+    # Start from the full common prefix
+    common_prefix = os.path.commonpath(filepaths)
+    prefix_len = len(pathlib.Path(common_prefix).parts)
+    
+    # Now try to reduce it:
+    for i in range(prefix_len, 0, -1):
+        # Build candidate roots
+        candidate_roots = [os.path.join(*parts[:i]) for parts in split_paths]
+        # Build relative paths from candidate root
+        rel_paths = [os.path.join(*parts[i:]) for parts in split_paths]
+        if len(rel_paths) == len(set(rel_paths)):
+            # Unique → this root is valid
+            return os.path.commonpath(candidate_roots)
+    
+    # Fallback — use full common path
+    return common_prefix
+
+def load_meeg(meeg_file, kwargs={}):
+    """Load a MEEG file using MNE-Python."""
+    try:
+        meeg = read_raw(meeg_file, **kwargs)
+    except Exception as e:
+        # try to load as epochs
+        try:
+            meeg = read_epochs(meeg_file, **kwargs)
+        except Exception as e:
+            raise ValueError(f"Could not load MEEG file {meeg_file}. Error: {e}")
+    return meeg
+
 def extract_item(data,fun,newtype):
     if isinstance(fun,str):
         fun=eval(fun.replace('eval%',''))
