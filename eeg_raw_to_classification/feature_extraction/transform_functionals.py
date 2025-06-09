@@ -9,7 +9,6 @@ from .decorators import functional_feature_decorator
 from itertools import permutations
 from .utils import get_mne_metadata, update_provenance, get_kind_from_snake
 from inspect import currentframe
-
 from .utils import snake_to_camel
 
 
@@ -165,6 +164,152 @@ def functional_aggregate_feature(input, label: Optional[str] = None, fun: Union[
 
     output.metadata.kind = kind
 
+    output = update_provenance(input, output)
+
+    return output
+
+@functional_feature_decorator('functional_binarize_along_axis_feature', 'array')
+def functional_binarizer_feature(
+    input: FunctionalFeatureStructure,
+    *,
+    label: Optional[str] = None,
+    axisname: str = "times",
+    threshold_fun: Union[Callable, str] = "median",
+) -> FunctionalFeatureStructure:
+    """
+    Binarize the input data along a specified axis using a threshold function.
+
+    Parameters:
+        input (FunctionalFeatureStructure): The input data to binarize.
+        label (Optional[str]): Optional label.
+        axisname (str): Axis name to apply threshold along (default: "times").
+        threshold_fun (Union[Callable, str]): Function or string for threshold (default: 'median').
+
+    Returns:
+        FunctionalFeatureStructure: Binarized output (0/1), with same axes.
+
+    Notes:
+    -----
+    Axisname/Shape effects:
+
+    +--------------------------+------------+----------+-------------------------------+-----------------------+
+    | Data shape               | axisname   | axis_idx | Binarize “across”             | Threshold shape       |
+    +==========================+============+==========+===============================+=======================+
+    | (epochs, spaces, times)  | "epochs"   |    0     | all epochs at (space, time)   | (1, n_spaces, n_times)|
+    +--------------------------+------------+----------+-------------------------------+-----------------------+
+    | (epochs, spaces, times)  | "spaces"   |    1     | all spaces at (epoch, time)   | (n_epochs, 1, n_times)|
+    +--------------------------+------------+----------+-------------------------------+-----------------------+
+    | (epochs, spaces, times)  | "times"    |    2     | all times at (epoch, space)   | (n_epochs, n_spaces, 1)|
+    +--------------------------+------------+----------+-------------------------------+-----------------------+
+    | (spaces, times)          | "spaces"   |    0     | all spaces at (time)          | (1, n_times)          |
+    +--------------------------+------------+----------+-------------------------------+-----------------------+
+    | (spaces, times)          | "times"    |    1     | all times at (space)          | (n_spaces, 1)         |
+    +--------------------------+------------+----------+-------------------------------+-----------------------+
+
+    """
+    # Get callable from string if needed
+    if isinstance(threshold_fun, str):
+        # Accept 'np.median', 'median', etc.
+        try:
+            threshold_fun = eval('np.' + threshold_fun)
+        except Exception:
+            threshold_fun = eval(threshold_fun)
+
+    if not callable(threshold_fun):
+        raise ValueError(f"threshold_fun {threshold_fun} is not callable or a string.")
+
+    # Get axis index
+    axis_idx = input.metadata.order.index(axisname)
+
+    # Compute threshold along axis
+    threshold_vals = threshold_fun(input.values, axis=axis_idx, keepdims=True)
+    # Binarize: 1 if > threshold, 0 else
+    binary = (input.values > threshold_vals).astype(int)
+
+    # Copy and update metadata (keep axes and order the same)
+    output = deepcopy(input)
+    output.values = binary
+
+    # Update kind to reflect binarization
+    kind = get_kind_from_snake(currentframe().f_code.co_name)
+    threshold_name = threshold_fun.__name__ if hasattr(threshold_fun, "__name__") else str(threshold_fun)
+    output.metadata.kind = (
+        (input.metadata.kind or "") + kind + snake_to_camel(axisname) + snake_to_camel(threshold_name)
+    )
+    output.metadata.label = label or output.metadata.label
+
+    # Optionally update provenance
+    output = update_provenance(input, output)
+
+    return output
+
+
+
+@functional_feature_decorator('functional_elementwise_feature', 'array')
+def functional_elementwise_feature(
+    input: FunctionalFeatureStructure,
+    *,
+    label: Optional[str] = None,
+    fun: Union[Callable, str] = None,
+    newkind: Optional[str] = None,
+    newtype: Optional[str] = None
+) -> FunctionalFeatureStructure:
+    """
+    Apply a function elementwise to the values array and update the type/kind if needed.
+
+    Parameters
+    ----------
+    input : FunctionalFeatureStructure
+        The input feature structure.
+    label : str, optional
+        Optional label.
+    fun : callable or str
+        The function to apply. If string, will be evaluated.
+    newkind : str, optional
+        If given, replaces the 'kind' field in metadata.
+        If not given, the kind will be updated based on the function name.
+    newtype : str, optional
+        If given, replaces the 'type_' field in metadata.
+
+    Returns
+    -------
+    FunctionalFeatureStructure
+        New structure with function applied elementwise and (optionally) new type/kind.
+    """
+    if fun is None:
+        raise ValueError("A function must be provided.")
+
+    # Evaluate string function if needed
+    if isinstance(fun, str):
+        if fun.startswith("eval%"):
+            fun = eval(fun.replace("eval%", ""))
+        else:
+            fun = eval(fun)  # Use cautiously!
+
+    # Vectorize for elementwise operation
+    vec_fun = np.vectorize(fun)
+
+    # Copy input and apply function
+    output = deepcopy(input)
+    output.values = vec_fun(output.values)
+
+    # Update kind
+    if newkind is not None:
+        output.metadata.kind = newkind
+    else:
+        kind = get_kind_from_snake(currentframe().f_code.co_name)
+        fun_name = fun.__name__ if hasattr(fun, "__name__") else str(fun)
+        output.metadata.kind = (
+            (input.metadata.kind or "") + kind + snake_to_camel(fun_name)
+        )
+
+    # Update type if requested
+    if newtype is not None:
+        output.metadata.type_ = newtype
+
+    output.metadata.label = label or output.metadata.label
+
+    # Update provenance
     output = update_provenance(input, output)
 
     return output
