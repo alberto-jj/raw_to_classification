@@ -42,3 +42,5 @@ cat rel_bids_files.txt | xargs -I{} cp --parents "{}" /home/yorguin/projects/def
 ## This does not work, disk quota exceeded
 ##cd /home/yorguin/scratch/data
 ##rsync -av --files-from=rel_bids_files.txt /home/yorguin/scratch/data/ /project/def-kjerbi/data_sprint/
+
+sshare -l -A def-kjerbi_cpu

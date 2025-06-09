@@ -40,7 +40,7 @@ if [ "$ENV" == "TMP" ]; then
     virtualenv --no-download $SLURM_TMPDIR/env
     source $SLURM_TMPDIR/env/bin/activate
     ## pip install --no-index --upgrade pip
-    cd /home/yorguin/projects/def-kjerbi/yorguin/raw_to_classification
+    cd /home/yorguin/scratch/code/raw_to_classification
     pip install --no-index -r requirements_cc_noindex.txt
     pip install -r requirements_extra.txt
     pip install .
@@ -53,7 +53,7 @@ elif [ "$ENV" == "DEFAULT" ]; then
     ## The commented lines below should have already been done in the environment setup.
     ## virtualenv --no-download /home/yorguin/envs/raw_to_classification_env
     source /home/yorguin/envs/raw_to_classification_env/bin/activate
-    cd /home/yorguin/projects/def-kjerbi/yorguin/raw_to_classification
+    cd /home/yorguin/scratch/code/raw_to_classification
     ## pip install --no-index -r requirements_cc_noindex.txt
     ## pip install -r requirements_extra.txt
     ## pip install -e .
