@@ -1,0 +1,178 @@
+AntropyPermutationEntropy:
+    label: AntropyPermutationEntropy
+    overwrite: False
+    type_: array
+    chain:
+        - function: functional_antropy_perm_entropy_feature
+          args:
+            label: AntropyPermutationEntropy
+            kwargs:
+                order: 3
+                delay: 1
+                normalize: True
+
+AntropySpectralEntropy:
+  label: AntropySpectralEntropy
+  overwrite: False
+  type_: array
+  chain:
+    - function: functional_antropy_spectral_entropy_feature
+      args:
+        label: AntropySpectralEntropy
+        kwargs:
+          #sf is defined inside
+          method: 'welch' #'fft'
+          nperseg: null
+          normalize: True
+          axis: -1
+
+AntropySvdEntropy:
+  label: AntropySvdEntropy
+  overwrite: False
+  type_: array
+  chain:
+    - function: functional_antropy_svd_entropy_feature
+      args:
+        label: AntropySvdEntropy
+        kwargs:
+          order: 3
+          delay: 1
+          normalize: True
+
+AntropyApproximateEntropy:
+  label: AntropyApproximateEntropy
+  overwrite: False
+  type_: array
+  chain:
+    - function: functional_antropy_app_entropy_feature
+      args:
+        label: AntropyApproximateEntropy
+        kwargs:
+          order: 2
+          tolerance: null
+          metric: 'chebyshev'
+
+AntropySampleEntropy:
+  label: AntropySampleEntropy
+  overwrite: False
+  type_: array
+  chain:
+    - function: functional_antropy_sample_entropy_feature
+      args:
+        label: AntropySampleEntropy
+        kwargs:
+          order: 2
+          tolerance: null
+          metric: 'chebyshev'
+
+AntropyLempelZivComplexity:
+  label: AntropyLempelZivComplexity
+  overwrite: False
+  type_: array
+  chain:
+    - function: functional_binarize_along_axis_feature
+      args:
+        label: AntropyBinarizedSignal
+        kwargs:
+          axisname: 'times'
+          threshold_fun: 'median'
+    - function: functional_antropy_lziv_complexity_feature
+      args:
+        label: AntropyLempelZivComplexity
+        kwargs:
+          normalize: True
+
+AntropyNumberOfZeroCrossings:
+  label: AntropyNumberOfZeroCrossings
+  overwrite: False
+  type_: array
+  chain:
+    - function: functional_antropy_num_zerocross_feature
+      args:
+        label: AntropyNumberOfZeroCrossings
+        kwargs:
+          normalize: True
+          axis : -1
+
+
+AntropyHjorthParameters:
+  label: AntropyHjorthParameters
+  overwrite: False
+  type_: array
+  chain:
+    - function: functional_antropy_hjorth_params_feature
+      args:
+        label: AntropyHjorthParameters
+        kwargs:
+          hjorth_params:
+            axis: -1
+
+
+AntropyHjorthMobility:
+  label: AntropyHjorthMobility
+  overwrite: False
+  type_: array
+  chain:
+    - feature: HjorthParameters
+    - function: functional_elementwise_feature
+      args:
+        label: AntropyHjorthMobility
+        fun: "eval%lambda x: x.mobility"
+        newkind: HjorthMobility
+
+AntropyHjorthComplexity:
+  label: AntropyHjorthComplexity
+  overwrite: False
+  type_: array
+  chain:
+    - feature: HjorthParameters
+    - function: functional_elementwise_feature
+      args:
+        label: AntropyHjorthComplexity
+        fun: "eval%lambda x: x.complexity"
+        newkind: HjorthComplexity
+
+
+AntropyPetrosianFractalDimension:
+  label: AntropyPetrosianFractalDimension
+  overwrite: False
+  type_: array
+  chain:
+    - function: functional_antropy_petrosian_fd_feature
+      args:
+        label: AntropyPetrosianFractalDimension
+        kwargs:
+          axis: -1
+
+AntropyKatzFractalDimension:
+  label: AntropyKatzFractalDimension
+  overwrite: False
+  type_: array
+  chain:
+    - function: functional_antropy_katz_fd_feature
+      args:
+        label: AntropyKatzFractalDimension
+        kwargs:
+          axis: -1
+
+
+AntropyHiguchiFractalDimension:
+  label: AntropyHiguchiFractalDimension
+  overwrite: False
+  type_: array
+  chain:
+    - function: functional_antropy_higuchi_fd_feature
+      args:
+        label: AntropyHiguchiFractalDimension
+        kwargs:
+          kmax: 10
+
+AntropyDetrendedFluctuation:
+  label: AntropyDetrendedFluctuation
+  overwrite: False
+  type_: array
+  chain:
+    - function: functional_antropy_detrended_fluctuation_feature
+      args:
+        label: AntropyDetrendedFluctuation
+        kwargs: {}
