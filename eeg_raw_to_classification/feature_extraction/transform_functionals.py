@@ -169,7 +169,7 @@ def functional_aggregate_feature(input, label: Optional[str] = None, fun: Union[
     return output
 
 @functional_feature_decorator('functional_binarize_along_axis_feature', 'array')
-def functional_binarizer_feature(
+def functional_binarize_along_axis_feature(
     input: FunctionalFeatureStructure,
     *,
     label: Optional[str] = None,
