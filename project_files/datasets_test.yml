@@ -58,6 +58,10 @@ eegbci:
   dataset_label : eegbci
   skip : False
 
+  example_file: 
+    remote: ""
+    local: "C:/Users/yjman/mne_data/MNE-eegbci-data/files/eegmmidb/1.0.0/*/*.edf"
+
   bidsify:
     paths:
       source_path : 
@@ -94,9 +98,6 @@ eegbci:
 
 
   # Processing
-  example_file: 
-    remote: ""
-    local: "C:/Users/yjman/mne_data/MNE-eegbci-data/files/eegmmidb/1.0.0/*/*.edf"
   ch_names: None
   PowerLineFrequency : 60
   # BIDS

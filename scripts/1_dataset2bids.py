@@ -19,7 +19,7 @@ def main(pipeline_file):
         module = importlib.import_module(module_name)
         bidsify = getattr(module, func_name)
     else:
-        def bidsify(source_path, bids_path, DATASET_CFG):
+        def bidsify(source_path, bids_path, DATASET_CFG, cfg):
             rules = DATASET_CFG['bidsify']['rules'] # this is suppose to be the dictionary of rules
             mappings = apply_rules(source_path, bids_path, rules)
             convert_them(mappings)
@@ -37,7 +37,7 @@ def main(pipeline_file):
             bids_path = DATASET['bidsify']['paths']['bids_path']
             bids_path = get_path(bids_path, MOUNT)
 
-            bidsify(source_path, bids_path, DATASET)
+            bidsify(source_path, bids_path, DATASET, cfg)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run the dataset to BIDS conversion pipeline.')

@@ -26,7 +26,7 @@ def load_meeg(meeg_file, dataset, kwargs={}):
 from mne_bids import BIDSPath, write_raw_bids
 from sovabids.parsers import parse_from_placeholder
 
-def bidsify(source_path, bids_path, DATASET_CFG):
+def bidsify(source_path, bids_path, DATASET_CFG, pipeline_cfg=None):
     """
     Convert source_path to BIDS format and save to bids_path.
     
