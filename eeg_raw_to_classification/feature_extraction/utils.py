@@ -162,6 +162,7 @@ def get_mne_metadata(
 
         input_axes['spaces'] = deepcopy(input.ch_names)
         input_axes['times'] = deepcopy(input.times)
+        extra_metadata['sfreq'] = input.info['sfreq'] if hasattr(input, 'info') else None
 
         # input_no_data.info has the 
         # montage : info.get_montage()
