@@ -18,7 +18,7 @@ def get_dependencies(feature, FEATURE_CFG):
     dependencies += depends_on + list(itertools.chain(*[get_dependencies(f, FEATURE_CFG) for f in depends_on]))
     return dependencies
 
-def foo(eeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, DEBUG=False,retry_errors=False, inspect_only=False):
+def foo(meeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, DEBUG=False,retry_errors=False, inspect_only=False):
     from mne.datasets.eegbci import standardize
     import mne
     import os
@@ -26,9 +26,9 @@ def foo(eeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipeline
     from eeg_raw_to_classification.utils import load_yaml, save_dict_to_json,get_path
     import traceback
 
-    dirname = os.path.dirname(eeg_file)
-    finame = os.path.basename(eeg_file)
-    derifile = eeg_file.replace(prep_pipeline, pipeline_name)
+    dirname = os.path.dirname(meeg_file)
+    finame = os.path.basename(meeg_file)
+    derifile = meeg_file.replace(prep_pipeline, pipeline_name)
     errorfile = os.path.join(dirname, f'file-{finame}_feature-{feature}_featureError.txt')
         # inspect first if the file is already processed
     inspect_dict = feat.process_feature(None, derifile, FEATURE_CFG, feature, pipeline_name, inspect_only=True)
@@ -47,7 +47,7 @@ def foo(eeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipeline
         return inspect_dict
     
     try:
-        epochs = mne.read_epochs(eeg_file, preload=True)
+        epochs = mne.read_epochs(meeg_file, preload=True)
         if standardize_epochs:
             standardize(epochs)
         if featurepipelineCFG.get('prefilter', None) is not None:
@@ -55,7 +55,7 @@ def foo(eeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipeline
         if DOWNSAMPLE is not None:
             epochs = epochs.resample(DOWNSAMPLE)
         if keep_channels:
-                        # We picked the common channels between datasets for simplicity
+            # We picked the common channels between datasets for simplicity
             epochs = epochs.reorder_channels(keep_channels)
 
         try:
@@ -112,8 +112,7 @@ def main(pipeline_file, external_jobs, debug, parallelize, retry_errors, single_
         standardize_epochs = featurepipelineCFG.get('standardize_epochs', True)
 
 
-        all_EEGS = []
-        all_raws = []
+        all_MEEGS = []
         for dslabel, DATASET in datasets.items():
             if DATASET.get('skip', False):
                 continue
@@ -136,48 +135,48 @@ def main(pipeline_file, external_jobs, debug, parallelize, retry_errors, single_
             #     all_raws = layout.get(**file_filter)
 
             #     get_derivative = lambda x: get_derivative_path(layout, x, 'reject', 'epo', '.fif', bids_root, prep_root)
-            #     eegs = [get_derivative(x) for x in all_raws]
+            #     meegs = [get_derivative(x) for x in all_raws]
             # else:
             #     pattern = os.path.join(prep_root, '**/*_epo.fif')
             #     pattern = pathlib.Path(pattern).as_posix()
-            #     eegs = glob.glob(pattern, recursive=True)
-            #     eegs = [pathlib.Path(x).as_posix() for x in eegs ]
+            #     meegs = glob.glob(pattern, recursive=True)
+            #     meegs = [pathlib.Path(x).as_posix() for x in meegs ]
             pattern = os.path.join(prep_root, '**/*_epo.fif')
             pattern = pathlib.Path(pattern).as_posix()
-            eegs = glob.glob(pattern, recursive=True)
-            eegs = [pathlib.Path(x).as_posix() for x in eegs ]
+            meegs = glob.glob(pattern, recursive=True)
+            meegs = [pathlib.Path(x).as_posix() for x in meegs ]
 
             feat_root = pathlib.Path(os.path.join(derivatives_root, pipeline_name)).as_posix()
             os.makedirs(feat_root, exist_ok=True)
 
-            for eeg_file in eegs:
-                all_EEGS.append(eeg_file)
+            for meeg_file in meegs:
+                all_MEEGS.append(meeg_file)
 
         if only_total:
-            print(f'Total number of files: {len(all_EEGS)}')
-            for i,eeg in enumerate(all_EEGS):
+            print(f'Total number of files: {len(all_MEEGS)}')
+            for i,eeg in enumerate(all_MEEGS):
                 print(i,eeg)
-            print(f'Total number of files: {len(all_EEGS)}')
-            return len(all_EEGS)
+            print(f'Total number of files: {len(all_MEEGS)}')
+            return len(all_MEEGS)
         
         if single_index is not None:
-            print(len(all_EEGS), single_index)
-            all_EEGS = [all_EEGS[single_index]]
+            print(len(all_MEEGS), single_index)
+            all_MEEGS = [all_MEEGS[single_index]]
         
         inspect_list = []
         if parallelize:
             for level in levels:
-                x = Parallel(n_jobs=external_jobs)(delayed(foo)(eeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, debug,retry_errors ) for eeg_file in all_EEGS for feature in level)
+                x = Parallel(n_jobs=external_jobs)(delayed(foo)(meeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, debug,retry_errors ) for meeg_file in all_MEEGS for feature in level)
                 inspect_list += x
         else:
-            for count,eeg_file in enumerate(all_EEGS):
+            for count,meeg_file in enumerate(all_MEEGS):
                 for level in levels:
                     for feature in level:
-                        x = foo(eeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, debug, retry_errors)
+                        x = foo(meeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, debug, retry_errors)
                         inspect_list.append(x)
     return inspect_list
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Run EEG feature extraction pipeline.')
+    parser = argparse.ArgumentParser(description='Run MEEG feature extraction pipeline.')
     parser.add_argument('pipeline_file', type=str, help='Path to the pipeline YAML file.')
     parser.add_argument('--external_jobs', type=int, default=1, help='Number of external jobs for parallel processing.')
     parser.add_argument('--raise_on_error', action='store_true', help='Raise on error if set.')
