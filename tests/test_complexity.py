@@ -5,7 +5,7 @@ import numpy as np
 # (Optional) Import the registry if you want to test feature listing
 import eeg_raw_to_classification.feature_extraction as fe
 
-features = [i for i in fe.FunctionalFeatureRegistry.list() if i.startswith("functional_") and i.endswith("_feature") and ('neurokit2' in i)] # or 'antropy' in i
+features = [i for i in fe.FunctionalFeatureRegistry.list() if i.startswith("functional_") and i.endswith("_feature") and ('neurokit2' in i or 'antropy' in i)] # 
 @pytest.fixture(scope="module")
 def raw_epochs():
     sample_data_folder = mne.datasets.sample.data_path()
