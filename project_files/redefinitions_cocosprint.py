@@ -645,8 +645,9 @@ def lsd_bids_conversion(source_path, bids_path, DATASET_CFG, pipeline_cfg, df_me
         filepath = row['file']
 
         try:
-            bidsTree = BIDSPath(subject=subject, session=session, task=task, root=BIDS_ROOT)
-
+            #breakpoint()
+            bidsTree = BIDSPath(subject=subject, session=session, task=task, root=BIDS_ROOT, datatype='meg', suffix='meg', extension='.fif')
+            # i dont know why this level of specificity in bids arguments sometimmes is not needed
             if not os.path.isfile(bidsTree.fpath):
                 mne_data = mne.io.read_raw(filepath, preload=True)
 
@@ -743,8 +744,8 @@ def fieldtrip_to_bids(source_path, bids_path, DATASET_CFG, pipeline_cfg):
     this_dataset = DATASET_CFG.get('dataset_label','Nolabel')
     filepath = os.path.join(bids_path, f'meg_{this_dataset}_metadata.csv')
     filepath_pkl = os.path.join(bids_path, f'meg_{this_dataset}_metadata.pkl')
-    breakpoint()
-    if not os.path.exists(filepath):
+    #breakpoint()
+    if not os.path.exists(filepath_pkl):
         print(f"File {filepath} does not exist, inspecting datasets...")
         FILES_PER_DATASET = None  # Number of files to inspect per dataset
         metadatas_dict = {}
@@ -761,10 +762,10 @@ def fieldtrip_to_bids(source_path, bids_path, DATASET_CFG, pipeline_cfg):
             mats = mats[:FILES_PER_DATASET]  if len(mats) > FILES_PER_DATASET else mats
 
         metadatas_dict[dataset_name] = []
-        filepath = os.path.join(root, f'{dataset_name}_meg_data.txt')
+        #filepath = os.path.join(root, f'{dataset_name}_meg_data.txt') # defined already outside the loop
         metadatas = inspect_meg_data(mats, file=filepath)
         metadatas_dict[dataset_name] = metadatas
-        print(f"Inspection results saved to {dataset_name}_meg_data.txt")
+        print(f"Inspection results saved to {filepath}")
 
         df = pd.DataFrame.from_records(metadatas_dict[dataset_name])
 
@@ -773,7 +774,7 @@ def fieldtrip_to_bids(source_path, bids_path, DATASET_CFG, pipeline_cfg):
     else:
         print(f"File {filepath} already exists, loading metadata from CSV...")
         df = pd.read_csv(filepath, sep=';', encoding='utf-8')
-
+    #breakpoint()
     df['filepath'].iloc[0]
     df['data_shape']
     df['fsample'].value_counts()
@@ -795,21 +796,14 @@ def fieldtrip_to_bids(source_path, bids_path, DATASET_CFG, pipeline_cfg):
         print(row['error'])
         print(row['traceback'])
 
-        # meg_data = loadmat(row['filepath'], kwargs=dict(simplify_cells=True))
-        # data = meg_data.get('data', None)  # Check if 'data' key exists
-        # data.keys()
-        
-        # data['trial'].shape
-        # data['label']
-        # data['time']
-        # data['cfg'].keys()
-        # data['cfg']['trials']
-
-
     # '/home/yorguin/scratch/data/MEG_perampanel/meg_data/PMP_PMP_020414_50.mat'
-    pattern = os.path.join(source_path, r'PMP_%session%_%subject%_%number%.mat')
+    if this_dataset not in ['psilocybin']:
+        pattern = os.path.join(source_path, r'%ignore%_%session%_%subject%_%number%.mat')
+    else:
+        pattern = os.path.join(source_path,r"%ignore%" ,r'%session%_%subject%_%number%.mat')
 
     bids_items = []
+    #breakpoint()
     for i, row in df.iterrows():
         bids_dict = parse_from_placeholder(row['filepath'],pattern)
         filepath = row['filepath']
@@ -827,7 +821,7 @@ def fieldtrip_to_bids(source_path, bids_path, DATASET_CFG, pipeline_cfg):
 
     df_bids['label'] = 'S' + df_bids['subject'] + 'N' + df_bids['number']
 
-    df_bids['session_bids'] = df_bids['session'].apply(lambda x: 'placebo' if x == 'PLA' else 'perampanel')
+    df_bids['session_bids'] = df_bids['session'].apply(lambda x: 'placebo' if x == 'PLA' else this_dataset) # or maybe just put drug here?, but then we need to change this also on the conversion of lsd
 
 
 
@@ -841,36 +835,6 @@ def fieldtrip_to_bids(source_path, bids_path, DATASET_CFG, pipeline_cfg):
         try:
             print(f"Processing {i+1}/{len(df)}: {row['filepath']}")
             print(row)
-            meg_path = row['filepath']
-            meg_data = loadmat(meg_path, kwargs=dict(simplify_cells=True))
-            metadata = get_metadata(meg_data, meg_path)
-
-            chantype_map = {
-            'meggrad': 'grad',     # MNE type for gradiometers
-            'refgrad': 'grad',     # if you want to treat refgrad as grad
-            'refmag': 'mag'        # or maybe 'misc' if they are not standard MEG
-            }
-
-
-            ch_names = meg_data['data']['label'].tolist()
-            types = [chantype_map.get(ch, 'misc') for ch in ch_names]  # Default to 'misc' if not found
-            chantypes = ['meggrad', 'meggrad', 'refmag', 'refgrad']
-            mne_types = [chantype_map.get(t, 'misc') for t in chantypes]
-
-            # Create a dictionary to pass to set_channel_types
-            ch_type_dict = {name: typ for name, typ in zip(ch_names, mne_types)}
-
-            # Set types
-            raw = mne.io.RawArray(
-                data=meg_data['data']['trial'],  # Assuming 'trial' is a 2D array with shape (n_channels, n_samples)
-                info=mne.create_info(
-                    ch_names=meg_data['data']['label'].tolist(),  # Assuming 'label' is a list of channel names
-                    sfreq=meg_data['data']['fsample'],  # Assuming 'fsample' is a scalar
-                    ch_types=types  # Assuming all channels are meg
-                )
-            )
-
-            raw.set_channel_types(ch_type_dict)
 
 
             subject = row['label']
@@ -878,11 +842,92 @@ def fieldtrip_to_bids(source_path, bids_path, DATASET_CFG, pipeline_cfg):
             task = 'resting'
             filepath = row['filepath']
             os.makedirs(BIDS_ROOT, exist_ok=True)
-            breakpoint()
+            #breakpoint()
 
-            bidsTree = BIDSPath(subject=subject, session=session, task=task, root=BIDS_ROOT)
+            bidsTree = BIDSPath(subject=subject, session=session, task=task, root=BIDS_ROOT, datatype='meg', suffix='meg', extension='.fif')
 
             if not os.path.isfile(bidsTree.fpath):
+
+
+                meg_path = row['filepath']
+                meg_data = loadmat(meg_path, kwargs=dict(simplify_cells=True))
+                metadata = get_metadata(meg_data, meg_path)
+
+                chantype_map = {
+                'meggrad': 'grad',     # MNE type for gradiometers
+                'refgrad': 'grad',     # if you want to treat refgrad as grad
+                'refmag': 'mag'        # or maybe 'misc' if they are not standard MEG
+                }
+
+
+                ch_names = meg_data['data']['label'].tolist()
+                types = [chantype_map.get(ch, 'misc') for ch in ch_names]  # Default to 'misc' if not found
+                chantypes = ['meggrad', 'meggrad', 'refmag', 'refgrad']
+                mne_types = [chantype_map.get(t, 'misc') for t in chantypes]
+
+                # Create a dictionary to pass to set_channel_types
+                ch_type_dict = {name: typ for name, typ in zip(ch_names, mne_types)}
+
+                # Set types
+                if this_dataset == 'psilocybin':
+                    #breakpoint()
+                    #pass
+                    # Find 'InfusionStop'
+                    # Find 'RestStop'
+                    infusion_stop = None
+                    rest_stop = None
+                    infusion_start = None
+                    rest_start = None
+                    for e in metadata['event']:
+                        if e['type'] == 'InfusionStart':
+                            infusion_start = e['sample']
+                        if e['type'] == 'RestStart':
+                            rest_start = e['sample']
+                        if e['type'] == 'InfusionStop':
+                            infusion_stop = e['sample']
+                        elif e['type'] == 'RestStop':
+                            rest_stop = e['sample']
+                        if infusion_stop is not None and rest_stop is not None:
+                            break
+                    if infusion_stop is None or rest_stop is None:
+                        raise ValueError("InfusionStop or RestStop event not found in metadata.")
+                    # Create a RawArray with the data and info
+                    raw = mne.io.RawArray(
+                        data=meg_data['data']['trial'],  # Assuming 'trial' is a 2D array with shape (n_channels, n_samples)
+                        info=mne.create_info(
+                            ch_names=meg_data['data']['label'].tolist(),  # Assuming 'label' is a list of channel names
+                            sfreq=meg_data['data']['fsample'],  # Assuming 'fsample' is a scalar
+                            ch_types=types  # Assuming all channels are meg
+                        ))
+
+                    # Add the events to the info
+                    #events = np.array([[infusion_stop, 0, 1], [rest_stop, 0, 2]])?
+
+                    # or just crop between these samples?
+                    #breakpoint()
+                    # actually they cutted the data from RestStart to RestStop
+                    # you can check that
+                    # num_samples = meg_data['data']['trial'].shape[1]
+                    # rest_stop - rest_start == num_samples - 1
+                    # so we will substract rest_start from both infusion_stop and rest_stop
+                    infusion_sec = raw.times[infusion_stop-rest_start]
+                    rest_sec = raw.times[rest_stop-rest_start]  # Convert sample index to seconds
+                    print(f"Cropping between: InfusionStop at {infusion_sec}, RestStop at {rest_sec}, in seconds.")
+                    print(f"Delta time: {(rest_sec - infusion_sec)/60} min = {rest_sec - infusion_sec} seconds = {rest_stop - infusion_stop} samples.")
+                    raw = raw.crop(tmin=infusion_sec, tmax=rest_sec, include_tmax=True)  # Crop the raw data between the two events
+                else:
+                    raw = mne.io.RawArray(
+                        data=meg_data['data']['trial'],  # Assuming 'trial' is a 2D array with shape (n_channels, n_samples)
+                        info=mne.create_info(
+                            ch_names=meg_data['data']['label'].tolist(),  # Assuming 'label' is a list of channel names
+                            sfreq=meg_data['data']['fsample'],  # Assuming 'fsample' is a scalar
+                            ch_types=types  # Assuming all channels are meg
+                        )
+                    )
+
+                raw.set_channel_types(ch_type_dict)
+
+
                 write_raw_bids(raw, bids_path=bidsTree, overwrite=True, format="FIF", allow_preload=True)
             else:
                 print(f"File {bidsTree.fpath} already exists, skipping.")
@@ -934,7 +979,7 @@ def bidsify(source_path, bids_path, DATASET_CFG,pipeline_cfg):
         lsd_bids_conversion(source_path, bids_path, DATASET_CFG, pipeline_cfg, df_megs)
 
 
-    if DATASET_CFG.get('dataset_label','') == 'perampanel':
+    if DATASET_CFG.get('dataset_label','') in ['perampanel','psilocybin']:
         fieldtrip_to_bids(source_path, bids_path, DATASET_CFG, pipeline_cfg)
 
 def parse_bids(bidsname):

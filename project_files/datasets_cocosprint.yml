@@ -4,8 +4,9 @@ lsd:
 
   example_file: 
     cedar: "/home/yorguin/scratch/data/MEG_LSDV2/meg_data/*_LSD_*_*.ds"
+    computecanada: "/home/yorguin/scratch/data/MEG_LSDV2/meg_data/*_LSD_*_*.ds"
 
-  bidsify:
+  no_bidsify: # for now i will use the custom bidsify outside of this pipeline, but eventually this should be integrated
     paths:
       source_path :
         cedar: "/home/yorguin/scratch/data/MEG_LSDV2/meg_data/"
@@ -51,9 +52,10 @@ perampanel:
 
 
   example_file: 
-    cedar: "/home/yorguin/scratch/data/MEG_LSDV2/meg_data/*_LSD_*_*.ds"
+    cedar: "/home/yorguin/scratch/data/MEG_perampanel/meg_data/*.mat"
+    computecanada : "/home/yorguin/scratch/data/MEG_perampanel/meg_data/*.mat"
 
-  bidsify:
+  no_bidsify: # for now i will use the custom bidsify outside of this pipeline, but eventually this should be integrated
     paths:
       source_path :
         cedar: "/home/yorguin/scratch/data/MEG_perampanel/meg_data/"
@@ -84,6 +86,52 @@ perampanel:
   derivatives_root : 
     computecanada: "/home/yorguin/scratch/data/MEG_perampanel/derivatives/"
     local: Y:/computecanada/cocosprint/home/yorguin/scratch/data/MEG_perampanel/derivatives
+
+  # Files to be included in the study
+  bids_layout:
+    extension: ".fif"
+    suffix : 'meg'
+    return_type : 'filename'
+
+psilocybin:
+  dataset_label : psilocybin
+  skip : False
+
+
+  example_file: 
+    cedar: "/home/yorguin/scratch/data/MEG_psilocybin/meg_data/*.mat"
+    computecanada : "/home/yorguin/scratch/data/MEG_psilocybin/meg_data/*.mat"
+
+  bidsify:
+    paths:
+      source_path :
+        computecanada: "/home/yorguin/scratch/data/MEG_psilocybin/meg_data/"
+      bids_path :
+        computecanada: "/home/yorguin/scratch/data/MEG_psilocybin/bids/"
+
+  participants:
+
+    # Participants 
+    participants_file : 
+      computecanada: "/home/yorguin/scratch/data/MEG_psilocybin/bids/participants.tsv"
+    reader : 
+      function : "pd.read_csv"
+      args : 
+        delimiter: "\\t"
+
+    cleaned_participants : 
+      computecanada: "/home/yorguin/scratch/data/MEG_psilocybin/bids/participants.tsv"
+
+  # Processing
+  example_file: 
+    computecanada: "/home/yorguin/scratch/data/MEG_psilocybin/bids/sub-*/ses-*/meg/sub-*_ses-*_task-*_meg.fif"
+  ch_names: None
+  PowerLineFrequency : 60
+  # BIDS
+  bids_root : 
+    computecanada: "/home/yorguin/scratch/data/MEG_psilocybin/bids/"
+  derivatives_root : 
+    computecanada: "/home/yorguin/scratch/data/MEG_psilocybin/derivatives/"
 
   # Files to be included in the study
   bids_layout:
