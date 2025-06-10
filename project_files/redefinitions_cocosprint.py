@@ -804,6 +804,7 @@ def fieldtrip_to_bids(source_path, bids_path, DATASET_CFG, pipeline_cfg):
 
     bids_items = []
     #breakpoint()
+    df = df.sort_index()
     for i, row in df.iterrows():
         bids_dict = parse_from_placeholder(row['filepath'],pattern)
         filepath = row['filepath']
@@ -831,9 +832,12 @@ def fieldtrip_to_bids(source_path, bids_path, DATASET_CFG, pipeline_cfg):
     BIDS_ROOT = bids_path
     os.makedirs(BIDS_ROOT, exist_ok=True)
     errors = []
+    breakpoint()
+    df_bids = df_bids.sort_index()
+    df_bids['label'].unique().shape
     for i, row in df_bids.iterrows():
         try:
-            print(f"Processing {i+1}/{len(df)}: {row['filepath']}")
+            print(f"Processing {i+1}/{len(df_bids)}: {row['filepath']}")
             print(row)
 
 
