@@ -29,7 +29,7 @@ def process_feature(epochs,relevantpath,CFG,feature,pipeline_name,inspect_only=F
             inner_featdict = CFG[suffix]
             if not os.path.isfile(outputfile) or inner_featdict['overwrite']:
                 if inspect_only:
-                    inspect_only_output[outputfile] = False
+                    inspect_only_output = {'status':False, 'feature_file':outputfile, 'feature':suffix}
                     continue
                 print(f'Feature {suffix} not found')
                 output = process_feature(input_data,relevantpath,CFG,suffix,pipeline_name,inspect_only)
@@ -37,11 +37,11 @@ def process_feature(epochs,relevantpath,CFG,feature,pipeline_name,inspect_only=F
                 np.save(outputfile,output)
             else:
                 if inspect_only:
-                    inspect_only_output[outputfile] = True
+                    inspect_only_output = {'status':True, 'feature_file':outputfile, 'feature':suffix}
                     continue
                 print(f'Already Exists:{outputfile}')
                 output = np.load(outputfile,allow_pickle=True).item()
-                inspect_only_output[outputfile] = True
+                inspect_only_output = {'status':True, 'feature_file':outputfile, 'feature':suffix}
 
         if 'function' in stage.keys():
             inner_featdict = stage
@@ -51,7 +51,7 @@ def process_feature(epochs,relevantpath,CFG,feature,pipeline_name,inspect_only=F
                 outputfile = relevantpath.replace('_epo.fif',f'_{suffix}.npy')
                 if not os.path.isfile(outputfile) or overwrite:
                     if inspect_only:
-                        inspect_only_output[outputfile] = False
+                        inspect_only_output = {'status':False, 'feature_file':outputfile, 'feature':suffix}
                         continue
                     fun = eval(f"{inner_featdict['function']}")
                     if isinstance(fun,str):
@@ -62,7 +62,7 @@ def process_feature(epochs,relevantpath,CFG,feature,pipeline_name,inspect_only=F
                     
                 else:
                     if inspect_only:
-                        inspect_only_output[outputfile] = True
+                        inspect_only_output = {'status':True, 'feature_file':outputfile, 'feature':suffix}
                         continue
                     print(f'Already Exists:{outputfile}')
                     output = np.load(outputfile,allow_pickle=True).item()

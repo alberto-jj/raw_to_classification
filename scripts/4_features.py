@@ -11,6 +11,8 @@ from joblib import delayed, Parallel
 import itertools
 from graphlib import TopologicalSorter
 import pathlib
+import pdb
+import pandas as pd
 
 def get_dependencies(feature, FEATURE_CFG):
     dependencies = []
@@ -35,14 +37,15 @@ def foo(meeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipelin
     inspect_vector = list(inspect_dict.values())
     inspect_ = np.all(inspect_vector)
     inspect_error = os.path.isfile(errorfile)
+    #breakpoint()
 
     if inspect_:
         print(f'{feature} already processed for {finame}, skipping')
-        return
+        return inspect_dict
     if inspect_error and not retry_errors:
         print(f'{feature} had an error, skipping according to retry_errors={retry_errors}')
-        return
-
+        return inspect_dict
+    #breakpoint()
     if inspect_only:
         return inspect_dict
     
@@ -79,11 +82,16 @@ def main(pipeline_file, external_jobs, debug, parallelize, retry_errors, single_
     #datasets = load_yaml(PIPELINE['datasets_file'])
     PROJECT = PIPELINE['project']
 
-    for featurepipeline in PIPELINE['features']['feature_pipeline_list']:
+    if debug:
+        os.environ['PYTHONBREAKPOINT'] = 'pdb.set_trace'
+    else:
+        os.environ['PYTHONBREAKPOINT'] = '0'
+
+    for featurepipeline in PIPELINE['4_features']['feature_pipeline_list']:
         print(f'Feature Pipeline: {featurepipeline}')
 
-        featurepipelineCFG = PIPELINE['features']['feature_pipeline_cfg'][featurepipeline]
-        CFG = PIPELINE['features']
+        featurepipelineCFG = PIPELINE['4_features']['feature_pipeline_cfg'][featurepipeline]
+        CFG = PIPELINE['4_features']
         pipeline_name = featurepipeline
         prep_pipeline = featurepipelineCFG['prep_pipeline']
         FEATURE_CFG = CFG['feature_cfg']
@@ -151,7 +159,8 @@ def main(pipeline_file, external_jobs, debug, parallelize, retry_errors, single_
 
             for meeg_file in meegs:
                 all_MEEGS.append(meeg_file)
-
+        # remove split files
+        all_MEEGS = [x for x in all_MEEGS if ('split-01' in x or not 'split-' in x)] # 01 will work if at most 99 split files?
         if only_total:
             print(f'Total number of files: {len(all_MEEGS)}')
             for i,eeg in enumerate(all_MEEGS):
@@ -163,17 +172,77 @@ def main(pipeline_file, external_jobs, debug, parallelize, retry_errors, single_
             print(len(all_MEEGS), single_index)
             all_MEEGS = [all_MEEGS[single_index]]
         
+
         inspect_list = []
         if parallelize:
             for level in levels:
-                x = Parallel(n_jobs=external_jobs)(delayed(foo)(meeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, debug,retry_errors ) for meeg_file in all_MEEGS for feature in level)
+                x = Parallel(n_jobs=external_jobs)(delayed(foo)(meeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, debug,retry_errors, inspect_only ) for meeg_file in all_MEEGS for feature in level)
                 inspect_list += x
         else:
             for count,meeg_file in enumerate(all_MEEGS):
                 for level in levels:
                     for feature in level:
-                        x = foo(meeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, debug, retry_errors)
+                        x = foo(meeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, debug, retry_errors, inspect_only)
+                        x.update({'source_file': meeg_file, 'feature': feature, '_index': count})
                         inspect_list.append(x)
+
+    outputfolder = PIPELINE['4_features'].get('path_inspection','.')
+    outputfolder = get_path(outputfolder, MOUNT).replace('%PROJECT%', PROJECT)
+    os.makedirs(outputfolder, exist_ok=True)
+    np.save(os.path.join(outputfolder, f'{pipeline_name}_inspect_list.npy'), inspect_list)
+    df = pd.DataFrame(inspect_list)
+    breakpoint()
+    if inspect_only and not single_index: # as we write here, avoid writing collisions between workers
+
+        df.to_csv(os.path.join(outputfolder, f'{pipeline_name}_inspect_list.csv'), index=False)
+
+        # For each (source_file, _index), check if any status is False (i.e., any missing feature)
+        problem_pairs = (
+            df.groupby(['source_file', '_index'])['status']
+            .min()
+            .reset_index()
+        )
+
+        # Only keep pairs with status == False (i.e., at least one missing feature)
+        problem_pairs = problem_pairs[problem_pairs['status'] == False]
+
+        # For each source_file, collect the list of _index values
+        file_to_missing_indices = (
+            problem_pairs.groupby('source_file')['_index']
+            .apply(list)
+            .to_dict()
+        )
+
+        # Filter the original dataframe to only the missing features
+        missing_rows = df[df['status'] == False]
+
+        # Group by source_file and _index, aggregate the list of missing features
+        missing_features_per_instance = (
+            missing_rows.groupby(['source_file', '_index'])['feature']
+            .apply(list)
+            .reset_index()
+        )
+
+        # Pivot to nested dictionary
+        file_to_index_missingfeatures = (
+            missing_features_per_instance
+            .groupby('source_file')
+            .apply(lambda x: dict(zip(x['_index'], x['feature'])))
+            .to_dict()
+        )
+        missing_index_list = list(file_to_missing_indices.values())
+        # flatten the list of lists
+        missing_index_list = [item for sublist in missing_index_list for item in sublist]
+        # Save the results to a JSON file
+        import json
+        with open(os.path.join(outputfolder, f'{pipeline_name}_missing_features.json'), 'w') as f:
+            json.dump({
+                'missing_index_list': missing_index_list,
+                'file_to_missing_indices': file_to_missing_indices,
+                'file_to_index_missingfeatures': file_to_index_missingfeatures
+            }, f, indent=4)
+        
+
     return inspect_list
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run MEEG feature extraction pipeline.')
@@ -188,6 +257,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     inspect_list = main(args.pipeline_file, args.external_jobs, args.raise_on_error, args.external_jobs > 1, args.retry_errors, args.index, args.only_total, args.inspect_only)
 
-    if args.inspect_only and not args.index:
-        np.save('inspect_list.npy', inspect_list)
 
