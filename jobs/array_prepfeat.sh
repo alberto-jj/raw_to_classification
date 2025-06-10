@@ -3,11 +3,13 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=64G
 #SBATCH --time=0-04:00:00
-#SBATCH --array=0-331
+#SBATCH --array=108,67
 ## 0-977 for saint
 ## 0-488 for cocosprint
 ## you need to get the index range using the command below:
 ## sbatch --export=STEP=index,PIPELINE_YML=project_files/pipeline_saint.yml --array=0 array_prepfeat.sh
+## or missing indexes from inspect_only
+## 108,67,69,70,68,197,219,368,370,372,373,375,374,336,337,339,361,360,363,362,313,312,314,315,316,317,318,319,352,354,355,341,340,342,343,365,364,366,367,349,348,350,351,357,356,359,358,328,329,330,331,377,376,378,379,325,324,326,309,308,310,311,321,320,323,322,345,347,346,332,334,335,238,239,236,247,246,245,244,231,228,229,271,270,269,268,294,295,293,250,251,249,248,282,283,281,280,291,290,288,289,266,267,265,242,243,241,240,259,258,257,256,262,263,260,287,286,284,285,254,255,252,253,307,304,305,302,301,300,299,298,297,296,275,273,272,235,232,233,278,279,277,276,396,408,401,400,406,395,385,384,391,390,405,404,387,386,393,392,403,402,389,388,399,398,383
 #SBATCH --job-name=prepfeat
 #SBATCH --output=%A_%a-prepfeat.out
 #SBATCH --error=%A_%a-prepfeat.err
@@ -23,6 +25,7 @@
 ## To just run the script, use:
 ## sbatch --export=STEP=3,PIPELINE_YML=project_files/pipeline_saint.yml array_prepfeat.sh
 ## sbatch --export=STEP=4,PIPELINE_YML=project_files/pipeline_saint.yml array_prepfeat.sh
+## sbatch --export=STEP=4,PIPELINE_YML=project_files/pipeline_cocosprint.yml array_prepfeat.sh
 
 ## To get the total number of indexes for array job configuration:
 ## sbatch --export=STEP=index,PIPELINE_YML=project_files/pipeline_saint.yml --array=0 array_prepfeat.sh
@@ -75,6 +78,8 @@ elif [ "$STEP" == "4" ]; then
     python -u scripts/4_features.py "$PIPELINE_YML" --index $SLURM_ARRAY_TASK_ID --retry_errors
 elif [ "$STEP" == "index" ]; then
     python -u scripts/3_preprocess.py "$PIPELINE_YML" --only_total
+elif [ "$STEP" == "inspect" ]; then
+    python -u scripts/4_features.py "$PIPELINE_YML" --inspect_only
 else
     echo "Error: Unknown STEP '$STEP'. Use STEP=3 or STEP=4 or STEP=index"
     exit 1
