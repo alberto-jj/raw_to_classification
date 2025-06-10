@@ -22,7 +22,17 @@ def foo(meeg_file, this_prep, DATASET, preprocessed_path, DEBUG, internal_njobs=
     fifname = os.path.basename(preprocessed_path)
     fifpath = os.path.dirname(preprocessed_path)
 
-    if not os.path.isfile(preprocessed_path) or this_prep['overwrite']:
+    fname = preprocessed_path
+    suffix = fifname.split('_')[-1]
+    fifname2 = fifname.split('_')[:-1]+['split-01', suffix]
+    fifname2 = '_'.join(fifname2)
+    preprocessed_path2 = os.path.join(fifpath, fifname2)
+
+    if os.path.isfile(preprocessed_path2):
+        print(f'Found split file: {preprocessed_path2}, using it instead of {preprocessed_path}')
+        preprocessed_path = preprocessed_path2
+
+    if not (os.path.isfile(preprocessed_path)) or this_prep['overwrite']:
         if os.path.isfile(preprocessed_path.replace('.fif', '_problem.txt')) and not retry_errors:
             print(f'Error file exists: {preprocessed_path.replace(".fif", "_problem.txt")}, skipping')
             return
@@ -42,11 +52,10 @@ def foo(meeg_file, this_prep, DATASET, preprocessed_path, DEBUG, internal_njobs=
                 from eeg_raw_to_classification.preprocessing import prepare
 
             processed_meeg, info, figures, report = prepare(filename=meeg_file, dataset_cfg=DATASET, njobs=njobs, **this_prep['prepare'])
-            figs_path = preprocessed_path.replace('reject_epo.fif', '_prepareFigs.html')
-            info_path = preprocessed_path.replace('reject_epo.fif', '_prepareInfo.txt')
-
-            save_figs_in_html(figs_path, figures)
-            save_dict_to_json(info_path, info)
+            # figs_path = preprocessed_path.replace('_epo.fif', '_prepareFigs.html') # careful with this, its prone to bugs if the name is not correctly replace
+            # info_path = preprocessed_path.replace('_epo.fif', '_prepareInfo.txt')
+            # save_figs_in_html(figs_path, figures)
+            # save_dict_to_json(info_path, info)
 
             processed_meeg.save(fifpath + '/' + fifname, split_naming='bids', overwrite=True)
 
@@ -126,6 +135,8 @@ def main():
                     limit = MAX_FILES
                 meegs = meegs[:limit]
             meegs = [pathlib.Path(x).as_posix() for x in meegs]
+            meegs = [x for x in meegs if ('split-01' in x or not 'split-' in x)] # 01 will work if at most 99 split files?
+
             print(len(meegs), meegs)
             
 

@@ -44,3 +44,4 @@ cat rel_bids_files.txt | xargs -I{} cp --parents "{}" /home/yorguin/projects/def
 ##rsync -av --files-from=rel_bids_files.txt /home/yorguin/scratch/data/ /project/def-kjerbi/data_sprint/
 
 sshare -l -A def-kjerbi_cpu
+

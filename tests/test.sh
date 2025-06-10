@@ -10,4 +10,8 @@ python -u "./scripts/1_dataset2bids.py" "project_files/pipeline_cocosprint.yml"
 python -u "./scripts/4_features.py" "project_files/pipeline_cocosprint.yml" --inspect_only
 python -u "./scripts/4_features.py" "project_files/pipeline_cocosprint.yml" --inspect_only --raise_on_error
 
-python -u "./scripts/4_features.py" "project_files/pipeline_cocosprint.yml" --inspect_only > inspect_features.log
+python -u "./scripts/3_preprocess.py" "project_files/pipeline_cocosprint.yml" --retry_errors
+
+python -u "./scripts/4_features.py" "project_files/pipeline_cocosprint.yml" --inspect_only
+
+python -u "./scripts/4_features.py" "project_files/pipeline_cocosprint.yml" --index 67 --retry_errors

@@ -958,7 +958,7 @@ def parse_bids(bidsname):
     return d
 
 # signature prepare(filename=raw_file, dataset_cfg, njobs=njobs, **this_prep['prepare'])
-def prepare(filename, dataset=None, njobs=1, downsample = 500, normalization = False, filter_args=None, epoch_config={}):
+def prepare(filename, dataset_cfg=None, njobs=1, downsample = 500, normalization = False, filter_args=None, epoch_config={}):
     """
     keep_chans: is ignored, only used to keep the same signature as the original function
     line_noise: is ignored, only used to keep the same signature as the original function
@@ -968,7 +968,7 @@ def prepare(filename, dataset=None, njobs=1, downsample = 500, normalization = F
     figures = []
 
     info['filename'] = filename
-    info['dataset_cfg'] = dataset
+    info['dataset_cfg'] = dataset_cfg
     info['downsample'] = downsample
     info['normalization'] = normalization
     info['filter_args'] = filter_args

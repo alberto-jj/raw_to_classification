@@ -31,23 +31,24 @@ def foo(meeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipelin
     dirname = os.path.dirname(meeg_file)
     finame = os.path.basename(meeg_file)
     derifile = meeg_file.replace(prep_pipeline, pipeline_name)
-    errorfile = os.path.join(dirname, f'file-{finame}_feature-{feature}_featureError.txt')
+    errorfile = derifile.replace('_epo.fif',f'_{feature}.error')
+    #os.path.join(dirname, f'file-{finame}_feature-{feature}_featureError.txt')
         # inspect first if the file is already processed
-    inspect_dict = feat.process_feature(None, derifile, FEATURE_CFG, feature, pipeline_name, inspect_only=True)
-    inspect_vector = list(inspect_dict.values())
+    inspect_dicts = feat.process_feature(None, derifile, FEATURE_CFG, feature, pipeline_name, inspect_only=True)
+    inspect_vector = [x['status'] for x in inspect_dicts]
     inspect_ = np.all(inspect_vector)
-    inspect_error = os.path.isfile(errorfile)
+    inspect_error = os.path.isfile(errorfile) and not inspect_ 
     #breakpoint()
 
     if inspect_:
         print(f'{feature} already processed for {finame}, skipping')
-        return inspect_dict
+        return inspect_dicts
     if inspect_error and not retry_errors:
         print(f'{feature} had an error, skipping according to retry_errors={retry_errors}')
-        return inspect_dict
+        return inspect_dicts
     #breakpoint()
     if inspect_only:
-        return inspect_dict
+        return inspect_dicts
     
     try:
         epochs = mne.read_epochs(meeg_file, preload=True)
@@ -68,12 +69,12 @@ def foo(meeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipelin
             if DEBUG:
                 raise
             else:
-                save_dict_to_json(os.path.join(dirname, f'file-{finame}_feature-{feature}_featureError.txt'), {'error': traceback.format_exc()})
+                save_dict_to_json(errorfile, {'error': traceback.format_exc()})
     except:
         if DEBUG:
             raise
         else:
-            save_dict_to_json(os.path.join(dirname, f'file-{finame}_feature-{feature}_featureError.txt'), {'error': traceback.format_exc()})
+            save_dict_to_json(errorfile, {'error': traceback.format_exc()})
 
 def main(pipeline_file, external_jobs, debug, parallelize, retry_errors, single_index=None, only_total=False, inspect_only=False):
     PIPELINE = load_yaml(pipeline_file)
@@ -175,24 +176,31 @@ def main(pipeline_file, external_jobs, debug, parallelize, retry_errors, single_
 
         inspect_list = []
         if parallelize:
+            if inspect_only:
+                raise ValueError('inspect_only is not compatible with parallelize=True')
             for level in levels:
                 x = Parallel(n_jobs=external_jobs)(delayed(foo)(meeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, debug,retry_errors, inspect_only ) for meeg_file in all_MEEGS for feature in level)
-                inspect_list += x
+                # flatten x
+                x_2 =[ item for sublist in x for item in sublist]
+                inspect_list += x_2
         else:
             for count,meeg_file in enumerate(all_MEEGS):
                 for level in levels:
                     for feature in level:
                         x = foo(meeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, debug, retry_errors, inspect_only)
-                        x.update({'source_file': meeg_file, 'feature': feature, '_index': count})
-                        inspect_list.append(x)
+                        if x:
+                            for d in x:
+                                d.update({'source_file': meeg_file, 'feature': feature, '_index': count})
+                            inspect_list += x
 
-    outputfolder = PIPELINE['4_features'].get('path_inspection','.')
-    outputfolder = get_path(outputfolder, MOUNT).replace('%PROJECT%', PROJECT)
-    os.makedirs(outputfolder, exist_ok=True)
-    np.save(os.path.join(outputfolder, f'{pipeline_name}_inspect_list.npy'), inspect_list)
-    df = pd.DataFrame(inspect_list)
     breakpoint()
     if inspect_only and not single_index: # as we write here, avoid writing collisions between workers
+
+        outputfolder = PIPELINE['4_features'].get('path_inspection','.')
+        outputfolder = get_path(outputfolder, MOUNT).replace('%PROJECT%', PROJECT)
+        os.makedirs(outputfolder, exist_ok=True)
+        np.save(os.path.join(outputfolder, f'{pipeline_name}_inspect_list.npy'), inspect_list)
+        df = pd.DataFrame(inspect_list)
 
         df.to_csv(os.path.join(outputfolder, f'{pipeline_name}_inspect_list.csv'), index=False)
 

@@ -19,7 +19,8 @@ def process_feature(epochs,relevantpath,CFG,feature,pipeline_name,inspect_only=F
         output = epochs.copy()
     else:
         output = None
-    inspect_only_output = {}
+    inspect_only_output = []
+    breakpoint()
     for i_f,stage in enumerate(featdict['chain']):
         input_data = output
         if 'feature' in stage.keys():
@@ -29,7 +30,7 @@ def process_feature(epochs,relevantpath,CFG,feature,pipeline_name,inspect_only=F
             inner_featdict = CFG[suffix]
             if not os.path.isfile(outputfile) or inner_featdict['overwrite']:
                 if inspect_only:
-                    inspect_only_output = {'status':False, 'feature_file':outputfile, 'feature':suffix}
+                    inspect_only_output.append({'status':False, 'feature_file':outputfile, 'feature':suffix})
                     continue
                 print(f'Feature {suffix} not found')
                 output = process_feature(input_data,relevantpath,CFG,suffix,pipeline_name,inspect_only)
@@ -37,11 +38,11 @@ def process_feature(epochs,relevantpath,CFG,feature,pipeline_name,inspect_only=F
                 np.save(outputfile,output)
             else:
                 if inspect_only:
-                    inspect_only_output = {'status':True, 'feature_file':outputfile, 'feature':suffix}
+                    inspect_only_output.append({'status':True, 'feature_file':outputfile, 'feature':suffix})
                     continue
                 print(f'Already Exists:{outputfile}')
                 output = np.load(outputfile,allow_pickle=True).item()
-                inspect_only_output = {'status':True, 'feature_file':outputfile, 'feature':suffix}
+                inspect_only_output.append({'status':True, 'feature_file':outputfile, 'feature':suffix})
 
         if 'function' in stage.keys():
             inner_featdict = stage
@@ -51,7 +52,7 @@ def process_feature(epochs,relevantpath,CFG,feature,pipeline_name,inspect_only=F
                 outputfile = relevantpath.replace('_epo.fif',f'_{suffix}.npy')
                 if not os.path.isfile(outputfile) or overwrite:
                     if inspect_only:
-                        inspect_only_output = {'status':False, 'feature_file':outputfile, 'feature':suffix}
+                        inspect_only_output.append({'status':False, 'feature_file':outputfile, 'feature':suffix})
                         continue
                     fun = eval(f"{inner_featdict['function']}")
                     if isinstance(fun,str):
@@ -62,7 +63,7 @@ def process_feature(epochs,relevantpath,CFG,feature,pipeline_name,inspect_only=F
                     
                 else:
                     if inspect_only:
-                        inspect_only_output = {'status':True, 'feature_file':outputfile, 'feature':suffix}
+                        inspect_only_output.append({'status':True, 'feature_file':outputfile, 'feature':suffix})
                         continue
                     print(f'Already Exists:{outputfile}')
                     output = np.load(outputfile,allow_pickle=True).item()
