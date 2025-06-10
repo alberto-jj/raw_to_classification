@@ -120,7 +120,7 @@ psilocybin:
         delimiter: "\\t"
 
     cleaned_participants : 
-      computecanada: "/home/yorguin/scratch/data/MEG_psilocybin/bids/participants.tsv"
+      computecanada: "/home/yorguin/scratch/data/MEG_psilocybin/bids/participants_cleaned.tsv"
 
   # Processing
   example_file: 

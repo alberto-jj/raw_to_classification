@@ -7,3 +7,5 @@ cd /home/yorguin/scratch/code/raw_to_classification
 ## or
 #cd /home/yorguin/raw_to_classification
 ipython
+
+## salloc --time=1:0:0 --mem-per-cpu=16G --ntasks=1 --account=def-kjerbi
