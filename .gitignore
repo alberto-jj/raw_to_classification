@@ -8,6 +8,9 @@ None/
 # C extensions
 *.so
 
+*.out
+*.err
+
 # Distribution / packaging
 .Python
 build/
