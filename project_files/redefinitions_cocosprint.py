@@ -743,7 +743,7 @@ def fieldtrip_to_bids(source_path, bids_path, DATASET_CFG, pipeline_cfg):
     this_dataset = DATASET_CFG.get('dataset_label','Nolabel')
     filepath = os.path.join(bids_path, f'meg_{this_dataset}_metadata.csv')
     filepath_pkl = os.path.join(bids_path, f'meg_{this_dataset}_metadata.pkl')
-    pdb.set_trace()
+    breakpoint()
     if not os.path.exists(filepath):
         print(f"File {filepath} does not exist, inspecting datasets...")
         FILES_PER_DATASET = None  # Number of files to inspect per dataset
@@ -878,7 +878,7 @@ def fieldtrip_to_bids(source_path, bids_path, DATASET_CFG, pipeline_cfg):
             task = 'resting'
             filepath = row['filepath']
             os.makedirs(BIDS_ROOT, exist_ok=True)
-            pdb.set_trace()
+            breakpoint()
 
             bidsTree = BIDSPath(subject=subject, session=session, task=task, root=BIDS_ROOT)
 
@@ -927,7 +927,7 @@ def bidsify(source_path, bids_path, DATASET_CFG,pipeline_cfg):
     rule = DATASET_CFG.get('bidsify', {}).get('pattern', None)
     
     import glob, os, pathlib
-    #pdb.set_trace()
+    #breakpoint()
     print(DATASET_CFG.get('dataset_label','Nolabel'))
     if DATASET_CFG.get('dataset_label','') == 'lsd': # You could add per dataset handling here
         df_megs = thanks_jordan_venkatesh(source_path, bids_path, DATASET_CFG, pipeline_cfg)
