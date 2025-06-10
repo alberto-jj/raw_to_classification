@@ -47,7 +47,7 @@ lsd:
 
 perampanel:
   dataset_label : perampanel
-  skip : True
+  skip : False
 
 
   example_file: 
@@ -59,8 +59,6 @@ perampanel:
         cedar: "/home/yorguin/scratch/data/MEG_perampanel/meg_data/"
       bids_path :
         cedar: "/home/yorguin/scratch/data/MEG_perampanel/bids/"
-    pattern: 
-      cedar: '/home/yorguin/scratch/data/MEG_perampanel/meg_data/PMP_%session%_%subA%_%subB%.mat'
 
   participants:
 
@@ -97,7 +95,7 @@ perampanel:
 
 ketamine:
   dataset_label : ketamine
-  skip : True
+  skip : False
 
 
   # Participants 
@@ -133,7 +131,7 @@ ketamine:
 
 tiagabine:
   dataset_label : tiagabine
-  skip : True
+  skip : False
 
   participants:
 

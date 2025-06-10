@@ -11,7 +11,7 @@ from sovabids.parsers import parse_from_placeholder
 from mne_bids import BIDSPath, write_raw_bids
 import traceback
 import pdb
-
+from pprint import pprint
 def thanks_jordan_venkatesh(source_path, bids_path, DATASET_CFG, pipeline_cfg):
 
     pd.set_option('display.max_rows', None)
@@ -645,9 +645,15 @@ def lsd_bids_conversion(source_path, bids_path, DATASET_CFG, pipeline_cfg, df_me
         filepath = row['file']
 
         try:
-            mne_data = mne.io.read_raw(filepath, preload=True)
-            bids_path = BIDSPath(subject=subject, session=session, task=task, root=BIDS_ROOT)
-            write_raw_bids(mne_data, bids_path=bids_path, overwrite=True, format="FIF", allow_preload=True)
+            bidsTree = BIDSPath(subject=subject, session=session, task=task, root=BIDS_ROOT)
+
+            if not os.path.isfile(bidsTree.fpath):
+                mne_data = mne.io.read_raw(filepath, preload=True)
+
+                write_raw_bids(mne_data, bids_path=bidsTree, overwrite=True, format="FIF", allow_preload=True)
+            else:
+                print(f"File {bidsTree.fpath} already exists, skipping.")
+
             print(f"Processed {i+1}/{len(df)}: {subject}, {session}, {task}, {filepath}")
         except Exception as e:
             print(f"Error processing {i+1}/{len(df)}: {subject}, {session}, {task}, {filepath}")
@@ -737,7 +743,7 @@ def fieldtrip_to_bids(source_path, bids_path, DATASET_CFG, pipeline_cfg):
     this_dataset = DATASET_CFG.get('dataset_label','Nolabel')
     filepath = os.path.join(bids_path, f'meg_{this_dataset}_metadata.csv')
     filepath_pkl = os.path.join(bids_path, f'meg_{this_dataset}_metadata.pkl')
-
+    pdb.set_trace()
     if not os.path.exists(filepath):
         print(f"File {filepath} does not exist, inspecting datasets...")
         FILES_PER_DATASET = None  # Number of files to inspect per dataset
@@ -801,7 +807,7 @@ def fieldtrip_to_bids(source_path, bids_path, DATASET_CFG, pipeline_cfg):
 
 
     # '/home/yorguin/scratch/data/MEG_perampanel/meg_data/PMP_PMP_020414_50.mat'
-    pattern = DATASET_CFG.get('bidsify', {}).get('pattern', {}).get(MOUNT,None)
+    pattern = os.path.join(source_path, r'PMP_%session%_%subject%_%number%.mat')
 
     bids_items = []
     for i, row in df.iterrows():
@@ -828,7 +834,7 @@ def fieldtrip_to_bids(source_path, bids_path, DATASET_CFG, pipeline_cfg):
     # Most of them have 2 events, or 0.
     # Will convert as is, to a raw file
 
-    BIDS_ROOT = '/home/yorguin/scratch/data/MEG_perampanel/meg_data_BIDS'
+    BIDS_ROOT = bids_path
     os.makedirs(BIDS_ROOT, exist_ok=True)
     errors = []
     for i, row in df_bids.iterrows():
@@ -866,12 +872,21 @@ def fieldtrip_to_bids(source_path, bids_path, DATASET_CFG, pipeline_cfg):
 
             raw.set_channel_types(ch_type_dict)
 
+
             subject = row['label']
             session = row['session_bids']
             task = 'resting'
             filepath = row['filepath']
-            bids_path = BIDSPath(subject=subject, session=session, task=task, root=BIDS_ROOT)
-            write_raw_bids(raw, bids_path=bids_path, overwrite=True, format="FIF", allow_preload=True)
+            os.makedirs(BIDS_ROOT, exist_ok=True)
+            pdb.set_trace()
+
+            bidsTree = BIDSPath(subject=subject, session=session, task=task, root=BIDS_ROOT)
+
+            if not os.path.isfile(bidsTree.fpath):
+                write_raw_bids(raw, bids_path=bidsTree, overwrite=True, format="FIF", allow_preload=True)
+            else:
+                print(f"File {bidsTree.fpath} already exists, skipping.")
+
         except Exception as e:
             print(f"Error processing {i+1}/{len(df)}: {row['filepath']}")
             print(f"Error: {str(e)}")
@@ -919,53 +934,8 @@ def bidsify(source_path, bids_path, DATASET_CFG,pipeline_cfg):
         lsd_bids_conversion(source_path, bids_path, DATASET_CFG, pipeline_cfg, df_megs)
 
 
-    if DATASET_CFG.get('dataset_label','') == 'eegbci': # You could add per dataset handling here
-        rule = DATASET_CFG.get('bidsify', {}).get('pattern', 'sub-{subject}_ses-{session}_task-{task}_eeg.edf')
-        pattern = os.path.join(source_path, '**', '*.edf')
-        files = glob.glob(pattern, recursive=True)
-        # Parse the source path for BIDS entities
-
-
-
-        for f in files:
-            this_file = pathlib.Path(f).as_posix()
-            entities = parse_from_placeholder(this_file, pattern=rule)
-            # see https://mne.tools/stable/generated/mne.datasets.eegbci.load_data.html#mne.datasets.eegbci.load_data
-            """
-            1 Baseline, eyes open
-            2 Baseline, eyes closed
-            3, 7, 11 Motor execution: left vs right hand
-            4, 8, 12 Motor imagery: left vs right hand
-            5, 9, 13 Motor execution: hands vs feet
-            6, 10, 14 Motor imagery: hands vs feet
-            """
-            run_to_task = {
-                'None': 'unknownTask',
-                1: 'baselineOpen',
-                2: 'baselineClosed',
-                3: 'leftHand',
-                4: 'rightHand',
-                5: 'leftFoot',
-                6: 'rightFoot',
-                7: 'leftHandImagery',
-                8: 'rightHandImagery',
-                9: 'leftFootImagery',
-                10: 'rightFootImagery'
-            }
-
-            subject = entities.get('subject', '')
-            task = run_to_task.get(int(entities.get('run', 'None')), 'unknownTask')
-            run = entities.get('run', 'None')
-
-            bidsTree = BIDSPath(subject=subject,task=task,run=run, root=bids_path)
-            if not os.path.isfile(bidsTree.fpath):
-                meeg = load_meeg(this_file, DATASET_CFG)
-                write_raw_bids(meeg, bids_path=bidsTree, overwrite=False, format="BrainVision", allow_preload=True)
-            else:
-                print(f"File {bidsTree.fpath} already exists, skipping.")
-
-    print(f"BIDS conversion complete. Data saved at {bids_path}")
-
+    if DATASET_CFG.get('dataset_label','') == 'perampanel':
+        fieldtrip_to_bids(source_path, bids_path, DATASET_CFG, pipeline_cfg)
 
 def parse_bids(bidsname):
     name = os.path.basename(bidsname)

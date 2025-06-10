@@ -1,6 +1,6 @@
 project: 'cocosprint'
 datasets_file: 'project_files/datasets_cocosprint.yml'
-mount: cedar
+mount: computecanada
 0_inspect:
   path : './data/%PROJECT%/inspect'
 1_dataset2bids:
@@ -58,10 +58,12 @@ prep_inspection:
     - 'epochs'
   prep_list :
     - prepDur30Ov20
-    - prepDur20Ov10
-    - prepDur10Ov5
+    # - prepDur20Ov10
+    # - prepDur10Ov5
 
-features:
+4_features:
+  path_inspection : './data/%PROJECT%/feature_inspection'
+
   feature_pipeline_cfg:
     features@prepDur30Ov20: #you set the name of the feature pipeline with the key
       prep_pipeline : 'prepDur30Ov20' # This is the name of the preprocessing pipeline previously defined (must exist in derivatives)
@@ -88,6 +90,8 @@ features:
         - petrosianFdMeanEpochs
         # # - entropyMultiscaleMeanEpochs
         # #- sampleEntropyMeanEpochs
+          #- permEntropyMeanEpochs
+
         - spectralEntropyMeanEpochs
         - lzivComplexityMeanEpochs
         # # - appEntropyMeanEpochs
