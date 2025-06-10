@@ -232,6 +232,16 @@ prep_inspection:
             max_numitem: null
             axisname: 'epochs'
 
+    detrendedFluctuationSDEpochs:
+      overwrite: False
+      chain:
+        - feature: detrendedFluctuation
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.std
+            max_numitem: null
+            axisname: 'epochs'
+
     lzivComplexity:
       overwrite: False
       chain:
@@ -250,6 +260,16 @@ prep_inspection:
             numpyfun: eval%np.mean
             max_numitem: null
             axisname: 'epochs'
+    lzivComplexitySDEpochs:
+      overwrite: False
+      chain:
+        - feature: lzivComplexity
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.std
+            max_numitem: null
+            axisname: 'epochs'
+
 
     sampleEntropy:
       overwrite: False
@@ -269,6 +289,16 @@ prep_inspection:
             numpyfun: eval%np.mean
             max_numitem: null
             axisname: 'epochs'
+    sampleEntropySDEpochs:
+      overwrite: False
+      chain:
+        - feature: sampleEntropy
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.std
+            max_numitem: null
+            axisname: 'epochs'
+
     spectralEntropy:
       overwrite: False
       chain:
@@ -289,6 +319,15 @@ prep_inspection:
             numpyfun: eval%np.mean
             max_numitem: null
             axisname: 'epochs'
+    spectralEntropySDEpochs:
+      overwrite: False
+      chain:
+        - feature: spectralEntropy
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.std
+            max_numitem: null
+            axisname: 'epochs'
 
     appEntropy:
       overwrite: False
@@ -307,6 +346,15 @@ prep_inspection:
         - function: agg_numpy
           args:
             numpyfun: eval%np.mean
+            max_numitem: null
+            axisname: 'epochs'
+    appEntropySDEpochs:
+      overwrite: False
+      chain:
+        - feature: appEntropy
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.std
             max_numitem: null
             axisname: 'epochs'
 
@@ -336,6 +384,17 @@ prep_inspection:
             numpyfun: eval%np.mean
             max_numitem: null # 20min at 5sec per epoch
             axisname: 'epochs'
+
+    hjorthMobilitySDEpochs:
+      overwrite: False
+      chain:
+        - feature: hjorthMobility
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.std
+            max_numitem: null # 20min at 5sec per epoch
+            axisname: 'epochs'
+
     hjorthComplexity:
       overwrite: False
       chain:
@@ -354,6 +413,17 @@ prep_inspection:
             numpyfun: eval%np.mean
             max_numitem: null # 20min at 5sec per epoch
             axisname: 'epochs'
+
+    hjorthComplexitySDEpochs:
+      overwrite: False
+      chain:
+        - feature: hjorthComplexity
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.std
+            max_numitem: null # 20min at 5sec per epoch
+            axisname: 'epochs'
+
     numZerocross:
       overwrite: False
       chain:
@@ -372,6 +442,17 @@ prep_inspection:
             numpyfun: eval%np.mean
             max_numitem: null # 20min at 5sec per epoch
             axisname: 'epochs'
+
+    numZerocrossSDEpochs:
+      overwrite: False
+      chain:
+        - feature: numZerocross
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.std
+            max_numitem: null # 20min at 5sec per epoch
+            axisname: 'epochs'
+
     permEntropy:
       overwrite: False
       chain:
@@ -392,6 +473,17 @@ prep_inspection:
             numpyfun: eval%np.mean
             max_numitem: null # 20min at 5sec per epoch
             axisname: 'epochs'
+
+    permEntropySDEpochs:
+      overwrite: False
+      chain:
+        - feature: permEntropy
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.std
+            max_numitem: null # 20min at 5sec per epoch
+            axisname: 'epochs'
+
     svdEntropy:
       overwrite: False
       chain:
@@ -412,6 +504,16 @@ prep_inspection:
             max_numitem: null # 20min at 5sec per epoch
             axisname: 'epochs'
 
+    svdEntropySDEpochs:
+      overwrite: False
+      chain:
+        - feature: svdEntropy
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.std
+            max_numitem: null # 20min at 5sec per epoch
+            axisname: 'epochs'
+
     higuchiFd:
       overwrite: False
       chain:
@@ -429,6 +531,17 @@ prep_inspection:
             numpyfun: eval%np.mean
             max_numitem: null # 20min at 5sec per epoch
             axisname: 'epochs'
+
+    higuchiFdSDEpochs:
+      overwrite: False
+      chain:
+        - feature: higuchiFd
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.std
+            max_numitem: null # 20min at 5sec per epoch
+            axisname: 'epochs'
+
     higuchiFdVarEpochs:
       overwrite: False
       chain:
@@ -479,6 +592,15 @@ prep_inspection:
             numpyfun: eval%np.mean
             max_numitem: null # 20min at 5sec per epoch
             axisname: 'epochs'
+    petrosianFdSDEpochs:
+      overwrite: False
+      chain:
+        - feature: petrosianFd
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.std
+            max_numitem: null # 20min at 5sec per epoch
+            axisname: 'epochs'
 
     entropyMultiscale: #TODO: i think the aggregation wont work here because multiscale return a complex datatype, check this
       overwrite: False
@@ -512,6 +634,15 @@ prep_inspection:
             max_numitem: null # 20min at 5sec per epoch
             axisname: 'epochs'
 
+    entropyMultiscaleSDEpochs:
+      overwrite: False
+      chain:
+        - feature: entropyMultiscaleSingle
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.std
+            max_numitem: null # 20min at 5sec per epoch
+            axisname: 'epochs'
 
 aggregate:
   path : 
