@@ -1,6 +1,21 @@
 lsd:
   dataset_label : lsd
   skip : False
+
+  example_file: 
+    cedar: "/home/yorguin/scratch/data/MEG_LSDV2/meg_data/*_LSD_*_*.ds"
+
+  bidsify:
+    paths:
+      source_path :
+        cedar: "/home/yorguin/scratch/data/MEG_LSDV2/meg_data/"
+      bids_path :
+        cedar: "/home/yorguin/scratch/data/MEG_LSDV2/bids/"
+    ID_file: # custom for this dataset
+      cedar: "/home/yorguin/datasets/MEG_LSD/IDs.xlsx"
+    pattern: 
+      cedar: '/home/yorguin/scratch/data/MEG_LSDV2/meg_data/%subjectNumber%_LSD_%session%_%task%.ds'
+
   # Participants 
   participants:
     participants_file : 
@@ -11,11 +26,9 @@ lsd:
         delimiter: "\\t"
 
     cleaned_participants : 
-      computecanada: "/home/yorguin/scratch/data/MEG_LSDV2/meg_data_BIDS/participants.tsv"
+      computecanada: "/home/yorguin/scratch/data/MEG_LSDV2/meg_data_BIDS/participants_cleaned.tsv"
 
   # Processing
-  example_file: 
-    computecanada: "/home/yorguin/scratch/data/MEG_LSDV2/meg_data_BIDS/sub-*/ses-*/meg/sub-*_ses-*_task-*_meg.fif"
   ch_names: None
   PowerLineFrequency : 60
   # BIDS
@@ -32,9 +45,59 @@ lsd:
     return_type : 'filename'
 
 
+perampanel:
+  dataset_label : perampanel
+  skip : True
+
+
+  example_file: 
+    cedar: "/home/yorguin/scratch/data/MEG_LSDV2/meg_data/*_LSD_*_*.ds"
+
+  bidsify:
+    paths:
+      source_path :
+        cedar: "/home/yorguin/scratch/data/MEG_perampanel/meg_data/"
+      bids_path :
+        cedar: "/home/yorguin/scratch/data/MEG_perampanel/bids/"
+    pattern: 
+      cedar: '/home/yorguin/scratch/data/MEG_perampanel/meg_data/PMP_%session%_%subA%_%subB%.mat'
+
+  participants:
+
+    # Participants 
+    participants_file : 
+      computecanada: "/home/yorguin/scratch/data/MEG_perampanel/meg_data_BIDS/participants.tsv"
+    reader : 
+      function : "pd.read_csv"
+      args : 
+        delimiter: "\\t"
+
+    cleaned_participants : 
+      computecanada: "/home/yorguin/scratch/data/MEG_perampanel/meg_data_BIDS/participants.tsv"
+
+  # Processing
+  example_file: 
+    computecanada: "/home/yorguin/scratch/data/MEG_perampanel/meg_data_BIDS/sub-*/ses-*/meg/sub-*_ses-*_task-*_meg.fif"
+  ch_names: None
+  PowerLineFrequency : 60
+  # BIDS
+  bids_root : 
+    computecanada: "/home/yorguin/scratch/data/MEG_perampanel/meg_data_BIDS/"
+  derivatives_root : 
+    computecanada: "/home/yorguin/scratch/data/MEG_perampanel/derivatives/"
+    local: Y:/computecanada/cocosprint/home/yorguin/scratch/data/MEG_perampanel/derivatives
+
+  # Files to be included in the study
+  bids_layout:
+    extension: ".fif"
+    suffix : 'meg'
+    return_type : 'filename'
+
+
+
 ketamine:
   dataset_label : ketamine
-  skip : False
+  skip : True
 
 
   # Participants 
@@ -68,44 +131,9 @@ ketamine:
     suffix : 'meg'
     return_type : 'filename'
 
-perampanel:
-  dataset_label : perampanel
-  skip : False
-
-  participants:
-
-    # Participants 
-    participants_file : 
-      computecanada: "/home/yorguin/scratch/data/MEG_perampanel/meg_data_BIDS/participants.tsv"
-    reader : 
-      function : "pd.read_csv"
-      args : 
-        delimiter: "\\t"
-
-    cleaned_participants : 
-      computecanada: "/home/yorguin/scratch/data/MEG_perampanel/meg_data_BIDS/participants.tsv"
-
-  # Processing
-  example_file: 
-    computecanada: "/home/yorguin/scratch/data/MEG_perampanel/meg_data_BIDS/sub-*/ses-*/meg/sub-*_ses-*_task-*_meg.fif"
-  ch_names: None
-  PowerLineFrequency : 60
-  # BIDS
-  bids_root : 
-    computecanada: "/home/yorguin/scratch/data/MEG_perampanel/meg_data_BIDS/"
-  derivatives_root : 
-    computecanada: "/home/yorguin/scratch/data/MEG_perampanel/derivatives/"
-    local: Y:/computecanada/cocosprint/home/yorguin/scratch/data/MEG_perampanel/derivatives
-
-  # Files to be included in the study
-  bids_layout:
-    extension: ".fif"
-    suffix : 'meg'
-    return_type : 'filename'
-
 tiagabine:
   dataset_label : tiagabine
-  skip : False
+  skip : True
 
   participants:
 

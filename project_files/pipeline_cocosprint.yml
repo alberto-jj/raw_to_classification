@@ -1,8 +1,13 @@
 project: 'cocosprint'
 datasets_file: 'project_files/datasets_cocosprint.yml'
-mount: computecanada
+mount: cedar
 0_inspect:
   path : './data/%PROJECT%/inspect'
+1_dataset2bids:
+  redefine_bidsify:
+    from_this: project_files.redefinitions_cocosprint
+    import_that: bidsify
+
 3_preprocess:
   prep_cfg:
     prepDur30Ov20: # This is the name of the preprocessing pipeline

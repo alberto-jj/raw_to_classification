@@ -13,11 +13,13 @@ def main(pipeline_file):
     this_dataset2bids = cfg.get('1_dataset2bids', {})
 
     if 'redefine_bidsify' in this_dataset2bids:
+        print('Redifining bidsify function from another module')
         import_dict = this_dataset2bids['redefine_bidsify']
         module_name = import_dict['from_this']
         func_name = import_dict['import_that']
         module = importlib.import_module(module_name)
         bidsify = getattr(module, func_name)
+        print(f"Using {module_name}.{func_name} for bidsify function")
     else:
         def bidsify(source_path, bids_path, DATASET_CFG, cfg):
             rules = DATASET_CFG['bidsify']['rules'] # this is suppose to be the dictionary of rules
