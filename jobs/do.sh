@@ -46,4 +46,7 @@ python -u scripts/5_aggregate.py project_files/pipeline_cocosprint.yml > 5_aggre
 ## this are for phi features
 python -u "./scripts/4_features.py" "project_files/pipeline_cocosprint2.yml" --inspect_only
 
-python -u "./scripts/4_features.py" "project_files/pipeline_cocosprint2.yml" --index 67 --retry_errors
+python -u "./scripts/4_features.py" "project_files/pipeline_cocosprint2.yml" --index 67 --retry_errors --raise_on_error
+
+
+python -u "./scripts/0_inspect.py" "project_files/pipeline_cocosprint.yml"
