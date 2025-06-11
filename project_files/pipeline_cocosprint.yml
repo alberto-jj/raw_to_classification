@@ -722,6 +722,101 @@ prep_inspection:
             numpyfun: eval%np.std
             max_numitem: null # 20min at 5sec per epoch
             axisname: 'epochs'
+    Atoms:
+      overwrite: False
+      chain:
+        - function: single_atoms
+          args:
+            tau: 5
+            kind: gaussian
+            redundancy: MMI
+
+    InfoDyn:
+      overwrite: False
+      chain:
+        - feature: Atoms
+        - function: atoms_results
+          args:
+            key: InformationDynamics
+            aggregation_mode: mean-sum
+
+    InfoDynMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: InfoDyn
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: null
+            axisname: 'epochs'
+
+    InfoDynSDEpochs:
+      overwrite: False
+      chain:
+        - feature: InfoDyn
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.std
+            max_numitem: null
+            axisname: 'epochs'
+
+    IID:
+      overwrite: False
+      chain:
+        - feature: Atoms
+        - function: atoms_results
+          args:
+            key: IntegratedInformationDecomposition
+            aggregation_mode: mean-sum
+
+    IIDMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: IID
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: null
+            axisname: 'epochs'
+
+    IIDSDEpochs:
+      overwrite: False
+      chain:
+        - feature: IID
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.std
+            max_numitem: null
+            axisname: 'epochs'
+
+    IIT:
+      overwrite: False
+      chain:
+        - feature: Atoms
+        - function: atoms_results
+          args:
+            key: IntegratedInformationTheory
+            aggregation_mode: mean-sum
+
+    IITMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: IIT
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: null
+            axisname: 'epochs'
+
+    IITSDEpochs:
+      overwrite: False
+      chain:
+        - feature: IIT
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.std
+            max_numitem: null
+            axisname: 'epochs'
 
 aggregate:
   path : 
@@ -841,6 +936,29 @@ aggregate:
     petrosianFdSDEpochs :
       return_function : "eval%lambda x: x"
       file_suffix : petrosianFdSDEpochs
+    IIDMeanEpochs:
+      return_function: eval%lambda x: x
+      file_suffix: IIDMeanEpochs
+
+    IIDSDEpochs:
+      return_function: eval%lambda x: x
+      file_suffix: IIDSDEpochs
+
+    InfoDynMeanEpochs:
+      return_function: eval%lambda x: x
+      file_suffix: InfoDynMeanEpochs
+
+    InfoDynSDEpochs:
+      return_function: eval%lambda x: x
+      file_suffix: InfoDynSDEpochs
+
+    IITMeanEpochs:
+      return_function: eval%lambda x: x
+      file_suffix: IITMeanEpochs
+
+    IITSDEpochs:
+      return_function: eval%lambda x: x
+      file_suffix: IITSDEpochs
   feature_aggregate_list:
     - MeanEpochs@prepDur30Ov20
     #- MeanEpochs@prepDur20Ov10
