@@ -85,10 +85,10 @@ prep_inspection:
       keep_channels : False
       standardize_epochs : False
       feature_list: # To say which features actually compute rather than configure
-        # #- PowerSpectrum
-        # #- PowerSpectrumAverage
+        - PowerSpectrum
+        - PowerSpectrumAverage
         # #- RelativeBandPowerFromAverageSpectrum
-        # #- FooofFromAverage
+        - FooofFromAverage
         # #- RelativeBandPowerFromAverageFooof
         - detrendedFluctuationMeanEpochs
         - detrendedFluctuationSDEpochs
@@ -154,6 +154,7 @@ prep_inspection:
       feature_list: # To say which features actually compute rather than configure
         - PowerSpectrum
         - PowerSpectrumAverage
+        - FooofFromAverage
         - RelativeBandPowerFromAverageSpectrum
         - FooofFromAverage
         - RelativeBandPowerFromAverageFooof
@@ -191,10 +192,10 @@ prep_inspection:
         - FooofFromAverageWelch
 
   feature_pipeline_list: #which feature pipelines to run
-    # - features@prepDur30Ov20
+    - features@prepDur30Ov20
     #- features@prepDur20Ov10
     #- features@prepDur10Ov5
-    - features@prepSingleEpoch
+    #- features@prepSingleEpoch
   feature_cfg: # You can configure different features for the same function but different args
     # The suffix will be the higher hierarchy name you put here
     PowerSpectrum:
