@@ -8,4 +8,16 @@ cd /home/yorguin/scratch/code/raw_to_classification
 #cd /home/yorguin/raw_to_classification
 ipython
 
-## salloc --time=0:30:0 --mem-per-cpu=16G --ntasks=1 --account=def-kjerbi
+## salloc --time=2:59:0 --mem-per-cpu=16G --ntasks=1 --account=def-kjerbi
+
+tar -cf - /home/yorguin/scratch/data/MEG_psilocybin/bids | xz -T${SLURM_CPUS_PER_TASK} > Datapsibids.tar.xz
+tar -cf - /home/yorguin/scratch/data/MEG_psilocybin/derivatives/features@prepDur30Ov20 | xz -T${SLURM_CPUS_PER_TASK} > DatapsiFeats.tar.xz
+
+
+
+salloc --time=5:0:0 --mem-per-cpu=64G --ntasks=1 --account=def-kjerbi
+
+salloc --time=5:0:0 --mem-per-cpu=1G   --ntasks=1 --cpus-per-task=32 --account=def-kjerbi
+
+
+
