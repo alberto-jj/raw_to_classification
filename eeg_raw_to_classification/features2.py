@@ -618,7 +618,7 @@ def single_atoms(epochs, tau=5,redundancy='MMI', kind='gaussian', channel_labels
 def atoms_results(atoms, key='InformationDynamics', aggregation_mode='mean-sum'):
     """
     aggregation_mode:
-        - 'sum-mean': sum across atoms at each timepoint, then mean over time (default, principled)
+        - 'sum-mean': sum across atoms at each timepoint, then mean over time (principled)
         - 'mean-sum': mean each atom first, then sum the means (to exactly match original process())
     """
     # assume atoms is a dict with keys 'values' and 'metadata' from single_atoms
