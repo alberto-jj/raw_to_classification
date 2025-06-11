@@ -524,8 +524,16 @@ def single_atoms(epochs, tau=5,redundancy='MMI', kind='gaussian', channel_labels
 
 
     if isinstance(epochs, BaseEpochs):
+        #breakpoint()
+        # drop channels not starting with 'M'
+        # custom code for cocosprint cocodelics project
+        idx_to_keep = [i for i,ch in enumerate(epochs.ch_names) if ch.startswith('M')]
+        chans_to_keep = [ch for i,ch in enumerate(epochs.ch_names) if ch.startswith('M')]
+
         matrix = epochs.get_data()
-        channel_labels = epochs.ch_names
+        matrix = matrix[:, idx_to_keep, :]  # shape (n_epochs, n_channels, n_time)
+        channel_labels = chans_to_keep
+
     else:
         # Assume input is a 3D numpy array: epochs x channels x timepoints
         matrix = np.asarray(epochs, dtype=float)
@@ -572,18 +580,23 @@ def single_atoms(epochs, tau=5,redundancy='MMI', kind='gaussian', channel_labels
                 trg = np.mean(data[np.arange(n_channels) != i], axis=0)
             else:
                 # only one channel: create trg as the timelagged version of src
-                trg = np.roll(src, tau)
-                # TODO
-                raise ValueError("Only one channel found, cannot compute PhiID with a single channel (TODO).")
+                #trg = np.roll(src, tau)
+                # 
+                trg = src #Antoine
+                #raise ValueError("Only one channel found, cannot compute PhiID with a single channel (TODO).")
 
             # Run the PhiID calculation
-            atoms_res, _ = calc_PhiID(src, trg, tau, kind=kind, redundancy=redundancy)
-            #assert [k for k in atoms_res.keys()] == atom_names
-            atoms_res['rtr'].shape
-            for key in atoms_res.keys():
-                vals = atoms_res[key]
-                atoms_vals[e, i, atom_names.index(key), :] = vals# should be size [:n_time - tau]
-
+            try:
+                atoms_res, _ = calc_PhiID(src, trg, tau, kind=kind, redundancy=redundancy)
+                #assert [k for k in atoms_res.keys()] == atom_names
+                atoms_res['rtr'].shape
+                for key in atoms_res.keys():
+                    vals = atoms_res[key]
+                    atoms_vals[e, i, atom_names.index(key), :] = vals# should be size [:n_time - tau]
+            except Exception as ex:
+                print(f"Error processing epoch {e}, channel {i} '{channel_labels[i]}': {ex}")
+                # Fill with NaNs if there's an error
+                atoms_vals[e, i, :, :] = np.nan
 
 
 
