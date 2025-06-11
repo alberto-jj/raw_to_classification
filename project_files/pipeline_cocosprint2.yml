@@ -85,37 +85,47 @@ prep_inspection:
       keep_channels : False
       standardize_epochs : False
       feature_list: # To say which features actually compute rather than configure
-        - PowerSpectrum
-        - PowerSpectrumAverage
-        # #- RelativeBandPowerFromAverageSpectrum
-        - FooofFromAverage
-        # #- RelativeBandPowerFromAverageFooof
-        - detrendedFluctuationMeanEpochs
-        - detrendedFluctuationSDEpochs
-        # - hjorthParams
-        - hjorthMobilityMeanEpochs
-        - hjorthMobilitySDEpochs
-        - hjorthComplexityMeanEpochs
-        - hjorthComplexitySDEpochs
-        - numZerocrossMeanEpochs
-        - numZerocrossSDEpochs
-        - svdEntropyMeanEpochs
-        - svdEntropySDEpochs
-        - higuchiFdMeanEpochs
-        - higuchiFdSDEpochs
-        - higuchiFdVarEpochs
-        - katzFdMeanEpochs
-        - katzFdSDEpochs
-        - petrosianFdMeanEpochs
-        - petrosianFdSDEpochs
-        # # - entropyMultiscaleMeanEpochs
-        # #- sampleEntropyMeanEpochs
-          #- permEntropyMeanEpochs
-        - spectralEntropyMeanEpochs
-        - spectralEntropySDEpochs
-        - lzivComplexityMeanEpochs
-        - lzivComplexitySDEpochs
-        # # - appEntropyMeanEpochs
+        # - PowerSpectrum
+        # - PowerSpectrumAverage
+        # # #- RelativeBandPowerFromAverageSpectrum
+        # - FooofFromAverage
+        # # #- RelativeBandPowerFromAverageFooof
+        # - detrendedFluctuationMeanEpochs
+        # - detrendedFluctuationSDEpochs
+        # # - hjorthParams
+        # - hjorthMobilityMeanEpochs
+        # - hjorthMobilitySDEpochs
+        # - hjorthComplexityMeanEpochs
+        # - hjorthComplexitySDEpochs
+        # - numZerocrossMeanEpochs
+        # - numZerocrossSDEpochs
+        # - svdEntropyMeanEpochs
+        # - svdEntropySDEpochs
+        # - higuchiFdMeanEpochs
+        # - higuchiFdSDEpochs
+        # - higuchiFdVarEpochs
+        # - katzFdMeanEpochs
+        # - katzFdSDEpochs
+        # - petrosianFdMeanEpochs
+        # - petrosianFdSDEpochs
+        # # # - entropyMultiscaleMeanEpochs
+        # # #- sampleEntropyMeanEpochs
+        #   #- permEntropyMeanEpochs
+        # - spectralEntropyMeanEpochs
+        # - spectralEntropySDEpochs
+        # - lzivComplexityMeanEpochs
+        # - lzivComplexitySDEpochs
+        # # # - appEntropyMeanEpochs
+
+
+        ## Phi features
+        - Atoms
+        - InfoDynMeanEpochs
+        - InfoDynSDEpochs
+        - IIDMeanEpochs
+        - IIDSDEpochs
+        - IITMeanEpochs
+        - IITSDEpochs
     features@prepDur20Ov10: #you set the name of the feature pipeline with the key
       prep_pipeline : 'prepDur20Ov10' # This is the name of the preprocessing pipeline previously defined (must exist in derivatives)
       downsample : null
@@ -722,6 +732,101 @@ prep_inspection:
             numpyfun: eval%np.std
             max_numitem: null # 20min at 5sec per epoch
             axisname: 'epochs'
+    Atoms:
+      overwrite: False
+      chain:
+        - function: single_atoms
+          args:
+            tau: 5
+            kind: gaussian
+            redundancy: MMI
+
+    InfoDyn:
+      overwrite: False
+      chain:
+        - feature: Atoms
+        - function: atoms_results
+          args:
+            key: InformationDynamics
+            aggregation_mode: mean-sum
+
+    InfoDynMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: InfoDyn
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: null
+            axisname: 'epochs'
+
+    InfoDynSDEpochs:
+      overwrite: False
+      chain:
+        - feature: InfoDyn
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.std
+            max_numitem: null
+            axisname: 'epochs'
+
+    IID:
+      overwrite: False
+      chain:
+        - feature: Atoms
+        - function: atoms_results
+          args:
+            key: IntegratedInformationDecomposition
+            aggregation_mode: mean-sum
+
+    IIDMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: IID
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: null
+            axisname: 'epochs'
+
+    IIDSDEpochs:
+      overwrite: False
+      chain:
+        - feature: IID
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.std
+            max_numitem: null
+            axisname: 'epochs'
+
+    IIT:
+      overwrite: False
+      chain:
+        - feature: Atoms
+        - function: atoms_results
+          args:
+            key: IntegratedInformationTheory
+            aggregation_mode: mean-sum
+
+    IITMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: IIT
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: null
+            axisname: 'epochs'
+
+    IITSDEpochs:
+      overwrite: False
+      chain:
+        - feature: IIT
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.std
+            max_numitem: null
+            axisname: 'epochs'
 
 aggregate:
   path : 
@@ -841,6 +946,29 @@ aggregate:
     petrosianFdSDEpochs :
       return_function : "eval%lambda x: x"
       file_suffix : petrosianFdSDEpochs
+    IIDMeanEpochs:
+      return_function: "eval%lambda x: x"
+      file_suffix: IIDMeanEpochs
+
+    IIDSDEpochs:
+      return_function: "eval%lambda x: x"
+      file_suffix: IIDSDEpochs
+
+    InfoDynMeanEpochs:
+      return_function: "eval%lambda x: x"
+      file_suffix: InfoDynMeanEpochs
+
+    InfoDynSDEpochs:
+      return_function: "eval%lambda x: x"
+      file_suffix: InfoDynSDEpochs
+
+    IITMeanEpochs:
+      return_function: "eval%lambda x: x"
+      file_suffix: IITMeanEpochs
+
+    IITSDEpochs:
+      return_function: "eval%lambda x: x"
+      file_suffix: IITSDEpochs
   feature_aggregate_list:
     - MeanEpochs@prepDur30Ov20
     #- MeanEpochs@prepDur20Ov10
@@ -859,35 +987,43 @@ aggregate:
     MeanEpochs@prepDur30Ov20:
       feature_folder : 'features@prepDur30Ov20' # what if we have multiple feature folders?
       feature_list: # CHOOSE FEATURES WITH SAME DIMENSIONS, OTHERWISE THE DATAFRAME CANT BE MADE
-        # - appEntropyMeanEpochs
-        # - entropyMultiscaleMeanEpochs
-        - higuchiFdMeanEpochs
-        - higuchiFdVarEpochs
-        - higuchiFdSDEpochs
-        - hjorthMobilityMeanEpochs
-        - hjorthMobilitySDEpochs
-        - hjorthComplexityMeanEpochs
-        - hjorthComplexitySDEpochs
-        - katzFdMeanEpochs
-        - katzFdSDEpochs
-        - lzivComplexityMeanEpochs
-        - lzivComplexitySDEpochs
-        - numZerocrossMeanEpochs
-        - numZerocrossSDEpochs
-        - detrendedFluctuationMeanEpochs
-        - detrendedFluctuationSDEpochs
-        # - sampleEntropyMeanEpochs
-        - spectralEntropyMeanEpochs
-        - spectralEntropySDEpochs
-        # - permEntropyMeanEpochs
-        - svdEntropyMeanEpochs
-        - svdEntropySDEpochs
-        - petrosianFdMeanEpochs
-        - petrosianFdSDEpochs
-        # - fooofExponent
-        # - fooofOffset
-        # - RelativeBandPowerFromAverageFooof
-        # - RelativeBandPowerFromAverageSpectrum
+        # # - appEntropyMeanEpochs
+        # # - entropyMultiscaleMeanEpochs
+        # - higuchiFdMeanEpochs
+        # - higuchiFdVarEpochs
+        # - higuchiFdSDEpochs
+        # - hjorthMobilityMeanEpochs
+        # - hjorthMobilitySDEpochs
+        # - hjorthComplexityMeanEpochs
+        # - hjorthComplexitySDEpochs
+        # - katzFdMeanEpochs
+        # - katzFdSDEpochs
+        # - lzivComplexityMeanEpochs
+        # - lzivComplexitySDEpochs
+        # - numZerocrossMeanEpochs
+        # - numZerocrossSDEpochs
+        # - detrendedFluctuationMeanEpochs
+        # - detrendedFluctuationSDEpochs
+        # # - sampleEntropyMeanEpochs
+        # - spectralEntropyMeanEpochs
+        # - spectralEntropySDEpochs
+        # # - permEntropyMeanEpochs
+        # - svdEntropyMeanEpochs
+        # - svdEntropySDEpochs
+        # - petrosianFdMeanEpochs
+        # - petrosianFdSDEpochs
+        # # - fooofExponent
+        # # - fooofOffset
+        # # - RelativeBandPowerFromAverageFooof
+        # # - RelativeBandPowerFromAverageSpectrum
+
+        ## Phi features
+        - IIDMeanEpochs
+        - IIDSDEpochs
+        - InfoDynMeanEpochs
+        - InfoDynSDEpochs
+        - IITMeanEpochs
+        - IITSDEpochs
     MeanEpochs@prepDur20Ov10:
       feature_folder : 'features@prepDur20Ov10' # what if we have multiple feature folders?
       feature_list: # CHOOSE FEATURES WITH SAME DIMENSIONS, OTHERWISE THE DATAFRAME CANT BE MADE
