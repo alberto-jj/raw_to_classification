@@ -77,7 +77,7 @@ def main(pipeline_file, max_files=None):
                         fmax = 200
                     report.add_figure(meeg.plot_psd(show=False, fmax=fmax), title=f'{dslabel} {rel_path} Spectrum')
 
-                    report.save(output_base + '_report.html', overwrite=True, verbose='error')
+                    report.save(output_base + '_report.html', overwrite=True, verbose='error', open_browser=False)
                     del report
                 except Exception as e:
                     print(f"Error adding to report: {e}")
