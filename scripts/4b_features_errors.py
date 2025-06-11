@@ -1,12 +1,6 @@
-import json
 
-def load_json(file_path):
-    with open(file_path, 'r') as file:
-        data = json.load(file)
-    return data
-
+"""
 pattern = '/home/yorguin/scratch/data/MEG_*/derivatives/prepDur30Ov20/**/*_featureError.txt'
-import glob
 files = glob.glob(pattern, recursive=True)
 
 errors = []
@@ -15,7 +9,6 @@ for file in files:
     data['file'] = file
     errors.append(data)
 
-import pandas as pd
 df = pd.DataFrame(errors)
 
 df.to_csv('/home/yorguin/scratch/data/featureErrors.csv', index=False)
@@ -51,8 +44,7 @@ dfIdTag['file_id_tag'] = dfIdTag['error'].apply(get_file_id_tag)
 
 dfIdTag['file_id_tag'].value_counts().to_csv('/home/yorguin/scratch/data/featureErrors_id_tag_counts.csv')
 
-import shutil
-import os
+
 for file_id_tag in dfIdTag['file_id_tag'].unique():
     print(file_id_tag)
     os.remove(file_id_tag)
@@ -61,9 +53,39 @@ for file_id_tag in dfIdTag['file_id_tag'].unique():
 
 # check if there are any split files in the bids source
 
-import glob
 pattern = '/home/yorguin/scratch/data/MEG_*/meg_data_BIDS/sub-*/ses-*/meg/*split*.fif'
 
 splits = glob.glob(pattern, recursive=True)
-
+"""
 # no split files found...
+
+
+import json
+import glob
+import pandas as pd
+import shutil
+import os
+def load_json(file_path):
+    with open(file_path, 'r') as file:
+        data = json.load(file)
+    return data
+
+
+filemissing = '/home/yorguin/scratch/code/raw_to_classification/data/cocosprint/feature_inspection/features@prepDur30Ov20_missing_features.json'
+
+def load_json(file_path):
+    with open(file_path, 'r') as file:
+        data = json.load(file)
+    return data
+data = load_json(filemissing)
+
+
+from pprint import pprint
+
+files = list(data["file_to_missing_indices"].keys())
+
+
+for f in files:
+    if os.path.isfile(f):
+        print(f"File exists: {f}, removing it.")
+        os.remove(f)

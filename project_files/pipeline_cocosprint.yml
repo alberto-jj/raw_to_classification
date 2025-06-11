@@ -46,20 +46,33 @@ mount: computecanada
         normalization : False
         filter_args: null
       overwrite : False
+    prepSingleEpoch: # This is the name of the preprocessing pipeline
+      redefine_prepare:
+        from_this: project_files.redefinitions_cocosprint
+        import_that: prepare
+      prepare:
+        epoch_config: 'SingleEpoch'
+        downsample : null # all should be 1200 by default
+        normalization : False
+        filter_args: null
+      overwrite : False
+
   prep_list :
     - prepDur30Ov20
     # - prepDur20Ov10
     # - prepDur10Ov5
     # - prepDur30Ov15
+    - prepSingleEpoch
 prep_inspection:
   path : './data/%PROJECT%/prep_inspection'
   overwrite : False
   checks:
     - 'epochs'
   prep_list :
-    - prepDur30Ov20
+    #- prepDur30Ov20
     # - prepDur20Ov10
     # - prepDur10Ov5
+    - prepSingleEpoch
 
 4_features:
   path_inspection : './data/%PROJECT%/feature_inspection'
@@ -78,22 +91,30 @@ prep_inspection:
         # #- FooofFromAverage
         # #- RelativeBandPowerFromAverageFooof
         - detrendedFluctuationMeanEpochs
+        - detrendedFluctuationSDEpochs
         # - hjorthParams
         - hjorthMobilityMeanEpochs
+        - hjorthMobilitySDEpochs
         - hjorthComplexityMeanEpochs
+        - hjorthComplexitySDEpochs
         - numZerocrossMeanEpochs
+        - numZerocrossSDEpochs
         - svdEntropyMeanEpochs
+        - svdEntropySDEpochs
         - higuchiFdMeanEpochs
+        - higuchiFdSDEpochs
         - higuchiFdVarEpochs
         - katzFdMeanEpochs
         - katzFdSDEpochs
         - petrosianFdMeanEpochs
+        - petrosianFdSDEpochs
         # # - entropyMultiscaleMeanEpochs
         # #- sampleEntropyMeanEpochs
           #- permEntropyMeanEpochs
-
         - spectralEntropyMeanEpochs
+        - spectralEntropySDEpochs
         - lzivComplexityMeanEpochs
+        - lzivComplexitySDEpochs
         # # - appEntropyMeanEpochs
     features@prepDur20Ov10: #you set the name of the feature pipeline with the key
       prep_pipeline : 'prepDur20Ov10' # This is the name of the preprocessing pipeline previously defined (must exist in derivatives)
@@ -154,10 +175,26 @@ prep_inspection:
         - petrosianFdMeanEpochs
         - entropyMultiscaleMeanEpochs
 
+    features@prepSingleEpoch: #you set the name of the feature pipeline with the key
+      prep_pipeline : prepSingleEpoch # This is the name of the preprocessing pipeline previously defined (must exist in derivatives)
+      downsample : null
+      prefilter : null
+      keep_channels : False
+      standardize_epochs : False
+      feature_list: # To say which features actually compute rather than configure
+        #- PowerSpectrum
+        #- PowerSpectrumAverage
+        # #- RelativeBandPowerFromAverageSpectrum
+        #- FooofFromAverage
+        - PowerSpectrumWelch
+        - PowerSpectrumWelchAverage
+        - FooofFromAverageWelch
+
   feature_pipeline_list: #which feature pipelines to run
-    - features@prepDur30Ov20
+    # - features@prepDur30Ov20
     #- features@prepDur20Ov10
     #- features@prepDur10Ov5
+    - features@prepSingleEpoch
   feature_cfg: # You can configure different features for the same function but different args
     # The suffix will be the higher hierarchy name you put here
     PowerSpectrum:
@@ -171,6 +208,25 @@ prep_inspection:
             low_bias : True
             normalization : 'full'
             verbose : 0
+    PowerSpectrumWelch:
+      overwrite : False
+      chain:
+        - function : spectrum_welch
+          args:
+            welch:
+              n_fft : eval%int(np.round(epochs.info['sfreq']/2))
+              n_overlap : eval%int(np.round(epochs.info['sfreq']/4))
+              n_per_seg : eval%int(np.round(epochs.info['sfreq']/2))
+    PowerSpectrumWelchAverage:
+      overwrite : False
+      chain:
+        - feature : PowerSpectrumWelch
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: null
+            axisname: 'epochs'
+
     PowerSpectrumAverage:
       overwrite : False
       chain:
@@ -191,6 +247,19 @@ prep_inspection:
                 aperiodic_mode : knee
               fit:
                 freq_range : [1,90]
+
+    FooofFromAverageWelch:
+      overwrite : False
+      chain:
+        - feature : PowerSpectrumWelchAverage
+        - function : fooof_from_average
+          args :
+            internal_kwargs:
+              FOOOF:
+                aperiodic_mode : knee
+              fit:
+                freq_range : [1,90]
+
     RelativeBandPowerFromAverageSpectrum:
       overwrite : False
       chain :
@@ -310,6 +379,7 @@ prep_inspection:
                 method : 'welch'
                 nperseg : eval%int(np.round(eeg.info['sfreq']/1))
                 normalize : True
+
     spectralEntropyMeanEpochs:
       overwrite: False
       chain:
@@ -494,6 +564,7 @@ prep_inspection:
                 order: 3
                 delay: 1
                 normalize: True
+
     svdEntropyMeanEpochs:
       overwrite: False
       chain:
@@ -522,6 +593,7 @@ prep_inspection:
             internal_kwargs:
               higuchi_fd:
                 kmax: 10
+
     higuchiFdMeanEpochs:
       overwrite: False
       chain:
@@ -551,6 +623,7 @@ prep_inspection:
             numpyfun: eval%np.var
             max_numitem: null # 20min at 5sec per epoch
             axisname: 'epochs'
+
     katzFd:
       overwrite: False
       chain:
@@ -558,6 +631,7 @@ prep_inspection:
           args:
             internal_kwargs:
               katz_fd: {}
+
     katzFdSDEpochs:
       overwrite: False
       chain:
@@ -567,6 +641,7 @@ prep_inspection:
             numpyfun: eval%np.std
             max_numitem: null # 20min at 5sec per epoch
             axisname: 'epochs'
+
     katzFdMeanEpochs:
       overwrite: False
       chain:
@@ -576,6 +651,7 @@ prep_inspection:
             numpyfun: eval%np.mean
             max_numitem: null # 20min at 5sec per epoch
             axisname: 'epochs'
+
     petrosianFd:
       overwrite: False
       chain:
@@ -583,6 +659,7 @@ prep_inspection:
           args:
             internal_kwargs:
               petrosian_fd: {}
+
     petrosianFdMeanEpochs:
       overwrite: False
       chain:
@@ -592,6 +669,7 @@ prep_inspection:
             numpyfun: eval%np.mean
             max_numitem: null # 20min at 5sec per epoch
             axisname: 'epochs'
+
     petrosianFdSDEpochs:
       overwrite: False
       chain:
@@ -660,9 +738,15 @@ aggregate:
     fooofExponent:
       return_function : "eval%lambda x: x.aperiodic_params_[-1]"
       file_suffix : FooofFromAverage
-    foofOffset:
+    fooofOffset:
       return_function : "eval%lambda x: x.aperiodic_params_[0]"
       file_suffix : FooofFromAverage
+    fooofExponentWelch:
+      return_function : "eval%lambda x: x.aperiodic_params_[-1]"
+      file_suffix : FooofFromAverageWelch
+    fooofOffsetWelch:
+      return_function : "eval%lambda x: x.aperiodic_params_[0]"
+      file_suffix : FooofFromAverageWelch
     RelativeBandPowerFromAverageFooof:
       return_function : "eval%lambda x: x"
       file_suffix : RelativeBandPowerFromAverageFooof
@@ -672,21 +756,36 @@ aggregate:
     appEntropyMeanEpochs: 
       return_function : "eval%lambda x: x"
       file_suffix : appEntropyMeanEpochs
+    appEntropySDEpochs:
+      return_function : "eval%lambda x: x"
+      file_suffix : appEntropySDEpochs
     entropyMultiscaleMeanEpochs:
       return_function: "eval%lambda x: x"
       file_suffix : entropyMultiscaleMeanEpochs
+    entropyMultiscaleSDEpochs:
+      return_function: "eval%lambda x: x"
+      file_suffix : entropyMultiscaleSDEpochs
     higuchiFdMeanEpochs:
       return_function : "eval%lambda x: x"
       file_suffix : higuchiFdMeanEpochs
     higuchiFdVarEpochs:
       return_function : "eval%lambda x: x"
       file_suffix : higuchiFdVarEpochs
+    higuchiFdSDEpochs:
+      return_function : "eval%lambda x: x"
+      file_suffix : higuchiFdSDEpochs
     hjorthMobilityMeanEpochs: 
       return_function : "eval%lambda x: x"
       file_suffix : hjorthMobilityMeanEpochs
+    hjorthMobilitySDEpochs:
+      return_function : "eval%lambda x: x"
+      file_suffix : hjorthMobilitySDEpochs
     hjorthComplexityMeanEpochs:
       return_function : "eval%lambda x: x"
       file_suffix : hjorthComplexityMeanEpochs
+    hjorthComplexitySDEpochs:
+      return_function : "eval%lambda x: x"
+      file_suffix : hjorthComplexitySDEpochs
     katzFdMeanEpochs: 
       return_function : "eval%lambda x: x"
       file_suffix : katzFdMeanEpochs
@@ -696,32 +795,66 @@ aggregate:
     lzivComplexityMeanEpochs: 
       return_function : "eval%lambda x: x"
       file_suffix : lzivComplexityMeanEpochs
+    lzivComplexitySDEpochs:
+      return_function : "eval%lambda x: x"
+      file_suffix : lzivComplexitySDEpochs
     numZerocrossMeanEpochs: 
       return_function : "eval%lambda x: x"
       file_suffix : numZerocrossMeanEpochs
+    numZerocrossSDEpochs:
+      return_function : "eval%lambda x: x"
+      file_suffix : numZerocrossSDEpochs
     detrendedFluctuationMeanEpochs: # no text
       return_function : "eval%lambda x: x" # this uses the first 2 epochs of the 10min epoch
       file_suffix : detrendedFluctuationMeanEpochs
+    detrendedFluctuationSDEpochs: # no text
+      return_function : "eval%lambda x: x" # this uses the first 2 epochs of the 10min epoch
+      file_suffix : detrendedFluctuationSDEpochs
     sampleEntropyMeanEpochs:
       return_function : "eval%lambda x: x"
       file_suffix : sampleEntropyMeanEpochs
+    sampleEntropySDEpochs:
+      return_function : "eval%lambda x: x"
+      file_suffix : sampleEntropySDEpochs
     spectralEntropyMeanEpochs:
       return_function : "eval%lambda x: x"
       file_suffix : spectralEntropyMeanEpochs
+    spectralEntropySDEpochs:
+      return_function : "eval%lambda x: x"
+      file_suffix : spectralEntropySDEpochs
     permEntropyMeanEpochs:
       return_function : "eval%lambda x: x"
       file_suffix : permEntropyMeanEpochs
+    permEntropySDEpochs:
+      return_function : "eval%lambda x: x"
+      file_suffix : permEntropySDEpochs
     svdEntropyMeanEpochs:
       return_function : "eval%lambda x: x"
       file_suffix : svdEntropyMeanEpochs
+    svdEntropySDEpochs:
+      return_function : "eval%lambda x: x"
+      file_suffix : svdEntropySDEpochs
     petrosianFdMeanEpochs : 
       return_function : "eval%lambda x: x"
       file_suffix : petrosianFdMeanEpochs
+    petrosianFdSDEpochs :
+      return_function : "eval%lambda x: x"
+      file_suffix : petrosianFdSDEpochs
   feature_aggregate_list:
     - MeanEpochs@prepDur30Ov20
     #- MeanEpochs@prepDur20Ov10
     #- MeanEpochs@prepDur10Ov5
+    - Epochs@prepSingleEpoch
   aggregate_cfgs:
+    Epochs@prepSingleEpoch:
+      feature_folder : 'features@prepSingleEpoch' # what if we have multiple feature folders?
+      feature_list: # CHOOSE FEATURES WITH SAME DIMENSIONS, OTHERWISE THE DATAFRAME CANT BE MADE
+        #- PowerSpectrumWelchAverage
+        #- FooofFromAverageWelch
+        #- RelativeBandPowerFromAverageFooof
+        #- RelativeBandPowerFromAverageSpectrum
+        - fooofExponentWelch
+        - fooofOffsetWelch
     MeanEpochs@prepDur30Ov20:
       feature_folder : 'features@prepDur30Ov20' # what if we have multiple feature folders?
       feature_list: # CHOOSE FEATURES WITH SAME DIMENSIONS, OTHERWISE THE DATAFRAME CANT BE MADE
@@ -729,20 +862,29 @@ aggregate:
         # - entropyMultiscaleMeanEpochs
         - higuchiFdMeanEpochs
         - higuchiFdVarEpochs
+        - higuchiFdSDEpochs
         - hjorthMobilityMeanEpochs
+        - hjorthMobilitySDEpochs
         - hjorthComplexityMeanEpochs
+        - hjorthComplexitySDEpochs
         - katzFdMeanEpochs
         - katzFdSDEpochs
         - lzivComplexityMeanEpochs
+        - lzivComplexitySDEpochs
         - numZerocrossMeanEpochs
+        - numZerocrossSDEpochs
         - detrendedFluctuationMeanEpochs
+        - detrendedFluctuationSDEpochs
         # - sampleEntropyMeanEpochs
         - spectralEntropyMeanEpochs
+        - spectralEntropySDEpochs
         # - permEntropyMeanEpochs
         - svdEntropyMeanEpochs
+        - svdEntropySDEpochs
         - petrosianFdMeanEpochs
+        - petrosianFdSDEpochs
         # - fooofExponent
-        # - foofOffset
+        # - fooofOffset
         # - RelativeBandPowerFromAverageFooof
         # - RelativeBandPowerFromAverageSpectrum
     MeanEpochs@prepDur20Ov10:
@@ -765,7 +907,7 @@ aggregate:
         - svdEntropyMeanEpochs
         - petrosianFdMeanEpochs
         - fooofExponent
-        - foofOffset
+        - fooofOffset
         - RelativeBandPowerFromAverageFooof
         - RelativeBandPowerFromAverageSpectrum
 
@@ -789,7 +931,7 @@ aggregate:
         - svdEntropyMeanEpochs
         - petrosianFdMeanEpochs
         - fooofExponent
-        - foofOffset
+        - fooofOffset
         - RelativeBandPowerFromAverageFooof
         - RelativeBandPowerFromAverageSpectrum
 

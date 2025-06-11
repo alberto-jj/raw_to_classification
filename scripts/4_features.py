@@ -49,19 +49,26 @@ def foo(meeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipelin
     #breakpoint()
     if inspect_only:
         return inspect_dicts
-    
-    try:
-        epochs = mne.read_epochs(meeg_file, preload=True)
-        if standardize_epochs:
-            standardize(epochs)
-        if featurepipelineCFG.get('prefilter', None) is not None:
-            epochs = epochs.filter(**featurepipelineCFG['prefilter'])
-        if DOWNSAMPLE is not None:
-            epochs = epochs.resample(DOWNSAMPLE)
-        if keep_channels:
-            # We picked the common channels between datasets for simplicity
-            epochs = epochs.reorder_channels(keep_channels)
 
+    skip_read = False
+    if len(inspect_vector) > 1:
+        if inspect_vector[-2] == True:
+            skip_read = True
+    try:
+        #breakpoint()
+        if not skip_read:
+            epochs = mne.read_epochs(meeg_file, preload=True)
+            if standardize_epochs:
+                standardize(epochs)
+            if featurepipelineCFG.get('prefilter', None) is not None:
+                epochs = epochs.filter(**featurepipelineCFG['prefilter'])
+            if DOWNSAMPLE is not None:
+                epochs = epochs.resample(DOWNSAMPLE)
+            if keep_channels:
+                # We picked the common channels between datasets for simplicity
+                epochs = epochs.reorder_channels(keep_channels)
+        else:
+            epochs = None
         try:
             print(f'Processing {feature} for {finame}')
             output = feat.process_feature(epochs, derifile, FEATURE_CFG, feature, pipeline_name)

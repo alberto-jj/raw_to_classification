@@ -1,5 +1,5 @@
 from scipy.integrate import simpson as simps
-from mne.time_frequency import psd_array_multitaper
+from mne.time_frequency import psd_array_multitaper,psd_array_welch
 from mne.datasets.eegbci import standardize
 import numpy as np
 import mne
@@ -16,11 +16,14 @@ def process_feature(epochs,relevantpath,CFG,feature,pipeline_name,inspect_only=F
     featdict = CFG[feature]
     overwrite = featdict['overwrite']
     if not inspect_only:
-        output = epochs.copy()
+        if epochs is None:
+            output = None # this should only happen if we have already computed the next to last part of the chain
+        else:
+            output = epochs.copy()
     else:
         output = None
     inspect_only_output = []
-    breakpoint()
+    #breakpoint()
     for i_f,stage in enumerate(featdict['chain']):
         input_data = output
         if 'feature' in stage.keys():
@@ -160,9 +163,15 @@ def spectrum_multitaper(epochs,multitaper={}):
     epochs = epochs.copy()
     sf = epochs.info['sfreq']
 
+    kwargs = copy.deepcopy(multitaper)
+    for k,v in kwargs.items():
+        if isinstance(v,str) and 'eval%' in v:
+            expression = v.replace('eval%','')
+            kwargs[k] = eval(expression)
+
     space_names = epochs.info['ch_names']
 
-    psd,freqs = psd_array_multitaper(epochs.get_data(), sf, **multitaper)
+    psd,freqs = psd_array_multitaper(epochs.get_data(), sf, **kwargs)
     fullpsd = psd
     # I think that having the mean here at the last position is confusing
     #psd_mean = np.mean(psd,axis=0,keepdims=True) #epochs, spaces,freqs
@@ -172,6 +181,35 @@ def spectrum_multitaper(epochs,multitaper={}):
     #epochs_labels[-1] = 'EPOCHS-MEAN'
     output = {}
     output['metadata'] = {'type':'PowerSpectrum'}
+    output['metadata']['axes']={'epochs':epochs_labels,'spaces':space_names,'frequencies':freqs}
+    output['metadata']['order']=('epochs','spaces','frequencies')
+    output['values'] = fullpsd
+    output['metadata']['times']=epochs.times #TODO: times is not standarized across all features
+    return output
+
+def spectrum_welch(epochs,welch={}):
+    epochs = epochs.copy()
+    sf = epochs.info['sfreq']
+
+    space_names = epochs.info['ch_names']
+    #breakpoint()
+    kwargs = copy.deepcopy(welch)
+    for k,v in kwargs.items():
+        if isinstance(v,str) and 'eval%' in v:
+            expression = v.replace('eval%','')
+            kwargs[k] = eval(expression)
+
+
+    psd,freqs = psd_array_welch(epochs.get_data(), sf, **kwargs)
+    fullpsd = psd
+    # I think that having the mean here at the last position is confusing
+    #psd_mean = np.mean(psd,axis=0,keepdims=True) #epochs, spaces,freqs
+    #fullpsd = np.concatenate([psd,psd_mean])
+    #assert np.all(fullpsd[-1,:,:]==psd_mean) # Last Epoch is the mean
+    epochs_labels = [x for x in range(fullpsd.shape[0])]
+    #epochs_labels[-1] = 'EPOCHS-MEAN'
+    output = {}
+    output['metadata'] = {'type':'PowerSpectrumWelch'}
     output['metadata']['axes']={'epochs':epochs_labels,'spaces':space_names,'frequencies':freqs}
     output['metadata']['order']=('epochs','spaces','frequencies')
     output['values'] = fullpsd

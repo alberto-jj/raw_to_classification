@@ -1044,7 +1044,13 @@ def prepare(filename, dataset_cfg=None, njobs=1, downsample = 500, normalization
 
     # Extract epochs
     print('EPOCH SEGMENTATION')
-    epochs = mne.make_fixed_length_epochs(raw,preload=True,**epoch_config)
+    if isinstance(epoch_config, dict):
+        epochs = mne.make_fixed_length_epochs(raw,preload=True,**epoch_config)
+    elif isinstance(epoch_config, str):
+        if epoch_config == 'SingleEpoch':
+            epochs = mne.make_fixed_length_epochs(raw, preload=True, duration=raw.times[-1], overlap=0)
+        else:
+            raise ValueError(f"Unknown epoch_config: {epoch_config}")
 
     if downsample is not None:
         epochs = epochs.resample(downsample)
