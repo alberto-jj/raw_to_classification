@@ -50,3 +50,33 @@ python -u "./scripts/4_features.py" "project_files/pipeline_cocosprint2.yml" --i
 
 
 python -u "./scripts/0_inspect.py" "project_files/pipeline_cocosprint.yml"
+
+
+python -u "./scripts/4_features.py" "project_files/pipeline_cocosprint2.yml" --index 67 --retry_errors --raise_on_error
+
+python -u "./scripts/4_features.py" "project_files/pipeline_cocosprint.yml" --index 114 --retry_errors --raise_on_error
+
+114,
+124,
+151,
+161,
+163,
+160,
+165,
+162,
+164,
+10,
+250,
+293,
+286,
+283,
+348,
+356,
+338,
+350
+
+
+python -u "./scripts/3_preprocess.py" "project_files/pipeline_cocosprint.yml" --retry_errors
+
+
+python -u "./scripts/4_features.py" "project_files/pipeline_cocosprint.yml" --retry_errors

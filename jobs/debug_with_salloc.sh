@@ -15,9 +15,11 @@ tar -cf - /home/yorguin/scratch/data/MEG_psilocybin/derivatives/features@prepDur
 
 
 
-salloc --time=5:0:0 --mem-per-cpu=64G --ntasks=1 --account=def-kjerbi
+salloc --time=3:0:0 --mem-per-cpu=64G --ntasks=1 --account=def-kjerbi
 
 salloc --time=5:0:0 --mem-per-cpu=1G   --ntasks=1 --cpus-per-task=32 --account=def-kjerbi
+
+salloc --time=3:0:0 --mem-per-cpu=64G   --ntasks=1 --cpus-per-task=10 --account=def-kjerbi
 
 
 

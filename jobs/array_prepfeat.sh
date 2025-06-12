@@ -1,9 +1,10 @@
 #!/bin/bash
 #SBATCH --account=def-kjerbi
 #SBATCH --cpus-per-task=1
-#SBATCH --mem=64G
-#SBATCH --time=0-05:00:00
-#SBATCH --array=114,112,113,117,115,129,128,124,125,126,127,151,148,153,34,35,36,38,43,184,157,158,161,163,160,165,162,164,136,82,93,33,103,5,3,10,327,311,307,297,247,246,253,257,245,241,240,264,263,262,250,293,268,272,274,295,278,286,283,348,360,346,337,356,339,338,344,340,351,350
+#SBATCH --mem=32G
+#SBATCH --time=0-00:30:00
+#SBATCH --array=0-361
+##Total number of files: 362 for cocosprint
 ## 0-977 for saint
 ## 0-488 for cocosprint
 ## you need to get the index range using the command below:
@@ -25,6 +26,7 @@
 ## sbatch --export=STEP=3,PIPELINE_YML=project_files/pipeline_saint.yml array_prepfeat.sh
 ## sbatch --export=STEP=4,PIPELINE_YML=project_files/pipeline_saint.yml array_prepfeat.sh
 ## sbatch --export=STEP=4,PIPELINE_YML=project_files/pipeline_cocosprint.yml array_prepfeat.sh
+## sbatch --export=STEP=3,PIPELINE_YML=project_files/pipeline_cocosprint.yml array_prepfeat.sh
 
 ## To get the total number of indexes for array job configuration:
 ## sbatch --export=STEP=index,PIPELINE_YML=project_files/pipeline_saint.yml --array=0 array_prepfeat.sh
