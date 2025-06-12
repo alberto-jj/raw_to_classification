@@ -10,85 +10,41 @@ mount: computecanada
 
 3_preprocess:
   prep_cfg:
-    prepDur30Ov20: # This is the name of the preprocessing pipeline
+    prepDur30Ov15: # This is the name of the preprocessing pipeline
       redefine_prepare:
         from_this: project_files.redefinitions_cocosprint
         import_that: prepare
       prepare:
         epoch_config:
           duration: 30
-          overlap: 20
-        downsample : null # all should be 1200 by default
-        normalization : False
-        filter_args: null
+          overlap: 15
       overwrite : False
-    prepDur20Ov10: # This is the name of the preprocessing pipeline
-      redefine_prepare:
-        from_this: project_files.redefinitions_cocosprint
-        import_that: prepare
-      prepare:
-        epoch_config:
-          duration: 20
-          overlap: 10
-        downsample : null # all should be 1200 by default
-        normalization : False
-        filter_args: null
-      overwrite : False
-    prepDur10Ov5: # This is the name of the preprocessing pipeline
-      redefine_prepare:
-        from_this: project_files.redefinitions_cocosprint
-        import_that: prepare
-      prepare:
-        epoch_config:
-          duration: 10
-          overlap: 5
-        downsample : null # all should be 1200 by default
-        normalization : False
-        filter_args: null
-      overwrite : False
-    prepSingleEpoch: # This is the name of the preprocessing pipeline
-      redefine_prepare:
-        from_this: project_files.redefinitions_cocosprint
-        import_that: prepare
-      prepare:
-        epoch_config: 'SingleEpoch'
-        downsample : null # all should be 1200 by default
-        normalization : False
-        filter_args: null
-      overwrite : False
-
   prep_list :
-    - prepDur30Ov20
-    # - prepDur20Ov10
-    # - prepDur10Ov5
-    # - prepDur30Ov15
-    - prepSingleEpoch
+    - prepDur30Ov15
+
 prep_inspection:
   path : './data/%PROJECT%/prep_inspection'
   overwrite : False
   checks:
     - 'epochs'
   prep_list :
-    #- prepDur30Ov20
-    # - prepDur20Ov10
-    # - prepDur10Ov5
-    - prepSingleEpoch
+    - prepDur30Ov15
 
 4_features:
   path_inspection : './data/%PROJECT%/feature_inspection'
 
   feature_pipeline_cfg:
-    features@prepDur30Ov20: #you set the name of the feature pipeline with the key
-      prep_pipeline : 'prepDur30Ov20' # This is the name of the preprocessing pipeline previously defined (must exist in derivatives)
+    features@prepDur30Ov15: #you set the name of the feature pipeline with the key
+      prep_pipeline : 'prepDur30Ov15' # This is the name of the preprocessing pipeline previously defined (must exist in derivatives)
       downsample : null
       prefilter : null
       keep_channels : False
       standardize_epochs : False
       feature_list: # To say which features actually compute rather than configure
-        - PowerSpectrum
-        - PowerSpectrumAverage
+        #- PowerSpectrum
+        #- PowerSpectrumAverage
         # #- RelativeBandPowerFromAverageSpectrum
-        - FooofFromAverage
+        #- FooofFromAverage
         # #- RelativeBandPowerFromAverageFooof
         - detrendedFluctuationMeanEpochs
         - detrendedFluctuationSDEpochs
@@ -116,66 +72,6 @@ prep_inspection:
         - lzivComplexityMeanEpochs
         - lzivComplexitySDEpochs
         # # - appEntropyMeanEpochs
-    features@prepDur20Ov10: #you set the name of the feature pipeline with the key
-      prep_pipeline : 'prepDur20Ov10' # This is the name of the preprocessing pipeline previously defined (must exist in derivatives)
-      downsample : null
-      prefilter : null
-      keep_channels : False
-      standardize_epochs : False
-      feature_list: # To say which features actually compute rather than configure
-        - PowerSpectrum
-        - PowerSpectrumAverage
-        - RelativeBandPowerFromAverageSpectrum
-        - FooofFromAverage
-        - RelativeBandPowerFromAverageFooof
-        - detrendedFluctuation
-        - lzivComplexityMeanEpochs
-        - sampleEntropyMeanEpochs
-        - spectralEntropyMeanEpochs
-        - appEntropyMeanEpochs
-        - hjorthParams
-        - hjorthMobilityMeanEpochs
-        - hjorthComplexityMeanEpochs
-        - numZerocrossMeanEpochs
-        - permEntropyMeanEpochs
-        - svdEntropyMeanEpochs
-        - higuchiFdMeanEpochs
-        - higuchiFdVarEpochs
-        - katzFdMeanEpochs
-        - katzFdSDEpochs
-        - petrosianFdMeanEpochs
-        - entropyMultiscaleMeanEpochs
-    features@prepDur10Ov5: #you set the name of the feature pipeline with the key
-      prep_pipeline : 'prepDur10Ov5' # This is the name of the preprocessing pipeline previously defined (must exist in derivatives)
-      downsample : null
-      prefilter : null
-      keep_channels : False
-      standardize_epochs : False
-      feature_list: # To say which features actually compute rather than configure
-        - PowerSpectrum
-        - PowerSpectrumAverage
-        - FooofFromAverage
-        - RelativeBandPowerFromAverageSpectrum
-        - FooofFromAverage
-        - RelativeBandPowerFromAverageFooof
-        - detrendedFluctuation
-        - lzivComplexityMeanEpochs
-        - sampleEntropyMeanEpochs
-        - spectralEntropyMeanEpochs
-        - appEntropyMeanEpochs
-        - hjorthParams
-        - hjorthMobilityMeanEpochs
-        - hjorthComplexityMeanEpochs
-        - numZerocrossMeanEpochs
-        - permEntropyMeanEpochs
-        - svdEntropyMeanEpochs
-        - higuchiFdMeanEpochs
-        - higuchiFdVarEpochs
-        - katzFdMeanEpochs
-        - katzFdSDEpochs
-        - petrosianFdMeanEpochs
-        - entropyMultiscaleMeanEpochs
-
     features@prepSingleEpoch: #you set the name of the feature pipeline with the key
       prep_pipeline : prepSingleEpoch # This is the name of the preprocessing pipeline previously defined (must exist in derivatives)
       downsample : null
@@ -192,10 +88,7 @@ prep_inspection:
         - FooofFromAverageWelch
 
   feature_pipeline_list: #which feature pipelines to run
-    - features@prepDur30Ov20
-    #- features@prepDur20Ov10
-    #- features@prepDur10Ov5
-    #- features@prepSingleEpoch
+    - features@prepDur30Ov15
   feature_cfg: # You can configure different features for the same function but different args
     # The suffix will be the higher hierarchy name you put here
     PowerSpectrum:
@@ -241,6 +134,9 @@ prep_inspection:
       overwrite : False
       chain:
         - feature : PowerSpectrumAverage
+        - function : spectrum_keep_magnetometers
+          args:
+            dummy : None
         - function : fooof_from_average
           args :
             internal_kwargs:
@@ -248,6 +144,7 @@ prep_inspection:
                 aperiodic_mode : knee
               fit:
                 freq_range : [1,90]
+              freq_res : 0.25
 
     FooofFromAverageWelch:
       overwrite : False
