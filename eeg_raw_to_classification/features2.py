@@ -11,7 +11,7 @@ import copy
 from antropy import detrended_fluctuation,lziv_complexity,sample_entropy,spectral_entropy,app_entropy,hjorth_params,num_zerocross,perm_entropy,svd_entropy,higuchi_fd,katz_fd,petrosian_fd
 from neurokit2 import entropy_multiscale
 import copy
-
+import neurokit2 as nk2
 def process_feature(epochs,relevantpath,CFG,feature,pipeline_name,inspect_only=False):
     featdict = CFG[feature]
     overwrite = featdict['overwrite']
@@ -187,6 +187,28 @@ def spectrum_multitaper(epochs,multitaper={}):
     output['metadata']['times']=epochs.times #TODO: times is not standarized across all features
     return output
 
+def spectrum_keep_magnetometers(spectrum_output, dummy=None):
+    # Copy input to avoid modifying in-place
+    output = copy.deepcopy(spectrum_output)
+
+    # Extract the current spaces (channel names)
+    space_names = output['metadata']['axes']['spaces']
+
+    # Find indices of channels whose name starts with 'M'
+    keep_indices = [i for i, name in enumerate(space_names) if name.startswith('M')]
+    keep_names = [space_names[i] for i in keep_indices]
+
+    # Slice the values accordingly
+    # values shape: (epochs, spaces, freqs)
+    output['values'] = output['values'][:, keep_indices, :]
+
+    # Update metadata
+    output['metadata']['axes']['spaces'] = keep_names
+    # (optional but clean): make sure 'order' stays the same
+    assert 'spaces' in output['metadata']['order']
+
+    return output
+
 def spectrum_welch(epochs,welch={}):
     epochs = epochs.copy()
     sf = epochs.info['sfreq']
@@ -221,16 +243,20 @@ def spectrum_welch(epochs,welch={}):
 def single_fooof(freqs, psds, internal_kwargs={'FOOOF':{},'fit':{}}):
     kwargs = copy.deepcopy(internal_kwargs)
     for key,val in kwargs.items():
-        for k,v in val.items():
-            if isinstance(v,str) and 'eval%' in v:
-                expression = v.replace('eval%','')
-                kwargs[key][k] = eval(expression)
+        if isinstance(val,dict):
+            for k,v in val.items():
+                if isinstance(v,str) and 'eval%' in v:
+                    expression = v.replace('eval%','')
+                    kwargs[key][k] = eval(expression)
 
     fm = FOOOF(verbose=False,**kwargs['FOOOF'])
     fm.fit(freqs, psds,**kwargs['fit']) # correct, if we used add_data it would ignore for examle freq_range
     return fm
 
-def fooof_from_average(data,internal_kwargs={'FOOOF':{},'fit':{}}):
+import time
+import math
+
+def fooof_from_average(data,internal_kwargs={'FOOOF':{},'fit':{}, 'freq_res':None}):
     #data,internal_kwargs={'compute_psd':{},'single_fooof':{}},extra_metadata={},n_jobs=1):
     # we can view this as a new feature or as an aggregate
     if isinstance(data,dict):
@@ -239,10 +265,11 @@ def fooof_from_average(data,internal_kwargs={'FOOOF':{},'fit':{}}):
       raise ValueError('Only dict input supported')
     kwargs = copy.deepcopy(internal_kwargs)
     for key,val in kwargs.items():
-        for k,v in val.items():
-            if isinstance(v,str) and 'eval%' in v:
-                expression = v.replace('eval%','')
-                kwargs[key][k] = eval(expression)
+        if isinstance(val,dict):
+            for k,v in val.items():
+                if isinstance(v,str) and 'eval%' in v:
+                    expression = v.replace('eval%','')
+                    kwargs[key][k] = eval(expression)
 
     spaces =  spectra['metadata']['axes']['spaces']
     freqs =   spectra['metadata']['axes']['frequencies']
@@ -256,10 +283,28 @@ def fooof_from_average(data,internal_kwargs={'FOOOF':{},'fit':{}}):
     output['metadata']['axes']={'spaces':spaces}
     output['metadata']['order']=('spaces')
     psd = spectra['values']
+    if 'freq_res' in internal_kwargs:
+        freq_res = internal_kwargs['freq_res']
+    if freq_res is not None:
+        # undersample the spectra
+        current_res = freqs[1] - freqs[0]
+        assert current_res <= freq_res
+        print(f"Current resolution: {current_res}, Desired resolution: {freq_res}")
+        step = max(1, math.ceil(freq_res / current_res))  # use ceil to ensure >= desired res
+        print(f"Downsampling step: {step}, to achieve resolution {freq_res} Hz")
+    else:
+        step = 1
     for space in spaces:
         space_idx = spaces.index(space)
         thispsd = np.take(psd,indices=space_idx,axis=axes.index('spaces'))
-        fm = single_fooof(freqs, thispsd,kwargs)
+        # Downsample
+        freqs_downsampled = freqs[::step]
+        thispsd_downsampled = thispsd[::step]
+        start = time.time()
+        fm = single_fooof(freqs_downsampled, thispsd_downsampled, kwargs)
+        end = time.time()
+        print(space, (end-start))
+
         values[space_idx]= fm
     output['values'] = values
     return output
