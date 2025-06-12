@@ -200,7 +200,6 @@ def main(pipeline_file, external_jobs, debug, parallelize, retry_errors, single_
                                 d.update({'source_file': meeg_file, 'feature': feature, '_index': count})
                             inspect_list += x
 
-    breakpoint()
     if inspect_only and not single_index: # as we write here, avoid writing collisions between workers
 
         outputfolder = PIPELINE['4_features'].get('path_inspection','.')

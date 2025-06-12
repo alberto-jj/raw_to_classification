@@ -301,6 +301,7 @@ def fooof_from_average(data,internal_kwargs={'FOOOF':{},'fit':{}, 'freq_res':Non
             print(f"Processed {space} in {timings[space_idx]} seconds")
     output['values'] = values
     output['metadata']['timings'] = timings
+    output['metadata']['total_time'] = np.nansum(timings)
     return output
 
 def roi_mapping_alberto(x):
@@ -508,7 +509,7 @@ def compute_%label%(eeg, suffix='%label%',internal_kwargs=dict(),extra_metadata=
             if DEBUG:
                 print(f"Processed epoch {e}, channel {i} '{eeg.ch_names[i]}' in {timings[e,i]} seconds")
 
-
+    total_time = np.nansum(timings)
     if len(eeg.get_data().shape)==3:
         axes = {'epochs':list(range(eeg.get_data().shape[0])),'spaces':eeg.info['ch_names']}
         order = ('epochs','spaces')
@@ -523,6 +524,7 @@ def compute_%label%(eeg, suffix='%label%',internal_kwargs=dict(),extra_metadata=
     output['metadata']['order']=order
     output['metadata']['times']=eeg.times
     output['metadata']['timings'] = timings
+    output['metadata']['total_time'] = total_time
     output['values']= values
     output['metadata'].update(extra_metadata)
     return output
@@ -652,7 +654,7 @@ def single_atoms(epochs, tau=5,redundancy='MMI', kind='gaussian', channel_labels
             timings[e, i] = end - start
             if DEBUG:
                 print(f"Processed epoch {e}, channel {i} '{channel_labels[i]}' in {timings[e, i]} seconds")
-
+    total_time = np.nansum(timings)
     # Build metadata
     output = {}
     output['metadata'] = {'type': 'Atoms'}
@@ -668,7 +670,8 @@ def single_atoms(epochs, tau=5,redundancy='MMI', kind='gaussian', channel_labels
         'epochs': epoch_labels,
         'spaces': space_names,
         'atoms': atom_names_order,
-        'times': time_axis
+        'times': time_axis,
+        'timings': timings,
     }
 
     # Order of axes (matches shape of atoms_vals)
@@ -937,94 +940,10 @@ def dfa_feature(epochs):
     
     return output
 
-def spectrum_biotuner(epochs, FREQ_BANDS=None, precision=0.5, n_harm=10, max_freq=100, n_peaks=5, delta_lim=50):
-    epochs = epochs.copy()
-    sf = epochs.info['sfreq']
-    times = epochs.times
-    space_names = epochs.info['ch_names']
-    
-    data = epochs.get_data()  # shape: (n_epochs, n_spaces, n_times)
-    n_epochs, n_spaces, n_times = data.shape
-    
-    # Default FREQ_BANDS
-    if FREQ_BANDS is None:
-        FREQ_BANDS = [
-            [1, 3],    # delta
-            [3, 7],    # theta
-            [7, 12],   # alpha
-            [12, 20],  # beta
-            [20, 30],  # high beta
-            [30, 70],  # gamma
-        ]
-
-    def get_metrics(biotuning):
-        d = biotuning.peaks_metrics
-        return [
-            d.get('cons', np.nan),
-            d.get('tenney', np.nan),
-            d.get('harmsim', np.nan),
-            float(d['subharm_tension'][0]) if (isinstance(d.get('subharm_tension'), list) and len(d['subharm_tension']) > 0) else np.nan
-        ]
-
-    # We will build an array: (n_epochs, n_spaces, n_metrics)
-    n_metrics = 4  # 'cons', 'tenney', 'harmsim', 'subharm_tension'
-    values = np.full((n_epochs, n_spaces, n_metrics), np.nan)
-
-    for epoch_idx in range(n_epochs):
-        for space_idx in range(n_spaces):
-            time_series = data[epoch_idx, space_idx, :]
-            
-            # You can zscore the time series if you want:
-            time_series = sp_stats.zscore(time_series)
-            
-            # Run biotuner with EMD (or fixed — you can adapt if you want both)
-            biotuning = compute_biotuner(
-                sf=sf,
-                peaks_function="EMD",
-                precision=precision,
-                n_harm=n_harm
-            )
-            biotuning.peaks_extraction(
-                time_series,
-                FREQ_BANDS=FREQ_BANDS,
-                peaks_function="EMD",
-                max_freq=max_freq,
-                n_peaks=n_peaks
-            )
-            biotuning.compute_peaks_metrics(delta_lim=delta_lim)
-            
-            metrics = get_metrics(biotuning)
-            values[epoch_idx, space_idx, :] = metrics
-
-    epochs_labels = [x for x in range(n_epochs)]
-
-    output = {}
-    output['metadata'] = {'type': 'BiotunerMetrics'}
-    output['metadata']['axes'] = {
-        'epochs': epochs_labels,
-        'spaces': space_names,
-        'metrics': ['cons', 'tenney', 'harmsim', 'subharm_tension']
-    }
-    output['metadata']['order'] = ('epochs', 'spaces', 'metrics')
-    output['metadata']['times'] = times
-    output['values'] = values
-
-    return output
-
 
 import numpy as np
 import copy
 import scipy.stats as sp_stats
-from biotuner.biotuner_object import compute_biotuner
-
-
-# if __name__ == '__main__':
-#     [print(label,fun) for label,fun in zip(labels,funs)]
-#     print(fun_template.replace('%label%',labels[-1]).replace('%fun%',funs[-1]))
-
-
-
-import numpy as np
 from biotuner.biotuner_object import compute_biotuner
 
 
@@ -1259,3 +1178,263 @@ biotuning_feature_FIXED = partial(
 # # lziv_complexity,sample_entropy,spectral_entropy,app_entropy,hjorth_params,num_zerocross,perm_entropy,svd_entropy,higuchi_fd,katz_fd,petrosian_fd
 
 # # compute_lziv_complexity = compute_lzivComplexity(meg, suffix='LZIVComplexity', internal_kwargs={"lziv_complexity":{}}, extra_metadata={}, prefoo=lambda x: x)
+
+
+import numpy as np
+import pandas as pd
+import mne
+from scipy import signal, stats
+# === Helper Functions for Chaos ===
+def _minmaxsig(x):
+    maxs = signal.argrelextrema(x, np.greater)[0]
+    mins = signal.argrelextrema(x, np.less)[0]
+    idx = np.sort(np.concatenate([mins, maxs]))
+    return x[idx]
+def z1_chaos_test(x, sigma=0.5, rand_seed=0):
+    np.random.seed(rand_seed)
+    N = len(x)
+    j = np.arange(1, N+1)
+    t = np.arange(1, int(round(N / 10)) + 1)
+    c = np.pi / 5 + np.random.rand(1000) * (3 * np.pi / 5)
+    k_corr = np.zeros(1000)
+    for i in range(1000):
+        p = np.cumsum(x * np.cos(j * c[i]))
+        q = np.cumsum(x * np.sin(j * c[i]))
+        M = np.array([
+            np.mean((p[n:N] - p[:N-n])**2 + (q[n:N] - q[:N-n])**2)
+            - np.mean(x)**2 * (1 - np.cos(n * c[i])) / (1 - np.cos(c[i]))
+            + sigma * (np.random.rand() - 0.5)
+            for n in t
+        ])
+        k_corr[i] = stats.pearsonr(t, M)[0]
+    return np.median(k_corr)
+def chaos_pipeline(data, sigma=0.5, downsample=True):
+    if downsample:
+        data = _minmaxsig(data)
+    if len(data) < 20:
+        return np.nan
+    data = data * (0.5 / np.std(data))
+    return z1_chaos_test(data, sigma=sigma)
+# === Final Feature Function (same structure as dfa_feature) ===
+def chaos_feature(epochs, sigma=0.5, downsample=True):
+    epochs = epochs.copy()
+    sf = epochs.info['sfreq']
+    times = epochs.times
+    space_names = epochs.info['ch_names']
+    data = epochs.get_data()  # (n_epochs, n_channels, n_times)
+    n_epochs, n_channels, _ = data.shape
+    k_values = np.empty((n_epochs, n_channels))
+    for epoch_idx in range(n_epochs):
+        for ch_idx in range(n_channels):
+            ts = data[epoch_idx, ch_idx, :]
+            ts_filt = mne.filter.filter_data(ts, sfreq=sf, l_freq=0.5, h_freq=5, verbose=False)
+            K = chaos_pipeline(ts_filt, sigma=sigma, downsample=downsample)
+            k_values[epoch_idx, ch_idx] = K
+    output = {
+        'metadata': {
+            'type': 'ChaosFeature',
+            'axes': {
+                'epochs': list(range(n_epochs)),
+                'spaces': space_names
+            },
+            'order': ('epochs', 'spaces'),
+            'times': times
+        },
+        'values': k_values
+    }
+    return output
+
+def rate_entropy_feature(epochs, kmax=10):
+    epochs = epochs.copy()
+    sf = epochs.info['sfreq']
+    times = epochs.times
+    space_names = epochs.info['ch_names']
+    data = epochs.get_data()
+    n_epochs, n_channels, _ = data.shape
+    values = np.empty((n_epochs, n_channels))
+    timings = np.nan * np.empty((n_epochs, n_channels))
+    for epoch_idx in range(n_epochs):
+        for ch_idx in range(n_channels):
+            ts = data[epoch_idx, ch_idx, :]
+            start = time.time()
+            feature_val, _ = nk2.entropy_rate(ts, kmax=kmax, symbolize='mean')
+            end = time.time()
+            if DEBUG:
+                print(f"Epoch {epoch_idx}, Channel {space_names[ch_idx]}, Rate Entropy: {feature_val:.4f}, Time taken: {end - start:.4f} seconds")
+            values[epoch_idx, ch_idx] = feature_val
+            timings[epoch_idx, ch_idx] = end - start
+    total_time = np.nansum(timings)
+
+    return {
+        'metadata': {
+            'type': 'RateEntropy',
+            'axes': {'epochs': list(range(n_epochs)), 'spaces': space_names},
+            'order': ('epochs', 'spaces'),
+            'times': times,
+            'timings': timings,
+            'total_time': total_time
+        },
+        'values': values
+    }
+def fisher_information_feature(epochs, delay=1, dimension=3):
+    epochs = epochs.copy()
+    sf = epochs.info['sfreq']
+    times = epochs.times
+    space_names = epochs.info['ch_names']
+    data = epochs.get_data()
+    n_epochs, n_channels, _ = data.shape
+    values = np.empty((n_epochs, n_channels))
+    timings = np.nan * np.empty((n_epochs, n_channels))
+    for epoch_idx in range(n_epochs):
+        for ch_idx in range(n_channels):
+            ts = data[epoch_idx, ch_idx, :]
+            start = time.time()
+            feature_val, _ = nk2.fisher_information(ts, delay=delay, dimension=dimension)
+            end = time.time()
+            if DEBUG:
+                print(f"Epoch {epoch_idx}, Channel {space_names[ch_idx]}, Fisher Information: {feature_val:.4f}, Time taken: {end - start:.4f} seconds")
+            values[epoch_idx, ch_idx] = feature_val
+            timings[epoch_idx, ch_idx] = end - start
+    total_time = np.nansum(timings)
+    return {
+        'metadata': {
+            'type': 'FisherInformation',
+            'axes': {'epochs': list(range(n_epochs)), 'spaces': space_names},
+            'order': ('epochs', 'spaces'),
+            'times': times
+        },
+        'values': values
+    }
+def correlation_dimension_feature(epochs, delay=1, dimension=3, radius=64):
+    epochs = epochs.copy()
+    sf = epochs.info['sfreq']
+    times = epochs.times
+    space_names = epochs.info['ch_names']
+    data = epochs.get_data()
+    n_epochs, n_channels, _ = data.shape
+    values = np.empty((n_epochs, n_channels))
+    for epoch_idx in range(n_epochs):
+        for ch_idx in range(n_channels):
+            ts = data[epoch_idx, ch_idx, :]
+            feature_val, _ = nk2.fractal_correlation(ts, delay=delay, dimension=dimension, radius=radius, show=False)
+            values[epoch_idx, ch_idx] = feature_val
+    return {
+        'metadata': {
+            'type': 'CorrelationDimension',
+            'axes': {'epochs': list(range(n_epochs)), 'spaces': space_names},
+            'order': ('epochs', 'spaces'),
+            'times': times
+        },
+        'values': values
+    }
+def lyapunov_exponent_feature(epochs, delay=1, dimension=3, len_trajectory_ratio=0.05):
+    epochs = epochs.copy()
+    sf = epochs.info['sfreq']
+    times = epochs.times
+    space_names = epochs.info['ch_names']
+    data = epochs.get_data()
+    n_epochs, n_channels, n_times = data.shape
+    len_trajectory = int(n_times * len_trajectory_ratio)
+    values = np.empty((n_epochs, n_channels))
+    for epoch_idx in range(n_epochs):
+        for ch_idx in range(n_channels):
+            ts = data[epoch_idx, ch_idx, :]
+            feature_val, _ = nk2.complexity_lyapunov(
+                ts, delay=delay, dimension=dimension,
+                method='rosenstein1993', separation='auto',
+                len_trajectory=len_trajectory
+            )
+            values[epoch_idx, ch_idx] = feature_val
+    return {
+        'metadata': {
+            'type': 'LyapunovExponent',
+            'axes': {'epochs': list(range(n_epochs)), 'spaces': space_names},
+            'order': ('epochs', 'spaces'),
+            'times': times
+        },
+        'values': values
+    }
+
+
+import numpy as np
+from scipy.signal import find_peaks
+from biotuner.metrics import integral_tenneyHeight, ratios2harmsim, compute_subharmonic_tension
+
+
+def feature_harmonicity(input_dict, height=None, distance=None, bands=None):
+    breakpoint()
+    psds = input_dict['values']
+    freqs = input_dict['metadata']['axes']['frequencies']
+    space_names = input_dict['metadata']['axes']['spaces']
+    if bands is None:
+        bands = [
+            ('delta', (2, 4)),
+            ('theta', (4, 8)),
+            ('alpha', (8, 12)),
+            ('beta', (12, 30)),
+            ('gamma', (30, 60)),
+        ]
+    band_names = [name for name, _ in bands]
+
+    n_epochs, n_channels, n_bins = psds.shape
+    nbands = len(bands)
+    n_features = 3  # Tenney, HarmSim, Subharmonic Tension
+    metrics_list = ['tenney', 'harmsim', 'subharm_tension']
+
+    # Initialize arrays
+    max_peaks = np.full((n_epochs, n_channels, nbands), np.nan)
+    metrics = np.full((n_epochs, n_channels, n_features), np.nan)
+
+    for ep in range(n_epochs):
+        for ch in range(n_channels):
+
+            print(f"Processing epoch {ep+1}/{n_epochs}, channel {ch+1}/{n_channels}")
+            peaks_list = []
+            for band_idx, (band_name, (low, high)) in enumerate(bands):
+                mask = (freqs >= low) & (freqs <= high)
+                band_psd = psds[ep, ch, mask]
+                band_freqs = freqs[mask]
+                if len(band_psd) > 0:
+                    peaks, _ = find_peaks(band_psd, height=height, distance=distance)
+                    if len(peaks) > 0:
+                        max_peak_idx = peaks[np.argmax(band_psd[peaks])]
+                        max_peaks[ep, ch, band_idx] = band_freqs[max_peak_idx]
+                        peaks_list.append(band_freqs[max_peak_idx])
+                    else:
+                        peaks_list.append(np.nan)
+                else:
+                    peaks_list.append(np.nan)
+            # Filter NaNs
+            valid_peaks = [p for p in peaks_list if not np.isnan(p)]
+            valid_peaks = list(np.round(valid_peaks, 1))
+            print(f"Valid peaks for epoch {ep+1}, channel {ch+1}: {valid_peaks}")
+            if len(valid_peaks) > 0:
+                try:
+                    _, _, subharm, _ = compute_subharmonic_tension(valid_peaks, n_harmonics=3, delta_lim=50)
+                    tenney = integral_tenneyHeight(valid_peaks)
+                    harmsim = np.mean(ratios2harmsim(valid_peaks))
+                    metrics[ep, ch, 0] = tenney
+                    metrics[ep, ch, 1] = harmsim
+                    metrics[ep, ch, 2] = subharm[0]
+                except Exception:
+                    print(f"Error computing metrics for epoch {ep+1}, channel {ch+1}: {valid_peaks}")
+                    pass
+
+    # Wrap in template
+    out_dict = {
+        'metadata': {
+            'type': 'MaxBandPeaksAndMetrics',
+            'axes': {
+                'epochs': list(range(n_epochs)),
+                'spaces': space_names if space_names is not None else list(range(n_channels)),
+                'bands': band_names,
+                'metrics': metrics_list
+            },
+            'order': ('epochs', 'spaces'),
+        },
+        'values': {
+            'max_peaks': max_peaks,
+            'metrics': metrics
+        }
+    }
+    return out_dict
