@@ -1030,17 +1030,12 @@ def prepare(filename, dataset_cfg=None, njobs=1, downsample = 500, normalization
 
     raw = mne.io.read_raw(eegpath,verbose=False,preload=True)
 
-    if normalization:
-        # It is debatable where to normalize the data. Here we do it after PyPREP.
-        # Sanity check, the argmin of the zscored data should be the same as the argmin of the raw data
-        assert np.argmin(raw.get_data()[0,:])==np.argmin(scipy.stats.zscore(raw.get_data(),axis=1)[0,:])
-        raw._data = scipy.stats.zscore(raw.get_data(),axis=1)
-        print('AMPLITUDE NORMALIZATION DONE')
-
     # Filter the data
-    if filter_args is not None:
-        raw = raw.filter(**filter_args,verbose=False)
-        print('FILTERED',end=' ')
+    raw = raw.notch_filter(freqs=[50, 100, 150], verbose=False)
+    print('FILTERED NOTCH 50 100 150',end=' ')
+
+    raw = raw.filter(l_freq=0.1, h_freq=150, verbose=False)
+    print('FILTERED',end=' ')
 
     # Extract epochs
     print('EPOCH SEGMENTATION')
@@ -1052,8 +1047,7 @@ def prepare(filename, dataset_cfg=None, njobs=1, downsample = 500, normalization
         else:
             raise ValueError(f"Unknown epoch_config: {epoch_config}")
 
-    if downsample is not None:
-        epochs = epochs.resample(downsample)
+    epochs = epochs.resample(600)
 
 
     return epochs,info,figures, None
