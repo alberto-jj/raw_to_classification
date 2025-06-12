@@ -21,7 +21,7 @@ from neurokit2 import entropy_multiscale
 import copy
 import neurokit2 as nk2
 
-DEBUG = True
+DEBUG = False
 def process_feature(epochs,relevantpath,CFG,feature,pipeline_name,inspect_only=False):
     featdict = CFG[feature]
     overwrite = featdict['overwrite']

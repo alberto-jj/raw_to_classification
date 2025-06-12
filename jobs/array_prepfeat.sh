@@ -2,7 +2,7 @@
 #SBATCH --account=def-kjerbi
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=32G
-#SBATCH --time=0-00:30:00
+#SBATCH --time=0-03:00:00
 #SBATCH --array=0-361
 ##Total number of files: 362 for cocosprint
 ## 0-977 for saint

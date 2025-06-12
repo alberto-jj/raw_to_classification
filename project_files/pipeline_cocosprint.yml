@@ -41,11 +41,6 @@ prep_inspection:
       keep_channels : False
       standardize_epochs : False
       feature_list: # To say which features actually compute rather than configure
-        #- PowerSpectrum
-        #- PowerSpectrumAverage
-        # #- RelativeBandPowerFromAverageSpectrum
-        #- FooofFromAverage
-        # #- RelativeBandPowerFromAverageFooof
         - detrendedFluctuationMeanEpochs
         - detrendedFluctuationSDEpochs
         # - hjorthParams
@@ -72,6 +67,12 @@ prep_inspection:
         - lzivComplexityMeanEpochs
         - lzivComplexitySDEpochs
         # # - appEntropyMeanEpochs
+        - PowerSpectrum
+        - PowerSpectrumAverage
+        #- RelativeBandPowerFromAverageSpectrum
+        #- FooofFromAverage
+        #- RelativeBandPowerFromAverageFooof
+
     features@prepSingleEpoch: #you set the name of the feature pipeline with the key
       prep_pipeline : prepSingleEpoch # This is the name of the preprocessing pipeline previously defined (must exist in derivatives)
       downsample : null
