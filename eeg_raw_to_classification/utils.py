@@ -75,7 +75,8 @@ def agg_numpy(x,numpyfun,axisname='epochs',max_numitem=None): # or give a more c
             print(f"Warning: {x['values'].shape[axis]} items in axis {axisname} are less than max_numitem {max_numitem}.")
 
     # handle metadata appropriately
-    x['values'] = numpyfun(x['values'],axis=axis)
+    #breakpoint()
+    x['values'] = numpyfun(np.array(x['values'], dtype=float),axis=axis)
     order = list(x['metadata']['order'])
     order.remove(axisname)
     x['metadata']['order'] = tuple(order)

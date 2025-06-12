@@ -1,3 +1,11 @@
+
+import scipy as sp
+import neurokit2 as nk2
+import numpy as np
+import copy
+from mne.time_frequency import psd_array_multitaper
+import time
+
 from scipy.integrate import simpson as simps
 from mne.time_frequency import psd_array_multitaper,psd_array_welch
 from mne.datasets.eegbci import standardize
@@ -12,6 +20,8 @@ from antropy import detrended_fluctuation,lziv_complexity,sample_entropy,spectra
 from neurokit2 import entropy_multiscale
 import copy
 import neurokit2 as nk2
+
+DEBUG = True
 def process_feature(epochs,relevantpath,CFG,feature,pipeline_name,inspect_only=False):
     featdict = CFG[feature]
     overwrite = featdict['overwrite']
@@ -171,7 +181,10 @@ def spectrum_multitaper(epochs,multitaper={}):
 
     space_names = epochs.info['ch_names']
 
+    start = time.time()
+
     psd,freqs = psd_array_multitaper(epochs.get_data(), sf, **kwargs)
+    end = time.time()
     fullpsd = psd
     # I think that having the mean here at the last position is confusing
     #psd_mean = np.mean(psd,axis=0,keepdims=True) #epochs, spaces,freqs
@@ -185,28 +198,7 @@ def spectrum_multitaper(epochs,multitaper={}):
     output['metadata']['order']=('epochs','spaces','frequencies')
     output['values'] = fullpsd
     output['metadata']['times']=epochs.times #TODO: times is not standarized across all features
-    return output
-
-def spectrum_keep_magnetometers(spectrum_output, dummy=None):
-    # Copy input to avoid modifying in-place
-    output = copy.deepcopy(spectrum_output)
-
-    # Extract the current spaces (channel names)
-    space_names = output['metadata']['axes']['spaces']
-
-    # Find indices of channels whose name starts with 'M'
-    keep_indices = [i for i, name in enumerate(space_names) if name.startswith('M')]
-    keep_names = [space_names[i] for i in keep_indices]
-
-    # Slice the values accordingly
-    # values shape: (epochs, spaces, freqs)
-    output['values'] = output['values'][:, keep_indices, :]
-
-    # Update metadata
-    output['metadata']['axes']['spaces'] = keep_names
-    # (optional but clean): make sure 'order' stays the same
-    assert 'spaces' in output['metadata']['order']
-
+    output['metadata']['timings'] = {end - start}
     return output
 
 def spectrum_welch(epochs,welch={}):
@@ -220,7 +212,6 @@ def spectrum_welch(epochs,welch={}):
         if isinstance(v,str) and 'eval%' in v:
             expression = v.replace('eval%','')
             kwargs[k] = eval(expression)
-
 
     psd,freqs = psd_array_welch(epochs.get_data(), sf, **kwargs)
     fullpsd = psd
@@ -279,6 +270,7 @@ def fooof_from_average(data,internal_kwargs={'FOOOF':{},'fit':{}, 'freq_res':Non
     output = {}
 
     values = np.empty(len(spaces),dtype=object)
+    timings = np.empty(len(spaces),dtype=float) * np.nan
     output['metadata'] = {'type':'fooofFromAverageSpectrum','kwargs':{'internal_kwargs':internal_kwargs},'freqs':freqs}
     output['metadata']['axes']={'spaces':spaces}
     output['metadata']['order']=('spaces')
@@ -303,10 +295,12 @@ def fooof_from_average(data,internal_kwargs={'FOOOF':{},'fit':{}, 'freq_res':Non
         start = time.time()
         fm = single_fooof(freqs_downsampled, thispsd_downsampled, kwargs)
         end = time.time()
-        print(space, (end-start))
-
+        timings[space_idx] = end - start
         values[space_idx]= fm
+        if DEBUG:
+            print(f"Processed {space} in {timings[space_idx]} seconds")
     output['values'] = values
+    output['metadata']['timings'] = timings
     return output
 
 def roi_mapping_alberto(x):
@@ -479,7 +473,6 @@ labels = [to_camel_case(x) for x in funs]
 
 
 
-
 fun_template="""
 def compute_%label%(eeg, suffix='%label%',internal_kwargs=dict(),extra_metadata={},prefoo=lambda x: x):
 
@@ -501,12 +494,20 @@ def compute_%label%(eeg, suffix='%label%',internal_kwargs=dict(),extra_metadata=
         data = eeg.get_data()[None,:,:]
 
     epochs = []
+    values = np.empty((nepochs,len(eeg.ch_names)),dtype=object)
+    timings = np.empty((nepochs,len(eeg.ch_names)),dtype=float)
     for e in range(nepochs):
-        result = [%fun%(prefoo(data[e,i,:]),**kwargs['%fun%']) for i in range(len(eeg.ch_names))]
-        epochs.append([ {i:v for i,v in enumerate(x)} if isinstance(x,tuple) else x for x in result])
+        for i in range(len(eeg.ch_names)):
+            start = time.time()
+            result = %fun%(prefoo(data[e,i,:]),**kwargs['%fun%'])
+            end = time.time()
+            if isinstance(result,tuple):
+                result = {i:v for i,v in enumerate(result)}
+            values[e,i] = result
+            timings[e,i] = end - start
+            if DEBUG:
+                print(f"Processed epoch {e}, channel {i} '{eeg.ch_names[i]}' in {timings[e,i]} seconds")
 
-
-    values = np.array(epochs)
 
     if len(eeg.get_data().shape)==3:
         axes = {'epochs':list(range(eeg.get_data().shape[0])),'spaces':eeg.info['ch_names']}
@@ -521,6 +522,7 @@ def compute_%label%(eeg, suffix='%label%',internal_kwargs=dict(),extra_metadata=
     output['metadata']['axes']=axes
     output['metadata']['order']=order
     output['metadata']['times']=eeg.times
+    output['metadata']['timings'] = timings
     output['values']= values
     output['metadata'].update(extra_metadata)
     return output
@@ -528,6 +530,7 @@ def compute_%label%(eeg, suffix='%label%',internal_kwargs=dict(),extra_metadata=
 antropy_definitions = [fun_template.replace('%label%',label).replace('%fun%',fun) for label,fun in zip(labels,funs)]
 for foo in antropy_definitions:
     exec(foo)
+
 
 
 from copy import deepcopy
@@ -615,10 +618,13 @@ def single_atoms(epochs, tau=5,redundancy='MMI', kind='gaussian', channel_labels
 
     atoms_vals = np.zeros((n_epochs, n_channels, n_atoms, n_time - tau), dtype=np.float64)
 
+    timings = np.empty((n_epochs, n_channels), dtype=float) * np.nan
+
     # Compute PhiID for each channel vs. the mean of all other channels
     for e in range(n_epochs):
         data = matrix[e, :, :]  # shape (n_channels, n_time)
         for i in range(n_channels):
+            start = time.time()
             src = data[i]
             if n_channels > 1:
                 # target is average of all other channels
@@ -642,8 +648,10 @@ def single_atoms(epochs, tau=5,redundancy='MMI', kind='gaussian', channel_labels
                 print(f"Error processing epoch {e}, channel {i} '{channel_labels[i]}': {ex}")
                 # Fill with NaNs if there's an error
                 atoms_vals[e, i, :, :] = np.nan
-
-
+            end = time.time()
+            timings[e, i] = end - start
+            if DEBUG:
+                print(f"Processed epoch {e}, channel {i} '{channel_labels[i]}' in {timings[e, i]} seconds")
 
     # Build metadata
     output = {}
@@ -883,6 +891,371 @@ my_phi = phi_epoch4['values'][0,:,:]
 pprint(orig_phi == my_phi)
 """
 
-if __name__ == '__main__':
-    [print(label,fun) for label,fun in zip(labels,funs)]
-    print(fun_template.replace('%label%',labels[-1]).replace('%fun%',funs[-1]))
+
+def dfa_feature(epochs):
+    import scipy.signal
+    import scipy.stats as sp_stats
+    import neurokit2 as nk2
+
+    epochs = epochs.copy()
+    sf = epochs.info['sfreq']
+    times = epochs.times
+    space_names = epochs.info['ch_names']
+    
+    data = epochs.get_data()  # shape: (n_epochs, n_channels, n_times)
+    
+    n_epochs, n_spaces, n_times = data.shape
+    dfa_values = np.empty((n_epochs, n_spaces))
+    spaces = epochs.info['ch_names']
+    
+    for epoch_idx in range(n_epochs):
+        for space_idx in range(n_spaces):
+            
+            time_series = data[epoch_idx, space_idx, :]
+            start = time.time()
+            try:
+                envelope = np.abs(scipy.signal.hilbert(sp_stats.zscore(time_series)))
+                dfa, _ = nk2.fractal_dfa(envelope)
+            except Exception as e:
+                print(f"Error processing epoch {epoch_idx}, space {space_idx}: {e}, using NaN")
+                dfa = np.nan
+            end = time.time()
+            print(f"Epoch {epoch_idx}, Space {spaces[space_idx]}, DFA: {dfa:.4f}, Time taken: {end - start:.4f} seconds")
+            dfa_values[epoch_idx, space_idx] = dfa
+    
+    epochs_labels = [x for x in range(n_epochs)]
+    
+    output = {}
+    output['metadata'] = {'type': 'DFAFeature'}
+    output['metadata']['axes'] = {
+        'epochs': epochs_labels,
+        'spaces': space_names
+    }
+    output['metadata']['order'] = ('epochs', 'spaces')
+    output['metadata']['times'] = times
+    output['values'] = dfa_values
+    
+    return output
+
+def spectrum_biotuner(epochs, FREQ_BANDS=None, precision=0.5, n_harm=10, max_freq=100, n_peaks=5, delta_lim=50):
+    epochs = epochs.copy()
+    sf = epochs.info['sfreq']
+    times = epochs.times
+    space_names = epochs.info['ch_names']
+    
+    data = epochs.get_data()  # shape: (n_epochs, n_spaces, n_times)
+    n_epochs, n_spaces, n_times = data.shape
+    
+    # Default FREQ_BANDS
+    if FREQ_BANDS is None:
+        FREQ_BANDS = [
+            [1, 3],    # delta
+            [3, 7],    # theta
+            [7, 12],   # alpha
+            [12, 20],  # beta
+            [20, 30],  # high beta
+            [30, 70],  # gamma
+        ]
+
+    def get_metrics(biotuning):
+        d = biotuning.peaks_metrics
+        return [
+            d.get('cons', np.nan),
+            d.get('tenney', np.nan),
+            d.get('harmsim', np.nan),
+            float(d['subharm_tension'][0]) if (isinstance(d.get('subharm_tension'), list) and len(d['subharm_tension']) > 0) else np.nan
+        ]
+
+    # We will build an array: (n_epochs, n_spaces, n_metrics)
+    n_metrics = 4  # 'cons', 'tenney', 'harmsim', 'subharm_tension'
+    values = np.full((n_epochs, n_spaces, n_metrics), np.nan)
+
+    for epoch_idx in range(n_epochs):
+        for space_idx in range(n_spaces):
+            time_series = data[epoch_idx, space_idx, :]
+            
+            # You can zscore the time series if you want:
+            time_series = sp_stats.zscore(time_series)
+            
+            # Run biotuner with EMD (or fixed — you can adapt if you want both)
+            biotuning = compute_biotuner(
+                sf=sf,
+                peaks_function="EMD",
+                precision=precision,
+                n_harm=n_harm
+            )
+            biotuning.peaks_extraction(
+                time_series,
+                FREQ_BANDS=FREQ_BANDS,
+                peaks_function="EMD",
+                max_freq=max_freq,
+                n_peaks=n_peaks
+            )
+            biotuning.compute_peaks_metrics(delta_lim=delta_lim)
+            
+            metrics = get_metrics(biotuning)
+            values[epoch_idx, space_idx, :] = metrics
+
+    epochs_labels = [x for x in range(n_epochs)]
+
+    output = {}
+    output['metadata'] = {'type': 'BiotunerMetrics'}
+    output['metadata']['axes'] = {
+        'epochs': epochs_labels,
+        'spaces': space_names,
+        'metrics': ['cons', 'tenney', 'harmsim', 'subharm_tension']
+    }
+    output['metadata']['order'] = ('epochs', 'spaces', 'metrics')
+    output['metadata']['times'] = times
+    output['values'] = values
+
+    return output
+
+
+import numpy as np
+import copy
+import scipy.stats as sp_stats
+from biotuner.biotuner_object import compute_biotuner
+
+
+# if __name__ == '__main__':
+#     [print(label,fun) for label,fun in zip(labels,funs)]
+#     print(fun_template.replace('%label%',labels[-1]).replace('%fun%',funs[-1]))
+
+
+
+import numpy as np
+from biotuner.biotuner_object import compute_biotuner
+
+
+FREQ_BANDS = [
+    [1, 3],      # delta
+    [3, 7],   # theta
+    [7, 12],   # alpha
+    [12, 20],  # beta
+    [20, 30],  # high beta
+    [30, 70],  # gamma
+]
+
+def get_metrics(biotuning):
+    # Keep only selected metrics and flatten subharm_tension
+    d = biotuning.peaks_metrics
+    return {
+        'cons': d.get('cons', np.nan),
+        'tenney': d.get('tenney', np.nan),
+        'harmsim': d.get('harmsim', np.nan),
+        'subharm_tension': float(d['subharm_tension'][0]) if (isinstance(d.get('subharm_tension'), list) and len(d['subharm_tension']) > 0) else np.nan
+    }
+
+results = {}
+
+# --- EMD peaks ---
+# biotuning_emd = compute_biotuner(
+#     sf=sf,
+#     peaks_function="EMD",
+#     precision=0.5,
+#     n_harm=10
+# )
+# biotuning_emd.peaks_extraction(
+#     data,
+#     FREQ_BANDS=FREQ_BANDS,
+#     peaks_function="EMD",
+#     max_freq=100,
+#     n_peaks=5
+# )
+# biotuning_emd.compute_peaks_metrics(delta_lim=50)
+# results['EMD'] = get_metrics(biotuning_emd)
+
+# --- Fixed peaks ---
+# biotuning_fixed = compute_biotuner(
+#     sf=sf,
+#     peaks_function="fixed",
+#     precision=0.5,
+#     n_harm=10
+# )
+# biotuning_fixed.peaks_extraction(
+#     data,
+#     FREQ_BANDS=FREQ_BANDS,
+#     peaks_function="fixed",
+#     max_freq=100,
+#     n_peaks=5
+# )
+# biotuning_fixed.compute_peaks_metrics(delta_lim=50)
+# results['fixed'] = get_metrics(biotuning_fixed)
+
+
+
+
+
+def biotuning_feature(epochs, biotuner_params={}, peak_extraction_params={}, compute_peaks_metrics_params={}, desired_metrics=None):
+
+    if desired_metrics is None:
+        desired_metrics = ['cons', 'tenney', 'harmsim', 'subharm_tension']
+
+    epochs = epochs.copy()
+    sf = epochs.info['sfreq']
+    times = epochs.times
+    space_names = epochs.info['ch_names']
+    
+    data = epochs.get_data()  # shape: (n_epochs, n_channels, n_times)
+    
+    n_epochs, n_spaces, n_times = data.shape
+    biotuner_values = np.empty((n_epochs, n_spaces, len(desired_metrics)))
+    timings = np.nan * np.empty((n_epochs, n_spaces))
+    
+    for epoch_idx in range(n_epochs):
+        for space_idx in range(n_spaces):
+            time_series = data[epoch_idx, space_idx, :]
+            try:
+                start = time.time()
+                biotuning = compute_biotuner(
+                    sf=sf,
+                    **biotuner_params
+                )
+                biotuning.peaks_extraction(
+                    time_series,
+                    **peak_extraction_params
+                )
+                biotuning.compute_peaks_metrics(
+                    **compute_peaks_metrics_params
+                )
+                
+                metrics = biotuning.peaks_metrics
+
+                metric_values = []
+                for metric in desired_metrics:
+                    if metric == 'subharm_tension':
+                        val = metrics.get('subharm_tension')
+                        if isinstance(val, list) and len(val) > 0:
+                            metric_values.append(float(val[0]))
+                        else:
+                            metric_values.append(np.nan)
+                    else:
+                        metric_values.append(metrics.get(metric, np.nan))
+
+                biotuner_values[epoch_idx, space_idx, :] = metric_values
+                end = time.time()
+                timings[epoch_idx, space_idx] = end - start
+                print(f"Epoch {epoch_idx}, Space {space_idx}, Metrics: {metric_values}, Time taken: {end - start:.4f} seconds")
+                if 'subharm_tension' in desired_metrics:
+                    if isinstance(metrics.get('subharm_tension'), list) and len(metrics['subharm_tension']) > 0:
+                        biotuner_values[epoch_idx, space_idx, desired_metrics.index('subharm_tension')] = float(metrics['subharm_tension'][0])
+                    else:
+                        biotuner_values[epoch_idx, space_idx, desired_metrics.index('subharm_tension')] = np.nan
+            except Exception as e:
+                raise RuntimeError(f"Error processing epoch {epoch_idx}, space {space_idx}: {e}")
+
+    
+    epochs_labels = [x for x in range(n_epochs)]
+    
+    output = {}
+    output['metadata'] = {'type': 'Biotuner'}
+    output['metadata']['axes'] = {
+        'epochs': epochs_labels,
+        'spaces': space_names,
+        'metrics': desired_metrics
+    }
+    output['metadata']['order'] = ('epochs', 'spaces', 'metrics')
+    output['metadata']['timings'] = timings
+    output['metadata']['times'] = times
+
+    output['values'] = biotuner_values
+    
+    return output
+
+
+# --- EMD peaks partials ---
+biotuner_params_emd = {
+    'peaks_function': 'EMD',
+    'precision': 0.5,
+    'n_harm': 10
+}
+
+peak_extraction_params_emd = {
+    'FREQ_BANDS': FREQ_BANDS,
+    'peaks_function': 'EMD',
+    'max_freq': 100,
+    'n_peaks': 5
+}
+
+compute_peaks_metrics_params_emd = {
+    'delta_lim': 50
+}
+
+# --- Fixed peaks partials ---
+biotuner_params_fixed = {
+    'peaks_function': 'fixed',
+    'precision': 0.5,
+    'n_harm': 10
+}
+
+peak_extraction_params_fixed = {
+    'FREQ_BANDS': FREQ_BANDS,
+    'peaks_function': 'fixed',
+    'max_freq': 100,
+    'n_peaks': 5
+}
+
+compute_peaks_metrics_params_fixed = {
+    'delta_lim': 50
+}
+
+FREQ_BANDS = [
+    [1, 3],    # delta
+    [3, 7],    # theta
+    [7, 12],   # alpha
+    [12, 20],  # beta
+    [20, 30],  # high beta
+    [30, 70],  # gamma
+]
+from functools import partial
+
+
+biotuning_feature_EMD = partial(
+    biotuning_feature,
+    biotuner_params=biotuner_params_emd,
+    peak_extraction_params=peak_extraction_params_emd,
+    compute_peaks_metrics_params=compute_peaks_metrics_params_emd
+)
+
+biotuning_feature_FIXED = partial(
+    biotuning_feature,
+    biotuner_params=biotuner_params_fixed,
+    peak_extraction_params=peak_extraction_params_fixed,
+    compute_peaks_metrics_params=compute_peaks_metrics_params_fixed
+)
+
+#biotuning_emd = biotuning_feature_EMD(meg, desired_metrics=['cons', 'tenney', 'harmsim', 'subharm_tension'])
+
+
+
+# filepath = r"C:\Users\yjman\Desktop\sub-S1TW_ses-lsd_task-Closed1_desc-None_epo.fif"
+
+# import mne
+# meg = mne.read_epochs(filepath,preload=True)
+
+# data = meg.get_data()[0, 100, :]
+# sf = meg.info['sfreq']
+# # biotuning_fixed = biotuning_feature_FIXED(meg, desired_metrics=['cons', 'tenney', 'harmsim', 'subharm_tension'])
+# # biotuning_emd = biotuning_feature_EMD(meg, desired_metrics=['cons', 'tenney', 'harmsim', 'subharm_tension'])
+
+# #
+
+# #spectrum['values'].shape
+# #dfa = dfa_feature(meg)
+
+
+# spectrum = spectrum_multitaper(meg,multitaper={})
+# spectrum['metadata']
+
+# [print(label,fun) for label,fun in zip(labels,funs)]
+
+
+
+# # DEBUG=True
+# # detrended_fluctuation_ = compute_detrendedFluctuation(meg, suffix='DetrendedFluctuation', internal_kwargs={"detrended_fluctuation":{}}, extra_metadata={}, prefoo=lambda x: x)
+
+
+# # lziv_complexity,sample_entropy,spectral_entropy,app_entropy,hjorth_params,num_zerocross,perm_entropy,svd_entropy,higuchi_fd,katz_fd,petrosian_fd
+
+# # compute_lziv_complexity = compute_lzivComplexity(meg, suffix='LZIVComplexity', internal_kwargs={"lziv_complexity":{}}, extra_metadata={}, prefoo=lambda x: x)
