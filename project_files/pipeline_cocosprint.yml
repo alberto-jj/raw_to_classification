@@ -42,8 +42,10 @@ prep_inspection:
       standardize_epochs : False
       feature_list: # To say which features actually compute rather than configure
         # - RateEntropy
-        - FisherInformation
-        - Harmonicity
+        - FisherInformationMeanEpochs
+        - FisherInformationSDEpochs
+        - HarmonicityMeanEpochs
+        - HarmonicitySDEpochs
         # - detrendedFluctuationMeanEpochs
         # - detrendedFluctuationSDEpochs
         # # - hjorthParams
@@ -106,6 +108,26 @@ prep_inspection:
             height: null
             bands: null
 
+    HarmonicityMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: Harmonicity
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: null # 20min at 5sec per epoch
+            axisname: 'epochs'
+
+    HarmonicitySDEpochs:
+      overwrite: False
+      chain:
+        - feature: Harmonicity
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.std
+            max_numitem: null # 20min at 5sec per epoch
+            axisname: 'epochs'
+
     RateEntropy:
       overwrite: False
       chain:
@@ -120,6 +142,26 @@ prep_inspection:
           args:
             delay: 1
             dimension: 3
+
+    FisherInformationMeanEpochs:
+      overwrite: False
+      chain:
+        - feature: FisherInformation
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.mean
+            max_numitem: null # 20min at 5sec per epoch
+            axisname: 'epochs'
+    
+    FisherInformationSDEpochs:
+      overwrite: False
+      chain:
+        - feature: FisherInformation
+        - function: agg_numpy
+          args:
+            numpyfun: eval%np.std
+            max_numitem: null # 20min at 5sec per epoch
+            axisname: 'epochs'
 
     Distance2Criticality:
       overwrite: False
@@ -776,6 +818,18 @@ aggregate:
     petrosianFdSDEpochs :
       return_function : "eval%lambda x: x"
       file_suffix : petrosianFdSDEpochs
+    HarmonicityMeanEpochs:
+      return_function : "eval%lambda x: x"
+      file_suffix : HarmonicityMeanEpochs
+    HarmonicitySDEpochs:
+      return_function : "eval%lambda x: x"
+      file_suffix : HarmonicitySDEpochs
+    FisherInformationMeanEpochs:
+      return_function : "eval%lambda x: x"
+      file_suffix : FisherInformationMeanEpochs
+    FisherInformationSDEpochs:
+      return_function : "eval%lambda x: x"
+      file_suffix : FisherInformationSDEpochs
   feature_aggregate_list:
     - MeanEpochs@prepDur30Ov15
     #- MeanEpochs@prepDur20Ov10
