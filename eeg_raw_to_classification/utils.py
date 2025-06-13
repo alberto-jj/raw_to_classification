@@ -182,6 +182,7 @@ def get_output_dict(eeg_file,FORMAT='WIDE',dataset_label='',feature_suffix='', a
     if showinfo:
         print(eeg_file)
         print('axes:',axes)
+        print('order:',output['metadata']['order'])
         print(output['values'].shape)
     
     for combination in itertools.product(*axes):
