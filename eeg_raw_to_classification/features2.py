@@ -1438,3 +1438,15 @@ def feature_harmonicity(input_dict, height=None, distance=None, bands=None):
         }
     }
     return out_dict
+
+def process_harmonicity_output(harmo_dict,args=None):
+    if isinstance(harmo_dict['values'], dict):
+        harmo_dict = copy.deepcopy(harmo_dict)
+        harmo_dict['metadata']['peaks'] = harmo_dict['values']['max_peaks']
+        harmo_dict['values'] = harmo_dict['values']['metrics']
+        return harmo_dict
+    elif isinstance(harmo_dict['values'], np.ndarray):
+        # If values is a numpy array, assume it's already in the right format
+        return copy.deepcopy(harmo_dict)
+    else:
+        raise ValueError("Unexpected format for 'values' in harmonicity output. Expected dict or ndarray.")
