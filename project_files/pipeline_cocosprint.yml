@@ -114,7 +114,7 @@ prep_inspection:
         - feature: Harmonicity
         - function: agg_numpy
           args:
-            numpyfun: eval%np.mean
+            numpyfun: eval%np.nanmean
             max_numitem: null # 20min at 5sec per epoch
             axisname: 'epochs'
 
@@ -124,7 +124,7 @@ prep_inspection:
         - feature: Harmonicity
         - function: agg_numpy
           args:
-            numpyfun: eval%np.std
+            numpyfun: eval%np.nanstd
             max_numitem: null # 20min at 5sec per epoch
             axisname: 'epochs'
 
@@ -868,6 +868,10 @@ aggregate:
         # - fooofOffset
         # - RelativeBandPowerFromAverageFooof
         # - RelativeBandPowerFromAverageSpectrum
+        - HarmonicityMeanEpochs
+        - HarmonicitySDEpochs
+        - FisherInformationMeanEpochs
+        - FisherInformationSDEpochs
 
 scalingAndFolding:
   aggregate_folders:
