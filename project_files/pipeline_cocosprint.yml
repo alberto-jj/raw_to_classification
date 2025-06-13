@@ -149,7 +149,7 @@ prep_inspection:
         - feature: FisherInformation
         - function: agg_numpy
           args:
-            numpyfun: eval%np.mean
+            numpyfun: eval%np.nanmean
             max_numitem: null # 20min at 5sec per epoch
             axisname: 'epochs'
     
@@ -159,7 +159,7 @@ prep_inspection:
         - feature: FisherInformation
         - function: agg_numpy
           args:
-            numpyfun: eval%np.std
+            numpyfun: eval%np.nanstd
             max_numitem: null # 20min at 5sec per epoch
             axisname: 'epochs'
 
