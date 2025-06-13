@@ -822,12 +822,12 @@ aggregate:
     petrosianFdSDEpochs :
       return_function : "eval%lambda x: x"
       file_suffix : petrosianFdSDEpochs
-    HarmonicityMeanEpochs:
+    HarmonicityMeanEpochs2:
       return_function : "eval%lambda x: x"
-      file_suffix : HarmonicityMeanEpochs
-    HarmonicitySDEpochs:
+      file_suffix : HarmonicityMeanEpochs2
+    HarmonicitySDEpochs2:
       return_function : "eval%lambda x: x"
-      file_suffix : HarmonicitySDEpochs
+      file_suffix : HarmonicitySDEpochs2
     FisherInformationMeanEpochs:
       return_function : "eval%lambda x: x"
       file_suffix : FisherInformationMeanEpochs
