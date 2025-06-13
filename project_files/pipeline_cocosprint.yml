@@ -843,6 +843,10 @@ aggregate:
     MeanEpochs@prepDur30Ov15:
       feature_folder : 'features@prepDur30Ov15' # what if we have multiple feature folders?
       feature_list: # CHOOSE FEATURES WITH SAME DIMENSIONS, OTHERWISE THE DATAFRAME CANT BE MADE
+        - HarmonicityMeanEpochs
+        - HarmonicitySDEpochs
+        - FisherInformationMeanEpochs
+        - FisherInformationSDEpochs
         # - appEntropyMeanEpochs
         # - entropyMultiscaleMeanEpochs
         - higuchiFdMeanEpochs
@@ -872,10 +876,6 @@ aggregate:
         # - fooofOffset
         # - RelativeBandPowerFromAverageFooof
         # - RelativeBandPowerFromAverageSpectrum
-        - HarmonicityMeanEpochs
-        - HarmonicitySDEpochs
-        - FisherInformationMeanEpochs
-        - FisherInformationSDEpochs
 
 scalingAndFolding:
   aggregate_folders:
