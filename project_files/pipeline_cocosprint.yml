@@ -44,8 +44,8 @@ prep_inspection:
         # - RateEntropy
         - FisherInformationMeanEpochs
         - FisherInformationSDEpochs
-        - HarmonicityMeanEpochs3
-        - HarmonicitySDEpochs3
+        - HarmonicityMeanEpochsFixed
+        - HarmonicitySDEpochsFixed
         # - detrendedFluctuationMeanEpochs
         # - detrendedFluctuationSDEpochs
         # # - hjorthParams
@@ -108,7 +108,7 @@ prep_inspection:
             height: null
             bands: null
 
-    HarmonicityMeanEpochs3:
+    HarmonicityMeanEpochsFixed:
       overwrite: True
       chain:
         - feature: Harmonicity
@@ -120,7 +120,7 @@ prep_inspection:
             max_numitem: null # 20min at 5sec per epoch
             axisname: 'epochs'
 
-    HarmonicitySDEpochs3:
+    HarmonicitySDEpochsFixed:
       overwrite: True
       chain:
         - feature: Harmonicity
@@ -822,12 +822,12 @@ aggregate:
     petrosianFdSDEpochs :
       return_function : "eval%lambda x: x"
       file_suffix : petrosianFdSDEpochs
-    HarmonicityMeanEpochs3:
+    HarmonicityMeanEpochsFixed:
       return_function : "eval%lambda x: x"
-      file_suffix : HarmonicityMeanEpochs3
-    HarmonicitySDEpochs3:
+      file_suffix : HarmonicityMeanEpochsFixed
+    HarmonicitySDEpochsFixed:
       return_function : "eval%lambda x: x"
-      file_suffix : HarmonicitySDEpochs3
+      file_suffix : HarmonicitySDEpochsFixed
     FisherInformationMeanEpochs:
       return_function : "eval%lambda x: x"
       file_suffix : FisherInformationMeanEpochs
@@ -843,8 +843,8 @@ aggregate:
     MeanEpochs@prepDur30Ov15:
       feature_folder : 'features@prepDur30Ov15' # what if we have multiple feature folders?
       feature_list: # CHOOSE FEATURES WITH SAME DIMENSIONS, OTHERWISE THE DATAFRAME CANT BE MADE
-        - HarmonicityMeanEpochs3
-        - HarmonicitySDEpochs3
+        - HarmonicityMeanEpochsFixed
+        - HarmonicitySDEpochsFixed
         - FisherInformationMeanEpochs
         - FisherInformationSDEpochs
         # - appEntropyMeanEpochs

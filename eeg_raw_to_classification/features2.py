@@ -1443,6 +1443,7 @@ def process_harmonicity_output(harmo_dict,args=None):
     #fix order
     #breakpoint()
     harmo_dict['metadata']['order'] = ('epochs', 'spaces','metrics')
+    del harmo_dict['metadata']['axes']['bands']  # Remove bands from axes
 
     if isinstance(harmo_dict['values'], dict):
         harmo_dict = copy.deepcopy(harmo_dict)
