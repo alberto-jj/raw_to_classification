@@ -44,8 +44,8 @@ prep_inspection:
         # - RateEntropy
         - FisherInformationMeanEpochs
         - FisherInformationSDEpochs
-        - HarmonicityMeanEpochs2
-        - HarmonicitySDEpochs2
+        - HarmonicityMeanEpochs3
+        - HarmonicitySDEpochs3
         # - detrendedFluctuationMeanEpochs
         # - detrendedFluctuationSDEpochs
         # # - hjorthParams
@@ -108,7 +108,7 @@ prep_inspection:
             height: null
             bands: null
 
-    HarmonicityMeanEpochs2:
+    HarmonicityMeanEpochs3:
       overwrite: True
       chain:
         - feature: Harmonicity
@@ -120,7 +120,7 @@ prep_inspection:
             max_numitem: null # 20min at 5sec per epoch
             axisname: 'epochs'
 
-    HarmonicitySDEpochs2:
+    HarmonicitySDEpochs3:
       overwrite: True
       chain:
         - feature: Harmonicity
@@ -822,12 +822,12 @@ aggregate:
     petrosianFdSDEpochs :
       return_function : "eval%lambda x: x"
       file_suffix : petrosianFdSDEpochs
-    HarmonicityMeanEpochs2:
+    HarmonicityMeanEpochs3:
       return_function : "eval%lambda x: x"
-      file_suffix : HarmonicityMeanEpochs2
-    HarmonicitySDEpochs2:
+      file_suffix : HarmonicityMeanEpochs3
+    HarmonicitySDEpochs3:
       return_function : "eval%lambda x: x"
-      file_suffix : HarmonicitySDEpochs2
+      file_suffix : HarmonicitySDEpochs3
     FisherInformationMeanEpochs:
       return_function : "eval%lambda x: x"
       file_suffix : FisherInformationMeanEpochs
