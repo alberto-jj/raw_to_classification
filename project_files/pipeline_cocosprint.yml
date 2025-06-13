@@ -44,8 +44,8 @@ prep_inspection:
         # - RateEntropy
         - FisherInformationMeanEpochs
         - FisherInformationSDEpochs
-        - HarmonicityMeanEpochs
-        - HarmonicitySDEpochs
+        - HarmonicityMeanEpochs2
+        - HarmonicitySDEpochs2
         # - detrendedFluctuationMeanEpochs
         # - detrendedFluctuationSDEpochs
         # # - hjorthParams
@@ -108,7 +108,7 @@ prep_inspection:
             height: null
             bands: null
 
-    HarmonicityMeanEpochs:
+    HarmonicityMeanEpochs2:
       overwrite: True
       chain:
         - feature: Harmonicity
@@ -120,7 +120,7 @@ prep_inspection:
             max_numitem: null # 20min at 5sec per epoch
             axisname: 'epochs'
 
-    HarmonicitySDEpochs:
+    HarmonicitySDEpochs2:
       overwrite: True
       chain:
         - feature: Harmonicity
@@ -843,8 +843,8 @@ aggregate:
     MeanEpochs@prepDur30Ov15:
       feature_folder : 'features@prepDur30Ov15' # what if we have multiple feature folders?
       feature_list: # CHOOSE FEATURES WITH SAME DIMENSIONS, OTHERWISE THE DATAFRAME CANT BE MADE
-        - HarmonicityMeanEpochs
-        - HarmonicitySDEpochs
+        - HarmonicityMeanEpochs2
+        - HarmonicitySDEpochs2
         - FisherInformationMeanEpochs
         - FisherInformationSDEpochs
         # - appEntropyMeanEpochs

@@ -1441,7 +1441,7 @@ def feature_harmonicity(input_dict, height=None, distance=None, bands=None):
 
 def process_harmonicity_output(harmo_dict,args=None):
     #fix order
-    breakpoint()
+    #breakpoint()
     harmo_dict['metadata']['order'] = ('epochs', 'spaces', 'bands', 'metrics')
 
     if isinstance(harmo_dict['values'], dict):
