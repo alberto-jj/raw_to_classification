@@ -113,7 +113,7 @@ prep_inspection:
       chain:
         - feature: Harmonicity
         - function: process_harmonicity_output
-          args: null
+          args: {}
         - function: agg_numpy
           args:
             numpyfun: eval%np.nanmean
@@ -125,7 +125,7 @@ prep_inspection:
       chain:
         - feature: Harmonicity
         - function: process_harmonicity_output
-          args: null
+          args: {}
         - function: agg_numpy
           args:
             numpyfun: eval%np.nanstd
