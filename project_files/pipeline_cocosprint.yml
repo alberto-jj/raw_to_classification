@@ -109,7 +109,7 @@ prep_inspection:
             bands: null
 
     HarmonicityMeanEpochs:
-      overwrite: False
+      overwrite: True
       chain:
         - feature: Harmonicity
         - function: process_harmonicity_output
@@ -121,7 +121,7 @@ prep_inspection:
             axisname: 'epochs'
 
     HarmonicitySDEpochs:
-      overwrite: False
+      overwrite: True
       chain:
         - feature: Harmonicity
         - function: process_harmonicity_output

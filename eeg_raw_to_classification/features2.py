@@ -1430,7 +1430,7 @@ def feature_harmonicity(input_dict, height=None, distance=None, bands=None):
                 'bands': band_names,
                 'metrics': metrics_list
             },
-            'order': ('epochs', 'spaces'),
+            'order': ('epochs', 'spaces')
         },
         'values': {
             'max_peaks': max_peaks,
@@ -1440,6 +1440,9 @@ def feature_harmonicity(input_dict, height=None, distance=None, bands=None):
     return out_dict
 
 def process_harmonicity_output(harmo_dict,args=None):
+    #fix order
+    harmo_dict['metadata']['order'] = ('epochs', 'spaces', 'bands', 'metrics')
+
     if isinstance(harmo_dict['values'], dict):
         harmo_dict = copy.deepcopy(harmo_dict)
         harmo_dict['metadata']['peaks'] = harmo_dict['values']['max_peaks']
