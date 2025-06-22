@@ -1,0 +1,72 @@
+DUMMY1:
+  dataset_label : DUMMY1
+  skip : False
+
+  example_file: 
+    local: "./data/DUMMY1/DUMMY1_SOURCE/*/*/*.vhdr"
+
+  bidsify:
+    paths:
+      source_path :
+        local: "./data/DUMMY1/DUMMY1_SOURCE/"
+      bids_path :
+        local: "./data/DUMMY1/DUMMY1_BIDS/"
+    rules : "./data/DUMMY1/DUMMY1_rules_placeholder.yml"
+  # Participants 
+  participants:
+    participants_file : 
+      local: "./data/DUMMY1/DUMMY1_BIDS/participants.tsv"
+    cleaned_participants : 
+      local: "./data/DUMMY1/DUMMY1_BIDS/participants_cleaned.tsv"
+
+  # Processing
+  ch_names: None
+  PowerLineFrequency : null
+  # BIDS
+  bids_root : 
+    local: "./data/DUMMY1/DUMMY1_BIDS/"
+  derivatives_root : 
+    local: "./data/DUMMY1_derivatives/"
+
+  # Files to be included in the study
+  bids_layout:
+    extension: ".vhdr"
+    suffix : 'eeg'
+    return_type : 'filename'
+
+
+DUMMY2:
+  dataset_label : DUMMY2
+  skip : False
+
+  example_file: 
+    local: "./data/DUMMY2/DUMMY2_SOURCE/*/*/*.vhdr"
+
+  bidsify:
+    paths:
+      source_path :
+        local: "./data/DUMMY2/DUMMY2_SOURCE/"
+      bids_path :
+        local: "./data/DUMMY2/DUMMY2_BIDS/"
+    rules : "./data/DUMMY2/DUMMY2_rules_placeholder.yml"
+  # Participants 
+  participants:
+    participants_file : 
+      local: "./data/DUMMY2/DUMMY2_BIDS/participants.tsv"
+    cleaned_participants : 
+      local: "./data/DUMMY2/DUMMY2_BIDS/participants_cleaned.tsv"
+
+  # Processing
+  ch_names: None
+  PowerLineFrequency : null
+  # BIDS
+  bids_root : 
+    local: "./data/DUMMY2/DUMMY2_BIDS/"
+  derivatives_root : 
+    local: "./data/DUMMY2_derivatives/"
+
+  # Files to be included in the study
+  bids_layout:
+    extension: ".vhdr"
+    suffix : 'eeg'
+    return_type : 'filename'

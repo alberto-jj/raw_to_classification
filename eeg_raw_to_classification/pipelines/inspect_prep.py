@@ -12,7 +12,7 @@ import traceback
 import pandas as pd
 import pathlib
 
-def main(pipeline_file):
+def pipeline_inspect_prep(pipeline_file):
     PIPELINE = load_yaml(pipeline_file)
     MOUNT = PIPELINE.get('mount', None)
     datasets = load_yaml(get_path(PIPELINE['datasets_file'], MOUNT))
@@ -20,12 +20,12 @@ def main(pipeline_file):
 
     PROJECT = PIPELINE['project']
 
-    for preplabel in PIPELINE['prep_inspection']['prep_list']:
-        outputfolder = PIPELINE['prep_inspection']['path']
+    for preplabel in PIPELINE['3a_prep_inspection']['prep_list']:
+        outputfolder = PIPELINE['3a_prep_inspection']['path']
         outputfolder = get_path(outputfolder, MOUNT).replace('%PROJECT%', PROJECT)
 
         ## Get the number of epochs
-        if 'epochs' in PIPELINE['prep_inspection']['checks']:
+        if 'epochs' in PIPELINE['3a_prep_inspection']['checks']:
             SHAPES = []
             EEGS = []
             DATASETS = []
@@ -48,6 +48,8 @@ def main(pipeline_file):
                 pattern = os.path.join(derivatives_root, '**/*_epo.fif')
                 pattern = pathlib.Path(pattern).as_posix()
                 meegs = glob.glob(pattern, recursive=True)
+                meegs = [x for x in meegs if ('split-01' in x or not 'split-' in x)] # 01 will work if at most 99 split files?
+
                 for meeg_file in meegs:
                     print(meeg_file)
                     epochs = mne.read_epochs(meeg_file, preload=True)
@@ -73,7 +75,7 @@ def main(pipeline_file):
                 print('BaseEpochs info saved to:', outputpath)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Run the EEG preprocessing inspection.')
+    parser = argparse.ArgumentParser(description='Run the MEEG preprocessing inspection.')
     parser.add_argument('pipeline_file', type=str, help='Path to the pipeline.yml file')
     args = parser.parse_args()
-    main(args.pipeline_file)
+    pipeline_inspect_prep(args.pipeline_file)

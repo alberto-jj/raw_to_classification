@@ -1,0 +1,274 @@
+import argparse
+import bids
+import psutil
+import os
+import matplotlib.pyplot as plt
+import numpy as np
+import glob
+from toposort import toposort
+from eeg_raw_to_classification.utils import load_yaml, get_path, get_derivative_path
+from joblib import delayed, Parallel
+import itertools
+from graphlib import TopologicalSorter
+import pathlib
+import pdb
+import pandas as pd
+
+def get_dependencies(feature, FEATURE_CFG):
+    dependencies = []
+    depends_on = [f['feature'] for f in FEATURE_CFG[feature]['chain'] if 'feature' in f]
+    dependencies += depends_on + list(itertools.chain(*[get_dependencies(f, FEATURE_CFG) for f in depends_on]))
+    return dependencies
+
+def foo(meeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, DEBUG=False,retry_errors=False, inspect_only=False):
+    from mne.datasets.eegbci import standardize
+    import mne
+    import os
+    from eeg_raw_to_classification import features2 as feat
+    from eeg_raw_to_classification.utils import load_yaml, save_dict_to_json,get_path
+    import traceback
+
+    dirname = os.path.dirname(meeg_file)
+    finame = os.path.basename(meeg_file)
+    derifile = meeg_file.replace(prep_pipeline, pipeline_name)
+    errorfile = derifile.replace('_epo.fif',f'_{feature}.error')
+    #os.path.join(dirname, f'file-{finame}_feature-{feature}_featureError.txt')
+        # inspect first if the file is already processed
+    inspect_dicts = feat.process_feature(None, derifile, FEATURE_CFG, feature, pipeline_name, inspect_only=True)
+    inspect_vector = [x['status'] for x in inspect_dicts]
+    inspect_ = np.all(inspect_vector)
+    inspect_error = os.path.isfile(errorfile) and not inspect_ 
+    #breakpoint()
+
+    if inspect_:
+        print(f'{feature} already processed for {finame}, skipping')
+        return inspect_dicts
+    if inspect_error and not retry_errors:
+        print(f'{feature} had an error, skipping according to retry_errors={retry_errors}')
+        return inspect_dicts
+    #breakpoint()
+    if inspect_only:
+        return inspect_dicts
+
+    skip_read = False
+    if len(inspect_vector) > 1:
+        if inspect_vector[-2] == True:
+            skip_read = True
+    try:
+        #breakpoint()
+        if not skip_read:
+            epochs = mne.read_epochs(meeg_file, preload=True)
+            if standardize_epochs:
+                standardize(epochs)
+            if featurepipelineCFG.get('prefilter', None) is not None:
+                epochs = epochs.filter(**featurepipelineCFG['prefilter'])
+            if DOWNSAMPLE is not None:
+                epochs = epochs.resample(DOWNSAMPLE)
+            if keep_channels:
+                # We picked the common channels between datasets for simplicity
+                epochs = epochs.reorder_channels(keep_channels)
+        else:
+            epochs = None
+        try:
+            print(f'Processing {feature} for {finame}')
+            output = feat.process_feature(epochs, derifile, FEATURE_CFG, feature, pipeline_name)
+        except:
+            if DEBUG:
+                raise
+            else:
+                save_dict_to_json(errorfile, {'error': traceback.format_exc()})
+    except:
+        if DEBUG:
+            raise
+        else:
+            save_dict_to_json(errorfile, {'error': traceback.format_exc()})
+
+def pipeline_features(pipeline_file, external_jobs, debug, parallelize, retry_errors, single_index=None, only_total=False, inspect_only=False):
+    PIPELINE = load_yaml(pipeline_file)
+    MOUNT = PIPELINE.get('mount', None)
+    datasets = load_yaml(get_path(PIPELINE['datasets_file'], MOUNT))
+    #datasets = load_yaml(PIPELINE['datasets_file'])
+    PROJECT = PIPELINE['project']
+
+    if debug:
+        os.environ['PYTHONBREAKPOINT'] = 'pdb.set_trace'
+    else:
+        os.environ['PYTHONBREAKPOINT'] = '0'
+
+    for featurepipeline in PIPELINE['4_features']['feature_pipeline_list']:
+        print(f'Feature Pipeline: {featurepipeline}')
+
+        featurepipelineCFG = PIPELINE['4_features']['feature_pipeline_cfg'][featurepipeline]
+        CFG = PIPELINE['4_features']
+        pipeline_name = featurepipeline
+        prep_pipeline = featurepipelineCFG['prep_pipeline']
+        FEATURE_CFG = CFG['feature_cfg']
+
+    # see which of these features depend on the calculation of other features to avoid redundancy and parallelize (avoid race conditions)
+        chains_of_features = {}
+        for feature in featurepipelineCFG['feature_list']:
+            chains_of_features[feature] = get_dependencies(feature, FEATURE_CFG)
+        # assume that if a feature depends on more than one feature, the list is in reverse order of calculation
+        # so that means that the last feature does not depend on anything
+        # create new keys with this order
+
+        new_chains_of_features = {}
+        for feature in chains_of_features:
+            if len(chains_of_features[feature]) > 0:
+                for ixf, feature_2 in enumerate(chains_of_features[feature][:-1]):
+                    new_chains_of_features[feature_2] = [chains_of_features[feature][ixf + 1]]
+                new_chains_of_features[feature] = [chains_of_features[feature][0]]
+            else:
+                new_chains_of_features[feature] = []
+        # based on chains of feature how to create levels of parallelization that dont race
+        levels = list(toposort(new_chains_of_features))
+
+        DOWNSAMPLE = featurepipelineCFG['downsample']
+        keep_channels = featurepipelineCFG['keep_channels']
+        standardize_epochs = featurepipelineCFG.get('standardize_epochs', True)
+
+
+        all_MEEGS = []
+        for dslabel, DATASET in datasets.items():
+            if DATASET.get('skip', False):
+                continue
+            bids_root = DATASET.get('bids_root', None)
+            bids_root = get_path(bids_root, MOUNT)
+            file_filter = DATASET.get('raw_layout', None)
+
+
+            derivatives_root = DATASET.get('derivatives_root', None)
+            
+            if derivatives_root is not None:
+                derivatives_root = get_path(derivatives_root, MOUNT)
+            else:
+                derivatives_root = os.path.join(bids_root, f'derivatives/')
+            prep_root = pathlib.Path(os.path.join(derivatives_root,prep_pipeline)).as_posix()
+            bids_root = pathlib.Path(bids_root).as_posix()
+            
+            # if single_index is not None or only_total:
+            #     layout = bids.BIDSLayout(bids_root)
+            #     all_raws = layout.get(**file_filter)
+
+            #     get_derivative = lambda x: get_derivative_path(layout, x, 'reject', 'epo', '.fif', bids_root, prep_root)
+            #     meegs = [get_derivative(x) for x in all_raws]
+            # else:
+            #     pattern = os.path.join(prep_root, '**/*_epo.fif')
+            #     pattern = pathlib.Path(pattern).as_posix()
+            #     meegs = glob.glob(pattern, recursive=True)
+            #     meegs = [pathlib.Path(x).as_posix() for x in meegs ]
+            pattern = os.path.join(prep_root, '**/*_epo.fif')
+            pattern = pathlib.Path(pattern).as_posix()
+            meegs = glob.glob(pattern, recursive=True)
+            meegs = [pathlib.Path(x).as_posix() for x in meegs ]
+
+            feat_root = pathlib.Path(os.path.join(derivatives_root, pipeline_name)).as_posix()
+            os.makedirs(feat_root, exist_ok=True)
+
+            for meeg_file in meegs:
+                all_MEEGS.append(meeg_file)
+        # remove split files
+        all_MEEGS = [x for x in all_MEEGS if ('split-01' in x or not 'split-' in x)] # 01 will work if at most 99 split files?
+        if only_total:
+            print(f'Total number of files: {len(all_MEEGS)}')
+            for i,eeg in enumerate(all_MEEGS):
+                print(i,eeg)
+            print(f'Total number of files: {len(all_MEEGS)}')
+            return len(all_MEEGS)
+        
+        if single_index is not None:
+            print(len(all_MEEGS), single_index)
+            all_MEEGS = [all_MEEGS[single_index]]
+        
+
+        inspect_list = []
+        if parallelize:
+            if inspect_only:
+                raise ValueError('inspect_only is not compatible with parallelize=True')
+            for level in levels:
+                x = Parallel(n_jobs=external_jobs)(delayed(foo)(meeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, debug,retry_errors, inspect_only ) for meeg_file in all_MEEGS for feature in level)
+                # flatten x
+                x_2 =[ item for sublist in x for item in sublist]
+                inspect_list += x_2
+        else:
+            for count,meeg_file in enumerate(all_MEEGS):
+                for level in levels:
+                    for feature in level:
+                        x = foo(meeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipelineCFG, FEATURE_CFG, feature, pipeline_name, prep_pipeline, debug, retry_errors, inspect_only)
+                        if x:
+                            for d in x:
+                                d.update({'source_file': meeg_file, 'feature': feature, '_index': count})
+                            inspect_list += x
+
+    if inspect_only and not single_index: # as we write here, avoid writing collisions between workers
+
+        outputfolder = PIPELINE['4_features'].get('path_inspection','.')
+        outputfolder = get_path(outputfolder, MOUNT).replace('%PROJECT%', PROJECT)
+        os.makedirs(outputfolder, exist_ok=True)
+        np.save(os.path.join(outputfolder, f'{pipeline_name}_inspect_list.npy'), inspect_list)
+        df = pd.DataFrame(inspect_list)
+
+        df.to_csv(os.path.join(outputfolder, f'{pipeline_name}_inspect_list.csv'), index=False)
+
+        # For each (source_file, _index), check if any status is False (i.e., any missing feature)
+        problem_pairs = (
+            df.groupby(['source_file', '_index'])['status']
+            .min()
+            .reset_index()
+        )
+
+        # Only keep pairs with status == False (i.e., at least one missing feature)
+        problem_pairs = problem_pairs[problem_pairs['status'] == False]
+
+        # For each source_file, collect the list of _index values
+        file_to_missing_indices = (
+            problem_pairs.groupby('source_file')['_index']
+            .apply(list)
+            .to_dict()
+        )
+
+        # Filter the original dataframe to only the missing features
+        missing_rows = df[df['status'] == False]
+
+        # Group by source_file and _index, aggregate the list of missing features
+        missing_features_per_instance = (
+            missing_rows.groupby(['source_file', '_index'])['feature']
+            .apply(list)
+            .reset_index()
+        )
+
+        # Pivot to nested dictionary
+        file_to_index_missingfeatures = (
+            missing_features_per_instance
+            .groupby('source_file')
+            .apply(lambda x: dict(zip(x['_index'], x['feature'])))
+            .to_dict()
+        )
+        missing_index_list = list(file_to_missing_indices.values())
+        # flatten the list of lists
+        missing_index_list = [item for sublist in missing_index_list for item in sublist]
+        # Save the results to a JSON file
+        import json
+        with open(os.path.join(outputfolder, f'{pipeline_name}_missing_features.json'), 'w') as f:
+            json.dump({
+                'missing_index_list': missing_index_list,
+                'file_to_missing_indices': file_to_missing_indices,
+                'file_to_index_missingfeatures': file_to_index_missingfeatures
+            }, f, indent=4)
+        
+
+    return inspect_list
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Run MEEG feature extraction pipeline.')
+    parser.add_argument('pipeline_file', type=str, help='Path to the pipeline YAML file.')
+    parser.add_argument('--external_jobs', type=int, default=1, help='Number of external jobs for parallel processing.')
+    parser.add_argument('--raise_on_error', action='store_true', help='Raise on error if set.')
+    parser.add_argument('--retry_errors', action='store_true', help='Retry files that had errors.')
+    parser.add_argument('--index', type=int, default=None, help='Index of the file to process. Total index taking into account the dataset outer loop.')
+    parser.add_argument('--only_total', action='store_true', help='Just get the total number of files.')
+    parser.add_argument('--inspect_only', action='store_true', help='Just get the status of the features for each file.')
+
+    args = parser.parse_args()
+    inspect_list = pipeline_features(args.pipeline_file, args.external_jobs, args.raise_on_error, args.external_jobs > 1, args.retry_errors, args.index, args.only_total, args.inspect_only)
+
+
