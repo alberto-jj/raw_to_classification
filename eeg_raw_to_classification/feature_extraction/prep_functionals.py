@@ -15,7 +15,7 @@ from .decorators import functional_feature_decorator
 from .utils import get_mne_metadata, update_provenance, get_kind_from_snake
 from inspect import currentframe
 from .utils import get_replaced_axes_order_values, get_sliced_index_combinations
-
+from ..utils import eval_expressions
 
 
 @functional_feature_decorator('functional_cast_to_structure_feature', 'mne')
@@ -63,6 +63,8 @@ def functional_resample_feature(input: Union[BaseEpochs,BaseRaw,FunctionalFeatur
     input = functional_cast_to_structure_feature(input, label=label)
     kind = get_kind_from_snake(currentframe().f_code.co_name)
     kind = input.metadata.kind + kind if input.metadata.kind else kind
+
+    mne_kwargs = eval_expressions(mne_kwargs, {'input': input, 'np':np})
 
     # Get metadata
     input_order, input_axes, extra_metadata, provenance = get_mne_metadata(input)
@@ -112,6 +114,8 @@ def functional_make_fixed_length_epochs_feature(input: Union[BaseEpochs,Function
     # Get metadata
     input_order, input_axes, extra_metadata, provenance = get_mne_metadata(input)
 
+    mne_kwargs = eval_expressions(mne_kwargs, {'input': input, 'np':np})
+
     epoched_data = make_fixed_length_epochs(input_mne, preload=True,**(mne_kwargs if mne_kwargs else {}))
     # The epochs constructor must preload the data for it to work in subsequent steps of the chain
     input_order, input_axes, extra_metadata, provenance = get_mne_metadata(epoched_data)
@@ -153,6 +157,8 @@ def functional_notch_filter_feature(input: Union[BaseRaw,FunctionalFeatureStruct
 
     # Get metadata
     input_order, input_axes, extra_metadata, provenance = get_mne_metadata(input)
+
+    mne_kwargs = eval_expressions(mne_kwargs, {'input': input, 'np':np})
 
     # Notch filter
     input_mne = input.values.copy() # Create a copy to avoid modifying the original data
@@ -249,6 +255,8 @@ def functional_filter_feature(input: Union[BaseEpochs, BaseRaw, FunctionalFeatur
 
     # Get metadata
     input_order, input_axes, extra_metadata, provenance = get_mne_metadata(input)
+
+    mne_kwargs = eval_expressions(mne_kwargs, {'input': input, 'np':np})
 
     # Filter the data
     input_mne = input.values.copy()  # Create a copy to avoid modifying the original data
@@ -360,6 +368,7 @@ def functional_set_montage_feature(
 
     input_mne = input.values.copy()
     mne_kwargs = mne_kwargs or {}
+    mne_kwargs = eval_expressions(mne_kwargs, {'input': input, 'np':np})
 
     montage_kind = mne_kwargs.get("montage_kind", None)
     if not montage_kind:

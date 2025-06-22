@@ -18,7 +18,7 @@ from .utils import get_kind_from_snake, update_provenance
 from mne.time_frequency import psd_array_multitaper, psd_array_welch
 from scipy.integrate import simpson as simps
 from fooof import FOOOF
-
+from ..utils import eval_expressions
 # Extra Imports, maybe useful once we implement feature inspection/visualization
 # import matplotlib.pyplot as plt
 # import base64
@@ -79,6 +79,11 @@ def functional_spectrum_feature(input: Union[BaseEpochs,BaseRaw],*, label: Optio
     # Get metadata
     input_order, input_axes, extra_metadata, provenance = get_mne_metadata(input)
 
+    mne_kwargs = eval_expressions(mne_kwargs, {'input': input, 'np':np})
+
+    if not 'sfreq' in mne_kwargs:
+        sfreq=input.values.info['sfreq']
+        mne_kwargs['sfreq'] = sfreq
 
     # In general for all features, validate the input array dimensions (number and order or set of dimensions)
     assert input.values.get_data().ndim in [2,3], "Input data must be 2D or 3D (e.g., mne.io.BaseRaw or mne.BaseEpochs)."
@@ -101,11 +106,11 @@ def functional_spectrum_feature(input: Union[BaseEpochs,BaseRaw],*, label: Optio
     if method == "multitaper":
         output_kind = mne_kwargs.get('output', 'power') # default is power
         if output_kind == 'power':
-            psds, freqs = psd_array_multitaper(input.values.get_data(), sfreq=input.values.info['sfreq'], **(mne_kwargs or {}))
+            psds, freqs = psd_array_multitaper(input.values.get_data(), **(mne_kwargs or {}))
             output_order = output_order + ('frequencies',)
             output_axes['frequencies'] = freqs
         elif output_kind == 'complex':
-            psds, freqs, weights = psd_array_multitaper(input.values.get_data(), sfreq=input.values.info['sfreq'], **(mne_kwargs or {}))
+            psds, freqs, weights = psd_array_multitaper(input.values.get_data(), **(mne_kwargs or {}))
             output_order = output_order + ('tapers', 'frequencies', )
             output_axes['tapers'] = list(range(weights.shape[0]))
             output_axes['frequencies'] = freqs
@@ -260,11 +265,7 @@ def functional_bandspectrum_feature(input: FunctionalFeatureStructure, *, bands:
 def single_fooof(freqs, psds, internal_kwargs: Dict[str, Dict[str, Any]]) -> FOOOF:
     """Fit a single FOOOF model with evaluated kwargs if needed."""
     kwargs = deepcopy(internal_kwargs)
-    for section in kwargs:
-        for key, value in kwargs[section].items():
-            if isinstance(value, str) and 'eval%' in value:
-                expression = value.replace('eval%', '')
-                kwargs[section][key] = eval(expression)
+
 
     fm = FOOOF(verbose=False, **kwargs.get('FOOOF', {}))
     fm.fit(freqs, psds, **kwargs.get('fit', {}))
@@ -296,6 +297,8 @@ def functional_fooof_feature(
     axes = input.metadata.axes
     order = input.metadata.order
     sliced_axis = 'frequencies'
+
+    internal_kwargs = eval_expressions(internal_kwargs, {'input': input, 'np': np})
 
     # 👇 Use reduced axis logic instead of replaced
     new_order, new_axes, new_values = get_reduced_axes_order_values(axes, order, removed_axis=sliced_axis)

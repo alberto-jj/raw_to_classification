@@ -15,6 +15,7 @@ from .decorators import functional_feature_decorator
 from .utils import get_mne_metadata
 from .utils import get_replaced_axes_order_values, get_sliced_index_combinations, get_reduced_axes_order_values
 from .utils import get_kind_from_snake, update_provenance
+from ..utils import eval_expressions
 
 # Feature Imports
 from mne.time_frequency import psd_array_multitaper, psd_array_welch
@@ -39,6 +40,8 @@ def feature_factory(label, fun, package='Unknown', returns=None):
 
         kind = get_kind_from_snake(fun.__name__)
 
+
+        kwargs = eval_expressions(kwargs, {'input': input, 'sf': sf, 'data': data, 'ch_names': ch_names, 'np':np})
         # Handle both Raw (2D) and Epochs (3D)
         if data.ndim == 2:  # (channels, time)
             n_epochs = 1

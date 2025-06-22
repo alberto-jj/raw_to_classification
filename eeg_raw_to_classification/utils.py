@@ -14,6 +14,33 @@ from mne.io import read_raw
 from mne import read_epochs
 
 
+def eval_expressions(obj, local_vars=None):
+    """
+    Recursively traverse a nested structure (dicts/lists) and evaluate any string with 'eval%' prefix.
+    
+    Parameters:
+        obj: The input structure (can be dict, list, or scalar).
+        local_vars: Optional dictionary with local variables for evaluation context.
+    
+    Returns:
+        A copy of the structure with 'eval%' strings replaced by evaluated expressions.
+    """
+    if local_vars is None:
+        local_vars = {}
+
+    if isinstance(obj, dict):
+        return {k: eval_expressions(v, local_vars) for k, v in obj.items()}
+
+    elif isinstance(obj, list):
+        return [eval_expressions(item, local_vars) for item in obj]
+
+    elif isinstance(obj, str) and obj.startswith("eval%"):
+        expression = obj.replace("eval%", "", 1)
+        return eval(expression, {}, local_vars)
+
+    else:
+        return obj
+
 def find_minimal_unique_root(filepaths):
     """Find the minimal common root such that the relative paths from it are unique."""
     # Split each path into components
