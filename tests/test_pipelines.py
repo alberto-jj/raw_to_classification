@@ -184,8 +184,8 @@ def test_features():
     pipeline_features("./project_files/dummy_pipeline.yml")
     print("Features test completed successfully.")
 if __name__ == '__main__':
-    # test_dummy_dataset()
-    test_inspect()
+    test_dummy_dataset()
+    #test_inspect()
     # test_dataset2bids()
     # test_participants()
     # test_preprocess()
