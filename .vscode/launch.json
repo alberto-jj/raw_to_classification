@@ -12,7 +12,7 @@
             "program": "${workspaceFolder}/scripts/0_inspect.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args": ["project_files/pipeline_test.yml"]
+            "args": ["project_files/dummy_pipeline.yml"]
         },
 
             {
