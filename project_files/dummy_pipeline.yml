@@ -45,10 +45,10 @@ mount: local
       standardize_epochs : False
       feature_list: # To say which features actually compute rather than configure
         # - RateEntropy
-        - FisherInformationMeanEpochs
-        - FisherInformationSDEpochs
-        - HarmonicityMeanEpochsFixed
-        - HarmonicitySDEpochsFixed
+        # - FisherInformationMeanEpochs
+        # - FisherInformationSDEpochs
+        # - HarmonicityMeanEpochsFixed
+        # - HarmonicitySDEpochsFixed
         # - detrendedFluctuationMeanEpochs
         # - detrendedFluctuationSDEpochs
         # # - hjorthParams
@@ -75,7 +75,7 @@ mount: local
         # - lzivComplexityMeanEpochs
         # - lzivComplexitySDEpochs
         # # # - appEntropyMeanEpochs
-        # - PowerSpectrum
+        - PowerSpectrum
         # - PowerSpectrumAverage
         # #- RelativeBandPowerFromAverageSpectrum
         # #- FooofFromAverage

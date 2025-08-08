@@ -179,13 +179,18 @@ def test_prep_inspect():
     pipeline_inspect_prep("./project_files/dummy_pipeline.yml")
     print("Prep inspect test completed successfully.")
 
+def test_features():
+    from eeg_raw_to_classification.pipelines.features import pipeline_features
+    pipeline_features("./project_files/dummy_pipeline.yml")
+    print("Features test completed successfully.")
 if __name__ == '__main__':
-    #test_dummy_dataset()
-    #test_inspect()
-    #test_dataset2bids()
-    #test_participants()
-    #test_preprocess()
-    test_prep_inspect()
+    # test_dummy_dataset()
+    test_inspect()
+    # test_dataset2bids()
+    # test_participants()
+    # test_preprocess()
+    # test_prep_inspect()
+    #test_features()
 
 
     print('ok')

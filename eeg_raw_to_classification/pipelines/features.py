@@ -83,7 +83,7 @@ def foo(meeg_file, DOWNSAMPLE, keep_channels, standardize_epochs, featurepipelin
         else:
             save_dict_to_json(errorfile, {'error': traceback.format_exc()})
 
-def pipeline_features(pipeline_file, external_jobs, debug, parallelize, retry_errors, single_index=None, only_total=False, inspect_only=False):
+def pipeline_features(pipeline_file, external_jobs=1, debug=False, parallelize=False, retry_errors=True, single_index=None, only_total=False, inspect_only=False):
     PIPELINE = load_yaml(pipeline_file)
     MOUNT = PIPELINE.get('mount', None)
     datasets = load_yaml(get_path(PIPELINE['datasets_file'], MOUNT))
