@@ -1,15 +1,32 @@
-import argparse
-from eeg_raw_to_classification.pipelines.features import pipeline_features
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Run MEEG feature extraction pipeline.')
-    parser.add_argument('pipeline_file', type=str, help='Path to the pipeline YAML file.')
-    parser.add_argument('--external_jobs', type=int, default=1, help='Number of external jobs for parallel processing.')
-    parser.add_argument('--raise_on_error', action='store_true', help='Raise on error if set.')
-    parser.add_argument('--retry_errors', action='store_true', help='Retry files that had errors.')
-    parser.add_argument('--index', type=int, default=None, help='Index of the file to process. Total index taking into account the dataset outer loop.')
-    parser.add_argument('--only_total', action='store_true', help='Just get the total number of files.')
-    parser.add_argument('--inspect_only', action='store_true', help='Just get the status of the features for each file.')
+"""
+DEPRECATED: This script is deprecated in favor of the new CLI entry points.
 
-    args = parser.parse_args()
-    inspect_list = pipeline_features(args.pipeline_file, args.external_jobs, args.raise_on_error, args.external_jobs > 1, args.retry_errors, args.index, args.only_total, args.inspect_only)
+After installing the package with 'pip install -e .', use the new commands:
+
+  meeg-features project_files/dummy_pipeline.yml --external-jobs 4
+  meeg-features project_files/dummy_pipeline.yml --retry-errors
+  meeg-features project_files/dummy_pipeline.yml --inspect-only
+  
+For backward compatibility, this script still works but will redirect to the new CLI.
+"""
+
+import warnings
+
+# Show deprecation warning
+warnings.warn(
+    "scripts/4_features.py is deprecated. Use 'meeg-features' command instead. "
+    "Install with 'pip install -e .' to get the new CLI commands.",
+    DeprecationWarning,
+    stacklevel=2
+)
+
+# Redirect to new CLI
+from eeg_raw_to_classification.cli.commands import features_main
+
+if __name__ == "__main__":
+    print("⚠️  DEPRECATED: This script is deprecated.")
+    print("   After 'pip install -e .', use: meeg-features <args>")
+    print("   Redirecting to new CLI...\n")
+    
+    features_main()
 

@@ -1,9 +1,32 @@
-import argparse
-from eeg_raw_to_classification.pipelines.inspect import pipeline_inspect
+"""
+DEPRECATED: This script is deprecated in favor of the new CLI entry points.
+
+After installing the package with 'pip install -e .', use the new commands:
+
+  meeg-inspect project_files/dummy_pipeline.yml --max-files 10
+  meeg-inspect project_files/dummy_pipeline.yml --output-format yaml
+  meeg-inspect project_files/dummy_pipeline.yml --debug
+  
+For backward compatibility, this script still works but will redirect to the new CLI.
+"""
+
+import sys
+import warnings
+
+# Show deprecation warning
+warnings.warn(
+    "scripts/0_inspect.py is deprecated. Use 'meeg-inspect' command instead. "
+    "Install with 'pip install -e .' to get the new CLI commands.",
+    DeprecationWarning,
+    stacklevel=2
+)
+
+# Redirect to new CLI
+from eeg_raw_to_classification.cli.commands import inspect_main
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Inspect MEEG datasets.')
-    parser.add_argument('pipeline_file', type=str, help='Path to the pipeline.yml file')
-    parser.add_argument('--max_files', type=int, default=None, help='Maximum number of files to process per dataset')
-    args = parser.parse_args()
-    pipeline_inspect(args.pipeline_file, max_files=args.max_files)
+    print("⚠️  DEPRECATED: This script is deprecated.")
+    print("   After 'pip install -e .', use: meeg-inspect <args>")
+    print("   Redirecting to new CLI...\n")
+    
+    inspect_main()
