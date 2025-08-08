@@ -1,7 +1,23 @@
+"""
+Refactored MEEG inspection pipeline with improved architecture.
+
+This module provides both the new structured approach and backward compatibility
+with the original pipeline_inspect function.
+"""
+
+import logging
+from pathlib import Path
+from typing import Optional, Dict, Any
+
+# Import new structured components
+from .inspection_wrapper import MEEGInspectionPipeline
+from .inspection_types import GlobalInspectionResult
+from ..loggers import setup_pipeline_logging
+
+# Legacy imports for backward compatibility
 import mne
 import os
 import glob
-import argparse
 from eeg_raw_to_classification.utils import load_yaml, save_dict_to_json, save_figs_in_html,get_path, load_meeg, find_minimal_unique_root
 import numpy as np
 import pandas as pd
@@ -9,7 +25,60 @@ import traceback
 import pathlib
 import importlib
 import matplotlib.pyplot as plt
-def pipeline_inspect(pipeline_file, max_files=None):
+
+
+def pipeline_inspect(
+    pipeline_file: str, 
+    max_files: Optional[int] = None,
+    output_format: str = "json",
+    logger: Optional[logging.Logger] = None,
+    use_legacy: bool = False
+) -> Optional[GlobalInspectionResult]:
+    """
+    Main pipeline inspection function with new structured approach.
+    
+    Args:
+        pipeline_file: Path to pipeline configuration file
+        max_files: Maximum files to process per dataset
+        output_format: Output format ('json', 'yaml', 'both')
+        logger: Optional logger instance
+        use_legacy: Use legacy implementation for backward compatibility
+        
+    Returns:
+        GlobalInspectionResult if using new implementation, None if legacy
+    """
+    if use_legacy:
+        # Use original implementation for backward compatibility
+        return _pipeline_inspect_legacy(pipeline_file, max_files)
+    
+    # Use new structured implementation
+    if logger is None:
+        # Create a simple logger if none provided
+        structured_logger = setup_pipeline_logging(
+            "inspect_pipeline", 
+            Path("./logs"), 
+            debug=False
+        )
+        logger = structured_logger
+    elif not hasattr(logger, 'timed_operation'):
+        # Wrap regular logger in structured logger
+        structured_logger = setup_pipeline_logging(
+            "inspect_pipeline", 
+            Path("./logs"), 
+            debug=False
+        )
+        logger = structured_logger
+    
+    # Run new pipeline
+    pipeline = MEEGInspectionPipeline(logger)
+    return pipeline.run_pipeline(pipeline_file, max_files, output_format)
+
+
+def _pipeline_inspect_legacy(pipeline_file: str, max_files: Optional[int] = None):
+    """
+    Legacy implementation for backward compatibility.
+    Preserves original behavior exactly.
+    """
     cfg = load_yaml(pipeline_file)
     MOUNT = cfg.get('mount', None)
     PROJECT = cfg['project']
@@ -136,9 +205,6 @@ def pipeline_inspect(pipeline_file, max_files=None):
     save_dict_to_json(os.path.join(inspect_path, 'common_montage.txt'), {'common_montage': list(common)})
     save_dict_to_json(os.path.join(inspect_path, 'union_montage.txt'), {'union_montage': list(union_montage)})
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Inspect MEEG datasets.')
-    parser.add_argument('pipeline_file', type=str, help='Path to the pipeline.yml file')
-    parser.add_argument('--max_files', type=int, default=None, help='Maximum number of files to process per dataset')
-    args = parser.parse_args()
-    pipeline_inspect(args.pipeline_file, max_files=args.max_files)
+
+# CLI interface moved to eeg_raw_to_classification.cli.commands
+# Use 'meeg-inspect' command after pip installation
