@@ -11,6 +11,8 @@ None/
 *.out
 *.err
 
+logs/
+
 # Distribution / packaging
 .Python
 build/
